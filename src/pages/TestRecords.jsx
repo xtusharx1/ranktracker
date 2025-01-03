@@ -169,6 +169,7 @@ const TestRecords = () => {
                 <th style={{ padding: '12px 15px', textAlign: 'left', color: '#555' }}>Batch</th>
                 <th style={{ padding: '12px 15px', textAlign: 'left', color: '#555' }}>Total Marks</th>
                 <th style={{ padding: '12px 15px', textAlign: 'left', color: '#555' }}>Actions</th>
+                <th style={{ padding: '12px 15px', textAlign: 'left', color: '#555' }}>Student Marks</th>
               </tr>
             </thead>
             <tbody>
@@ -181,9 +182,13 @@ const TestRecords = () => {
                   <td style={{ padding: '12px 15px' }}>{getBatchName(record.batch_id)}</td>
                   <td style={{ padding: '12px 15px' }}>{record.total_marks}</td>
                   <td style={{ padding: '12px 15px' }}>
-                    <button onClick={() => handleEditTest(record.test_id)} style={{ marginRight: '10px', cursor: 'pointer' }}>Edit</button>
-                    <button onClick={() => handleDeleteTest(record.test_id)} style={{ marginRight: '10px', cursor: 'pointer' }}>Delete</button>
-                    <button onClick={() => goToStudentMarks(record.test_id)} style={{ cursor: 'pointer' }}>Student Marks</button>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button onClick={() => handleEditTest(record.test_id)} style={{ cursor: 'pointer', backgroundColor: '#2196F3', color: '#fff', border: 'none', borderRadius: '5px', padding: '8px 12px' }}>Edit</button>
+                      <button onClick={() => handleDeleteTest(record.test_id)} style={{ cursor: 'pointer', backgroundColor: '#F44336', color: '#fff', border: 'none', borderRadius: '5px', padding: '8px 12px' }}>Delete</button>
+                    </div>
+                  </td>
+                  <td style={{ padding: '12px 15px' }}>
+                    <button onClick={() => goToStudentMarks(record.test_id)} style={{ cursor: 'pointer', backgroundColor: '#4CAF50', color: '#fff', border: 'none', borderRadius: '5px', padding: '8px 12px' }}>Student Marks</button>
                   </td>
                 </tr>
               ))}

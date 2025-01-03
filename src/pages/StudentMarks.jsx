@@ -159,7 +159,6 @@ const StudentMarks = () => {
       )}
 
       {/* Student Marks Table */}
-      <h1>Student Marks for Test ID: {testId}</h1>
       <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)' }}>
         <thead>
           <tr style={{ backgroundColor: '#f0f0f0', borderBottom: '2px solid #ddd' }}>

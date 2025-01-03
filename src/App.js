@@ -31,6 +31,9 @@ import FeeReminders from "./pages/FeeReminders";
 import Course from "./pages/Course";
 import TestRecords from "./pages/TestRecords";
 import StudentMarks from "./pages/StudentMarks";
+import StudentPerformance from "./pages/StudentPerformance";
+import ClassPerformance from "./pages/ClassPerformance";
+
 const App = () => {
   const {
     activeMenu,
@@ -86,6 +89,7 @@ const App = () => {
                 <Route path="/Course" element={<Course/>}/>
                 <Route path="/Test-Records" element={<TestRecords/>}/>
                 <Route path="/student-marks/:testId" element={<StudentMarks />} />
+                <Route path="/Student-Performance" element={<StudentPerformance />} />
                 {/* Pages */}
                 <Route path="/ClassAnalytics" element={<ClassAnalytics/>} />
                 <Route path="/batch" element={<Batch />} />
@@ -107,6 +111,7 @@ const App = () => {
                 <Route path="/color-mapping" element={<ColorMapping />} />
                 <Route path="/pyramid" element={<Pyramid />} />
                 <Route path="/stacked" element={<Stacked />} />
+                <Route path="/Class-Performance" element={<ClassPerformance />} />
               </Routes>
             </div>{" "}
             <Footer />

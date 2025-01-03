@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/material": "^6.3.0",
     "@syncfusion/ej2": "^19.4.48",
     "@syncfusion/ej2-react-calendars": "^19.4.48",
     "@syncfusion/ej2-react-charts": "^19.4.50",

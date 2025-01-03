@@ -1,100 +1,163 @@
-import React from 'react';
-import { Bar, Line } from 'react-chartjs-2';
+import React, { useEffect, useState } from 'react';
 
 const FeeReminders = () => {
-  // Data for the charts
-  const newAdmissionsData = {
-    labels: ['Jan24', 'Feb24', 'Mar24', 'Apr24', 'May24', 'Jun24'],
-    datasets: [
-      {
-        label: 'New Admissions',
-        data: [3, 2, 5, 4, 6, 5],
-        backgroundColor: 'rgba(102, 51, 153, 0.6)',
-        borderColor: 'rgba(102, 51, 153, 1)',
-        borderWidth: 1,
-      },
-    ],
-  };
+  const [feeSummary, setFeeSummary] = useState(null);
+  const [upcomingDues, setUpcomingDues] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [batches, setBatches] = useState({});
 
-  const boysGirlsData = {
-    labels: ['Course 1', 'Course 2', 'Course 3', 'Course 4', 'Course 5', 'Course 6'],
-    datasets: [
-      {
-        label: 'Boys',
-        data: [50, 60, 70, 65, 80, 75],
-        backgroundColor: 'rgba(54, 162, 235, 0.7)',
-      },
-      {
-        label: 'Girls',
-        data: [40, 50, 60, 55, 70, 65],
-        backgroundColor: 'rgba(255, 99, 132, 0.7)',
-      },
-    ],
-  };
+  useEffect(() => {
+    const fetchFeeSummary = async () => {
+      try {
+        const response = await fetch('http://ec2-13-202-53-68.ap-south-1.compute.amazonaws.com:3002/api/feestatus/summary');
+        if (response.ok) {
+          const data = await response.json();
+          setFeeSummary(data);
+        } else {
+          console.error('Failed to fetch fee summary');
+        }
+      } catch (error) {
+        console.error('Error fetching fee summary:', error);
+      }
+    };
+
+    const fetchUpcomingDues = async () => {
+      try {
+        const response = await fetch('http://ec2-13-202-53-68.ap-south-1.compute.amazonaws.com:3002/api/feestatus/upcoming-dues');
+        if (response.ok) {
+          const data = await response.json();
+          const enrichedData = await Promise.all(data.map(async (due) => {
+            const userDetails = await fetchUserDetails(due.user_id);
+            const batchId = await fetchBatchId(due.user_id);
+            return { ...due, userDetails, batch_id: batchId };
+          }));
+          setUpcomingDues(enrichedData);
+        } else {
+          console.error('Failed to fetch upcoming dues');
+        }
+      } catch (error) {
+        console.error('Error fetching upcoming dues:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const fetchUserDetails = async (userId) => {
+      try {
+        const response = await fetch(`http://ec2-13-202-53-68.ap-south-1.compute.amazonaws.com:3002/api/users/user/${userId}`);
+        if (response.ok) {
+          const data = await response.json();
+          return data.user;
+        } else {
+          console.error('Failed to fetch user details');
+          return null;
+        }
+      } catch (error) {
+        console.error('Error fetching user details:', error);
+        return null;
+      }
+    };
+
+    const fetchBatchId = async (userId) => {
+      try {
+        const response = await fetch(`http://ec2-13-202-53-68.ap-south-1.compute.amazonaws.com:3002/api/studentBatches/students/search/${userId}`);
+        if (response.ok) {
+          const data = await response.json();
+          return data[0]?.batch_id;
+        } else {
+          console.error('Failed to fetch batch ID');
+          return null;
+        }
+      } catch (error) {
+        console.error('Error fetching batch ID:', error);
+        return null;
+      }
+    };
+
+    const fetchAllBatches = async () => {
+      try {
+        const response = await fetch('http://ec2-13-202-53-68.ap-south-1.compute.amazonaws.com:3002/api/batches/');
+        if (response.ok) {
+          const data = await response.json();
+          const batchMap = {};
+          data.forEach(batch => {
+            batchMap[batch.batch_id] = batch;
+          });
+          setBatches(batchMap);
+        } else {
+          console.error('Failed to fetch batches');
+        }
+      } catch (error) {
+        console.error('Error fetching batches:', error);
+      }
+    };
+
+    fetchFeeSummary();
+    fetchAllBatches();
+    fetchUpcomingDues();
+  }, []);
+
+  if (loading) {
+    return <div>Loading fee summary...</div>;
+  }
 
   return (
     <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif', color: '#333' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <div style={{ width: '48%' }}>
-          <h3 style={{ textAlign: 'center' }}>New Admissions</h3>
-          <Line data={newAdmissionsData} />
+      <h2 style={{ textAlign: 'center' }}>Fee Status Summary</h2>
+      {feeSummary && (
+        <div style={{ display: 'flex', justifyContent: 'space-around', marginTop: '20px' }}>
+          <div style={{ border: '1px solid #ccc', padding: '20px', borderRadius: '5px', flex: '1', margin: '10px' }}>
+            <h3>Total Students</h3>
+            <p style={{ fontSize: '24px', fontWeight: 'bold' }}>{feeSummary.totalStudents}</p>
+          </div>
+          <div style={{ border: '1px solid #ccc', padding: '20px', borderRadius: '5px', flex: '1', margin: '10px' }}>
+            <h3>Total Fee Collection</h3>
+            <p style={{ fontSize: '24px', fontWeight: 'bold' }}>₹{feeSummary.totalDueFee}</p>
+          </div>
+          <div style={{ border: '1px solid #ccc', padding: '20px', borderRadius: '5px', flex: '1', margin: '10px' }}>
+            <h3>Fees Due Today</h3>
+            <p style={{ fontSize: '24px', fontWeight: 'bold' }}>{feeSummary.totalDueToday}</p>
+          </div>
         </div>
-        <div style={{ width: '48%' }}>
-          <h3 style={{ textAlign: 'center' }}>Boys vs Girls</h3>
-          <Bar data={boysGirlsData} />
-        </div>
-      </div>
+      )}
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <div style={{ border: '1px solid #ccc', padding: '10px', borderRadius: '5px', flex: '1', marginRight: '10px' }}>
-          <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>Select Course</label>
-          <select style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ccc' }}>
-            <option value="6th offline">6th offline</option>
-            <option value="7th online">7th online</option>
-          </select>
-        </div>
-        <div style={{ border: '1px solid #ccc', padding: '10px', borderRadius: '5px', flex: '1', marginRight: '10px' }}>
-          <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>No of Students</label>
-          <p style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>35</p>
-        </div>
-        <div style={{ border: '1px solid #ccc', padding: '10px', borderRadius: '5px', flex: '1' }}>
-          <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>Total Amount Pending</label>
-          <p style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: '#d9534f' }}>₹5,35,000/-</p>
-        </div>
-      </div>
-
-      <div style={{ overflowX: 'auto', marginBottom: '20px' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #ccc' }}>
+      <h2 style={{ textAlign: 'center', marginTop: '40px' }}>Upcoming Dues</h2>
+      {upcomingDues.length > 0 ? (
+        <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px' }}>
           <thead>
-            <tr style={{ backgroundColor: '#f9f9f9' }}>
-              <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>S No</th>
-              <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>Course Name</th>
-              <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>Student Name</th>
-              <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>Installment No</th>
-              <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>Due Date</th>
-              <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>Status</th>
-              <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>Follow up (Note)</th>
-              <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>Profile</th>
+            <tr style={{ backgroundColor: '#f0f0f0', borderBottom: '2px solid #ddd' }}>
+              <th style={{ padding: '12px 15px', textAlign: 'left' }}>Student Name</th>
+              <th style={{ padding: '12px 15px', textAlign: 'left' }}>Email</th>
+              <th style={{ padding: '12px 15px', textAlign: 'left' }}>Batch</th>
+              <th style={{ padding: '12px 15px', textAlign: 'left' }}>Admission Date</th>
+              <th style={{ padding: '12px 15px', textAlign: 'left' }}>Total Fees</th>
+              <th style={{ padding: '12px 15px', textAlign: 'left' }}>Fees Submitted</th>
+              <th style={{ padding: '12px 15px', textAlign: 'left' }}>Remaining Fees</th>
+              <th style={{ padding: '12px 15px', textAlign: 'left' }}>Next Due Date</th>
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td style={{ padding: '10px', border: '1px solid #ddd' }}>1</td>
-              <td style={{ padding: '10px', border: '1px solid #ddd' }}>6th offline</td>
-              <td style={{ padding: '10px', border: '1px solid #ddd' }}>John Doe</td>
-              <td style={{ padding: '10px', border: '1px solid #ddd' }}>2</td>
-              <td style={{ padding: '10px', border: '1px solid #ddd' }}>2024-01-15</td>
-              <td style={{ padding: '10px', border: '1px solid #ddd', color: '#d9534f', fontWeight: 'bold' }}>Pending</td>
-              <td style={{ padding: '10px', border: '1px solid #ddd' }}>Call parent</td>
-              <td style={{ padding: '10px', border: '1px solid #ddd' }}><button style={{ padding: '5px 10px', border: 'none', backgroundColor: '#0275d8', color: '#fff', borderRadius: '3px', cursor: 'pointer' }}>View</button></td>
-            </tr>
+            {upcomingDues.map((due) => (
+              <tr key={due.id} style={{ borderBottom: '1px solid #ddd' }}>
+                <td style={{ padding: '12px 15px' }}>{due.userDetails ? due.userDetails.name : 'N/A'}</td>
+                <td style={{ padding: '12px 15px' }}>{due.userDetails ? due.userDetails.email : 'N/A'}</td>
+                <td style={{ padding: '12px 15px' }}>
+                  {due.batch_id ? (
+                    batches[due.batch_id] ? batches[due.batch_id].batch_name : 'N/A'
+                  ) : 'N/A'}
+                </td>
+                <td style={{ padding: '12px 15px' }}>{due.admissionDate}</td>
+                <td style={{ padding: '12px 15px' }}>₹{due.totalFees}</td>
+                <td style={{ padding: '12px 15px' }}>₹{due.feesSubmitted}</td>
+                <td style={{ padding: '12px 15px' }}>₹{due.remainingFees}</td>
+                <td style={{ padding: '12px 15px' }}>{due.nextDueDate}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
-      </div>
-
-      <div style={{ textAlign: 'center', fontStyle: 'italic', color: '#777' }}>
-        <p>If complete fee is <strong>‘paid’</strong>, then name will not come here.</p>
-      </div>
+      ) : (
+        <p style={{ textAlign: 'center', marginTop: '20px' }}>No upcoming dues.</p>
+      )}
     </div>
   );
 };
