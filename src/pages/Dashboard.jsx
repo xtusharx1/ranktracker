@@ -16,17 +16,17 @@ const Dashboard = () => {
     const fetchData = async () => {
       try {
         // Fetch roles
-        const rolesResponse = await fetch("http://localhost:3002/api/role");
+        const rolesResponse = await fetch("http://172.31.15.184:3002/api/role");
         const rolesData = await rolesResponse.json();
   
         // Fetch user counts by role
-        const userCountsResponse = await fetch("http://localhost:3002/api/users/roles/count");
+        const userCountsResponse = await fetch("http://172.31.15.184:3002/api/users/roles/count");
         const userCountsData = await userCountsResponse.json();
   
         // Fetch course count (optional, if the endpoint exists)
         let courseCount = 0;
         try {
-          const courseResponse = await fetch("http://localhost:3002/api/courses/count");
+          const courseResponse = await fetch("http://172.31.15.184:3002/api/courses/count");
           const courseData = await courseResponse.json();
           courseCount = courseData.count || 0;
         } catch (error) {
