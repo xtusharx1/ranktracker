@@ -11,7 +11,7 @@ const AddOtherChargesForm = ({ feeStatusId, onClose }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://ec2-13-202-53-68.ap-south-1.compute.amazonaws.com:3002/api/otherchargesrecords/add-other-charges', {
+      const response = await axios.post('http://localhost:3002/api/otherchargesrecords/add-other-charges', {
         title,
         date,
         amount,
@@ -82,7 +82,7 @@ const AddPaymentForm = ({ feeStatusId, onClose }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://ec2-13-202-53-68.ap-south-1.compute.amazonaws.com:3002/api/feepaymentrecords/add-payment', {
+      const response = await axios.post('http://localhost:3002/api/feepaymentrecords/add-payment', {
         title,
         date,
         amount,
@@ -188,9 +188,9 @@ const FeeRecords = () => {
   useEffect(() => {
     const fetchStudents = async () => {
       try {
-        const response = await axios.get('http://ec2-13-202-53-68.ap-south-1.compute.amazonaws.com:3002/api/users/role/2');
+        const response = await axios.get('http://localhost:3002/api/users/role/2');
         setAllStudents(response.data);
-        const feeStatusResponse = await axios.get('http://ec2-13-202-53-68.ap-south-1.compute.amazonaws.com:3002/api/feestatus');
+        const feeStatusResponse = await axios.get('http://localhost:3002/api/feestatus');
         const feeStatusStudentIds = feeStatusResponse.data.map(feeStatus => feeStatus.user_id);
         setStudents(response.data.filter(student => feeStatusStudentIds.includes(student.user_id)));
         console.log('Fetched Students:', students);
@@ -205,14 +205,14 @@ const FeeRecords = () => {
   useEffect(() => {
     const fetchBatchData = async () => {
       try {
-        const batchMappingResponse = await axios.get('http://ec2-13-202-53-68.ap-south-1.compute.amazonaws.com:3002/api/studentBatches/students');
+        const batchMappingResponse = await axios.get('http://localhost:3002/api/studentBatches/students');
         const batchMapping = batchMappingResponse.data.reduce((acc, item) => {
           acc[item.user_id] = item.batch_id;
           return acc;
         }, {});
         setStudentBatches(batchMapping);
 
-        const batchDetailsResponse = await axios.get('http://ec2-13-202-53-68.ap-south-1.compute.amazonaws.com:3002/api/batches/');
+        const batchDetailsResponse = await axios.get('http://localhost:3002/api/batches/');
         setBatchDetails(batchDetailsResponse.data);
       } catch (error) {
         console.error('Error fetching batch data:', error);
@@ -227,7 +227,7 @@ const FeeRecords = () => {
 
     const fetchFeeStatuses = async () => {
       try {
-        const response = await axios.get('http://ec2-13-202-53-68.ap-south-1.compute.amazonaws.com:3002/api/feestatus');
+        const response = await axios.get('http://localhost:3002/api/feestatus');
         if (isMounted) setStudents(response.data);
       } catch (error) {
         console.error('Error fetching fee statuses:', error);
@@ -247,7 +247,7 @@ const FeeRecords = () => {
         return; // Exit if feeStatusId is not valid
     }
     try {
-        const response = await axios.get(`http://ec2-13-202-53-68.ap-south-1.compute.amazonaws.com:3002/api/feepaymentrecords/payments/${feeStatusId}`);
+        const response = await axios.get(`http://localhost:3002/api/feepaymentrecords/payments/${feeStatusId}`);
         setFeeRecords(response.data);
     } catch (error) {
         console.error('Error fetching fee payment records:', error);
@@ -260,7 +260,7 @@ const FeeRecords = () => {
         return; // Exit if feeStatusId is not valid
     }
     try {
-        const response = await axios.get(`http://ec2-13-202-53-68.ap-south-1.compute.amazonaws.com:3002/api/otherchargesrecords/charges/${feeStatusId}`);
+        const response = await axios.get(`http://localhost:3002/api/otherchargesrecords/charges/${feeStatusId}`);
         setOtherChargesRecords(response.data);
     } catch (error) {
         console.error('Error fetching other charges records:', error);
@@ -305,10 +305,10 @@ const FeeRecords = () => {
     event.preventDefault();
     try {
       if (activeTab === 'academy') {
-        const response = await axios.post(`http://ec2-13-202-53-68.ap-south-1.compute.amazonaws.com:3002/api/feepaymentrecord/status/${selectedStudent.user_id}`, newEntry);
+        const response = await axios.post(`http://localhost:3002/api/feepaymentrecord/status/${selectedStudent.user_id}`, newEntry);
         setFeeRecords([...feeRecords, response.data]);
       } else {
-        const response = await axios.post(`http://ec2-13-202-53-68.ap-south-1.compute.amazonaws.com:3002/api/othercharges/status/${selectedStudent.user_id}`, newEntry);
+        const response = await axios.post(`http://localhost:3002/api/othercharges/status/${selectedStudent.user_id}`, newEntry);
         setOtherChargesRecords([...otherChargesRecords, response.data]);
       }
       setNewEntry({
@@ -335,7 +335,7 @@ const FeeRecords = () => {
   const handleCreateFeeStatus = async (event) => {
     event.preventDefault();
     try {
-      const response = await axios.post('http://ec2-13-202-53-68.ap-south-1.compute.amazonaws.com:3002/api/feestatus/', {
+      const response = await axios.post('http://localhost:3002/api/feestatus/', {
         ...newEntry,
         user_id: selectedStudentForAdd.user_id,
       });
@@ -386,7 +386,7 @@ const FeeRecords = () => {
     if (selectedStudent) {
       const fetchOtherCharges = async () => {
         try {
-          const response = await fetch(`http://ec2-13-202-53-68.ap-south-1.compute.amazonaws.com:3002/api/otherchargesrecords/charges/${feeStatusId}`);
+          const response = await fetch(`http://localhost:3002/api/otherchargesrecords/charges/${feeStatusId}`);
           if (response.ok) {
             const data = await response.json();
             setOtherCharges(data);
@@ -401,7 +401,7 @@ const FeeRecords = () => {
       const fetchPayments = async () => {
         
         try {
-          const response = await fetch(`http://ec2-13-202-53-68.ap-south-1.compute.amazonaws.com:3002/api/feepaymentrecords/payments/${feeStatusId}`);
+          const response = await fetch(`http://localhost:3002/api/feepaymentrecords/payments/${feeStatusId}`);
           if (response.ok) {
             const data = await response.json();
             setPayments(data);

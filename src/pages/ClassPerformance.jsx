@@ -32,7 +32,7 @@ const ClassPerformance = () => {
 
   useEffect(() => {
     const fetchBatchDetails = async () => {
-      const response = await fetch('http://ec2-13-202-53-68.ap-south-1.compute.amazonaws.com:3002/api/batches/');
+      const response = await fetch('http://localhost:3002/api/batches/');
       if (response.ok) {
         const data = await response.json();
         setBatches(data);
@@ -54,7 +54,7 @@ const ClassPerformance = () => {
   };
 
   const fetchTestsByBatchId = async (batchId) => {
-    const response = await fetch(`http://ec2-13-202-53-68.ap-south-1.compute.amazonaws.com:3002/api/test/tests/batch/${batchId}`);
+    const response = await fetch(`http://localhost:3002/api/test/tests/batch/${batchId}`);
     if (response.ok) {
       const tests = await response.json();
       const testDetailsPromises = tests.map(test => fetchStudentRecords(test.test_id));
@@ -64,7 +64,7 @@ const ClassPerformance = () => {
   };
 
   const fetchStudentRecords = async (testId) => {
-    const response = await fetch(`http://ec2-13-202-53-68.ap-south-1.compute.amazonaws.com:3002/api/studenttestrecords/test/${testId}`);
+    const response = await fetch(`http://localhost:3002/api/studenttestrecords/test/${testId}`);
     if (response.ok) {
       const records = await response.json();
       return { testId, records }; // Return test ID along with student records

@@ -12,7 +12,7 @@ const Course = () => {
   useEffect(() => {
     const fetchBatches = async () => {
       try {
-        const response = await axios.get('http://ec2-13-202-53-68.ap-south-1.compute.amazonaws.com:3002/api/batches/');
+        const response = await axios.get('http://localhost:3002/api/batches/');
         setBatches(response.data);
       } catch (error) {
         console.error('Error fetching batches:', error);
@@ -21,7 +21,7 @@ const Course = () => {
 
     const fetchStudents = async () => {
       try {
-        const response = await axios.get('http://ec2-13-202-53-68.ap-south-1.compute.amazonaws.com:3002/api/users/role/2');
+        const response = await axios.get('http://localhost:3002/api/users/role/2');
         setStudents(response.data);
       } catch (error) {
         console.error('Error fetching students:', error);
@@ -50,7 +50,7 @@ const Course = () => {
       const selectedBatchId = selectedBatch;
       for (const user_id of selectedStudents) {
         console.log('Adding student to batch:', { batch_id: selectedBatchId, user_id });
-        const response = await axios.post(`http://ec2-13-202-53-68.ap-south-1.compute.amazonaws.com:3002/api/studentBatches/students/batch/`, {
+        const response = await axios.post(`http://localhost:3002/api/studentBatches/students/batch/`, {
           user_id: user_id,
           batch_id: selectedBatchId
         });

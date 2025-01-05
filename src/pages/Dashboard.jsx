@@ -26,9 +26,9 @@ const Dashboard = () => {
         // Fetch course count (optional, if the endpoint exists)
         let courseCount = 0;
         try {
-          const courseResponse = await fetch("http://localhost:3002/api/courses/count");
+          const courseResponse = await fetch("http://localhost:3002/api/batches/count");
           const courseData = await courseResponse.json();
-          courseCount = courseData.count || 0;
+          courseCount = courseData.batch_count || 0;
         } catch (error) {
           console.log("Course API not available:", error);
         }

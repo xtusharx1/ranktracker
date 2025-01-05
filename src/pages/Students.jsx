@@ -66,7 +66,7 @@ const Students = () => {
   useEffect(() => {
     const fetchStudents = async () => {
       try {
-        const response = await fetch("http://ec2-13-202-53-68.ap-south-1.compute.amazonaws.com:3002/api/users/role/2");
+        const response = await fetch("http://localhost:3002/api/users/role/2");
         const data = await response.json();
         setStudents(data);
       } catch (error) {
@@ -76,7 +76,7 @@ const Students = () => {
 
     const fetchBatches = async () => {
       try {
-        const response = await fetch("http://ec2-13-202-53-68.ap-south-1.compute.amazonaws.com:3002/api/batches/");
+        const response = await fetch("http://localhost:3002/api/batches/");
         const data = await response.json();
         setBatches(data); // Set batches data
       } catch (error) {
@@ -149,7 +149,7 @@ const Students = () => {
 
     try {
       // Create the new student
-      const response = await fetch("http://ec2-13-202-53-68.ap-south-1.compute.amazonaws.com:3002/api/users/register", {
+      const response = await fetch("http://localhost:3002/api/users/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -173,7 +173,7 @@ const Students = () => {
         console.log("User ID:", user_id);
 
         // Use the specified API endpoint and request format to add the student to the batch
-        const addStudentToBatchResponse = await axios.post(`http://ec2-13-202-53-68.ap-south-1.compute.amazonaws.com:3002/api/studentBatches/students/batch/`, {
+        const addStudentToBatchResponse = await axios.post(`http://localhost:3002/api/studentBatches/students/batch/`, {
           user_id: user_id, // Send user_id in the request body
           batch_id: selectedBatch // Send batch_id in the request body
         });

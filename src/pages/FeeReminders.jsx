@@ -9,7 +9,7 @@ const FeeReminders = () => {
   useEffect(() => {
     const fetchFeeSummary = async () => {
       try {
-        const response = await fetch('http://ec2-13-202-53-68.ap-south-1.compute.amazonaws.com:3002/api/feestatus/summary');
+        const response = await fetch('http://localhost:3002/api/feestatus/summary');
         if (response.ok) {
           const data = await response.json();
           setFeeSummary(data);
@@ -23,7 +23,7 @@ const FeeReminders = () => {
 
     const fetchUpcomingDues = async () => {
       try {
-        const response = await fetch('http://ec2-13-202-53-68.ap-south-1.compute.amazonaws.com:3002/api/feestatus/upcoming-dues');
+        const response = await fetch('http://localhost:3002/api/feestatus/upcoming-dues');
         if (response.ok) {
           const data = await response.json();
           const enrichedData = await Promise.all(data.map(async (due) => {
@@ -44,7 +44,7 @@ const FeeReminders = () => {
 
     const fetchUserDetails = async (userId) => {
       try {
-        const response = await fetch(`http://ec2-13-202-53-68.ap-south-1.compute.amazonaws.com:3002/api/users/user/${userId}`);
+        const response = await fetch(`http://localhost:3002/api/users/user/${userId}`);
         if (response.ok) {
           const data = await response.json();
           return data.user;
@@ -60,7 +60,7 @@ const FeeReminders = () => {
 
     const fetchBatchId = async (userId) => {
       try {
-        const response = await fetch(`http://ec2-13-202-53-68.ap-south-1.compute.amazonaws.com:3002/api/studentBatches/students/search/${userId}`);
+        const response = await fetch(`http://localhost:3002/api/studentBatches/students/search/${userId}`);
         if (response.ok) {
           const data = await response.json();
           return data[0]?.batch_id;
@@ -76,7 +76,7 @@ const FeeReminders = () => {
 
     const fetchAllBatches = async () => {
       try {
-        const response = await fetch('http://ec2-13-202-53-68.ap-south-1.compute.amazonaws.com:3002/api/batches/');
+        const response = await fetch('http://localhost:3002/api/batches/');
         if (response.ok) {
           const data = await response.json();
           const batchMap = {};
