@@ -7,8 +7,8 @@ const WebSocketComponent = () => {
     // Use different WebSocket URLs for development and production
     const socket = new WebSocket(
       process.env.NODE_ENV === 'production'
-        ? 'ws://http://ec2-13-202-53-68.ap-south-1.compute.amazonaws.com:3002' // Production: Use server IP or domain
-        : 'ws://localhost:3002'               // Development: Use local Node.js server
+        ? 'ws://localhost:3002' // WebSocket URL for local testing (on EC2 instance)
+        : 'ws://localhost:3002'  // WebSocket URL for local development
     );
 
     // Handle successful connection
