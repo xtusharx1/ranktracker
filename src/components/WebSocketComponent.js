@@ -4,8 +4,8 @@ import React, { useEffect } from 'react';
 
 const WebSocketComponent = () => {
   useEffect(() => {
-    // Replace with your WebSocket URL (use wss:// for secure WebSocket connections)
-    const socket = new WebSocket('wss://students.sainikschoolcadet.com:3003'); 
+    // Use localhost URL for local testing
+    const socket = new WebSocket('ws://localhost:3002'); // WebSocket URL for local development
 
     // When the WebSocket connection is successfully established
     socket.addEventListener('open', () => {
