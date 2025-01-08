@@ -1,3 +1,5 @@
+// src/App.js
+
 import React, { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { FiSettings } from "react-icons/fi";
@@ -34,6 +36,9 @@ import StudentMarks from "./pages/StudentMarks";
 import StudentPerformance from "./pages/StudentPerformance";
 import ClassPerformance from "./pages/ClassPerformance";
 
+// Import the WebSocket component
+import WebSocketComponent from './components/WebSocketComponent';
+
 const App = () => {
   const {
     activeMenu,
@@ -60,7 +65,6 @@ const App = () => {
             </TooltipComponent>
           </div>
           {activeMenu ? (
-            
             <div className="w-72 fixed sidebar dark:bg-secondary-dark-bg bg-white ">
               <Sidebar />
             </div>
@@ -117,6 +121,8 @@ const App = () => {
             <Footer />
           </div>
         </div>
+        {/* Add the WebSocket component */}
+        <WebSocketComponent />
       </BrowserRouter>
     </div>
   );
