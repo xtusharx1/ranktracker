@@ -8,10 +8,7 @@ const server = http.createServer((req, res) => {
   res.end('WebSocket server is running');
 });
 
-// Create a WebSocket server attached to the HTTP server
 const wss = new WebSocket.Server({ server });
-
-// When a new WebSocket connection is established
 wss.on('connection', (ws) => {
   console.log('Client connected');
   
