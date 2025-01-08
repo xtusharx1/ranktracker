@@ -74,9 +74,15 @@ const StudentPerformance = () => {
     const response = await fetch(`http://localhost:3002/api/studenttestrecords/user/${userId}`);
     if (response.ok) {
       const data = await response.json();
-      setTestRecords(data);
+      const recordsWithRank = await Promise.all(
+        data.map(async (record) => {
+          const rank = await fetchRank(record.test_id, userId);
+          return { ...record, rank };
+        })
+      );
+      setTestRecords(recordsWithRank);
       // Fetch statistics for each test record
-      data.forEach(record => {
+      recordsWithRank.forEach(record => {
         fetchTestStatistics(record.test_id);
       });
     }
@@ -88,6 +94,19 @@ const StudentPerformance = () => {
       const data = await response.json();
       setTestStatistics(prevStats => ({ ...prevStats, [testId]: data }));
     }
+  };
+
+  const fetchRank = async (testId, userId) => {
+    try {
+      const response = await fetch(`http://localhost:3002/api/studenttestrecords/rank/${testId}/${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        return data.rank;
+      }
+    } catch (error) {
+      console.error('Error fetching rank:', error);
+    }
+    return null;
   };
 
   const calculateCumulativeMetrics = () => {
@@ -188,6 +207,7 @@ const StudentPerformance = () => {
                   <TableCell>Highest Marks</TableCell>
                   <TableCell>Lowest Marks</TableCell>
                   <TableCell>Average Marks</TableCell>
+                  <TableCell>Rank</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -198,6 +218,7 @@ const StudentPerformance = () => {
                     <TableCell>{testStatistics[record.test_id]?.highest_marks}</TableCell>
                     <TableCell>{testStatistics[record.test_id]?.lowest_marks}</TableCell>
                     <TableCell>{testStatistics[record.test_id]?.average_marks}</TableCell>
+                    <TableCell>{record.rank || 'N/A'}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
