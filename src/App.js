@@ -1,6 +1,4 @@
-// src/App.js
-
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { FiSettings } from "react-icons/fi";
 import { TooltipComponent } from "@syncfusion/ej2-react-popups";
@@ -36,7 +34,6 @@ import StudentMarks from "./pages/StudentMarks";
 import StudentPerformance from "./pages/StudentPerformance";
 import ClassPerformance from "./pages/ClassPerformance";
 
-
 const App = () => {
   const {
     activeMenu,
@@ -45,6 +42,16 @@ const App = () => {
     currentColor,
     currentMode,
   } = useStateContext();
+
+  useEffect(() => {
+    if (process.env.REACT_APP_ENV === "production") {
+      console.log = () => {};
+      console.warn = () => {};
+      console.error = () => {};
+    } else {
+      console.log("App is running in development mode");
+    }
+  }, []);
 
   return (
     <div className={currentMode === "Dark" ? "dark" : ""}>
@@ -63,7 +70,7 @@ const App = () => {
             </TooltipComponent>
           </div>
           {activeMenu ? (
-            <div className="w-72 fixed sidebar dark:bg-secondary-dark-bg bg-white ">
+            <div className="w-72 fixed sidebar dark:bg-secondary-dark-bg bg-white">
               <Sidebar />
             </div>
           ) : (
@@ -83,17 +90,17 @@ const App = () => {
               {themeSettings && <ThemeSettings />}
               <Routes>
                 {/* Dashboard */}
-                <Route path="/" element={<Dashboard/>} />
-                <Route path="/Dashboard" element={<Dashboard/>} />
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/Dashboard" element={<Dashboard />} />
                 <Route path="/students" element={<Students />} />
-                <Route path="/fee-records" element={<FeeRecords/>}/>
-                <Route path="/fee-reminders" element={<FeeReminders/>}/>
-                <Route path="/Course" element={<Course/>}/>
-                <Route path="/Test-Records" element={<TestRecords/>}/>
+                <Route path="/fee-records" element={<FeeRecords />} />
+                <Route path="/fee-reminders" element={<FeeReminders />} />
+                <Route path="/Course" element={<Course />} />
+                <Route path="/Test-Records" element={<TestRecords />} />
                 <Route path="/student-marks/:testId" element={<StudentMarks />} />
                 <Route path="/Student-Performance" element={<StudentPerformance />} />
                 {/* Pages */}
-                <Route path="/ClassAnalytics" element={<ClassAnalytics/>} />
+                <Route path="/ClassAnalytics" element={<ClassAnalytics />} />
                 <Route path="/batch" element={<Batch />} />
                 <Route path="/employees" element={<Employees />} />
                 <Route path="/customers" element={<Customers />} />
@@ -115,11 +122,10 @@ const App = () => {
                 <Route path="/stacked" element={<Stacked />} />
                 <Route path="/Class-Performance" element={<ClassPerformance />} />
               </Routes>
-            </div>{" "}
+            </div>
             <Footer />
           </div>
         </div>
-        
       </BrowserRouter>
     </div>
   );
