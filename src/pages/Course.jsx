@@ -16,7 +16,7 @@ const Course = () => {
   useEffect(() => {
     const fetchBatches = async () => {
       try {
-        const response = await axios.get('https://api.students.sainikschoolcadet.com/api/batches/');
+        const response = await axios.get('https://apistudents.sainikschoolcadet.com/api/batches/');
         setBatches(response.data);
       } catch (error) {
         console.error('Error fetching batches:', error);
@@ -25,7 +25,7 @@ const Course = () => {
 
     const fetchStudents = async () => {
       try {
-        const response = await axios.get('https://api.students.sainikschoolcadet.com/api/users/role/2');
+        const response = await axios.get('https://apistudents.sainikschoolcadet.com/api/users/role/2');
         setStudents(response.data);
       } catch (error) {
         console.error('Error fetching students:', error);
@@ -53,7 +53,7 @@ const Course = () => {
     try {
       const selectedBatchId = selectedBatch;
       for (const user_id of selectedStudents) {
-        await axios.post(`https://api.students.sainikschoolcadet.com/api/studentBatches/students/batch/`, {
+        await axios.post(`https://apistudents.sainikschoolcadet.com/api/studentBatches/students/batch/`, {
           user_id: user_id,
           batch_id: selectedBatchId,
         });
@@ -68,7 +68,7 @@ const Course = () => {
 
   const handleCreateNewCourse = async () => {
     try {
-      const response = await axios.post('https://api.students.sainikschoolcadet.com/api/batches/', {
+      const response = await axios.post('https://apistudents.sainikschoolcadet.com/api/batches/', {
         batch_name: newCourseName,
       });
       setBatches((prevBatches) => [...prevBatches, response.data]);
@@ -82,7 +82,7 @@ const Course = () => {
 
   const handleDeleteCourse = async () => {
     try {
-      await axios.delete(`https://api.students.sainikschoolcadet.com/api/batches/${batchToDelete}`);
+      await axios.delete(`https://apistudents.sainikschoolcadet.com/api/batches/${batchToDelete}`);
       setBatches(batches.filter(batch => batch.batch_id !== batchToDelete));
       setShowDeleteConfirmation(false);
       alert('Course deleted successfully');

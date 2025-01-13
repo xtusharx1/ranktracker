@@ -11,7 +11,7 @@ const StudentMarks = () => {
     const fetchTestDetails = async () => {
       try {
         // Fetch test details to get the batchId and other info
-        const testResponse = await fetch(`https://api.students.sainikschoolcadet.com/api/test/${testId}`);
+        const testResponse = await fetch(`https://apistudents.sainikschoolcadet.com/api/test/${testId}`);
         if (testResponse.ok) {
           const testData = await testResponse.json();
           setTestDetails(testData); // Save test details to state
@@ -29,7 +29,7 @@ const StudentMarks = () => {
     // Function to fetch students in the batch
     const fetchStudentsInBatch = async (batchId) => {
       try {
-        const batchResponse = await fetch(`https://api.students.sainikschoolcadet.com/api/studentbatches/students/batch/${batchId}`);
+        const batchResponse = await fetch(`https://apistudents.sainikschoolcadet.com/api/studentbatches/students/batch/${batchId}`);
         if (batchResponse.ok) {
           const studentsData = await batchResponse.json();
           // Fetch student test records for each student
@@ -45,7 +45,7 @@ const StudentMarks = () => {
     // Function to fetch test records for all students
     const fetchStudentTestRecords = async (studentsData) => {
       try {
-        const marksResponse = await fetch(`https://api.students.sainikschoolcadet.com/api/studenttestrecords/test/${testId}`);
+        const marksResponse = await fetch(`https://apistudents.sainikschoolcadet.com/api/studenttestrecords/test/${testId}`);
         let marksData = [];
 
         if (marksResponse.ok) {
@@ -56,7 +56,7 @@ const StudentMarks = () => {
 
         // Fetch student details (name) for each user_id
         const recordsWithNames = await Promise.all(studentsData.map(async (student) => {
-          const userResponse = await fetch(`https://api.students.sainikschoolcadet.com/api/users/user/${student.user_id}`);
+          const userResponse = await fetch(`https://apistudents.sainikschoolcadet.com/api/users/user/${student.user_id}`);
           const userData = await userResponse.json();
 
           let studentMarks = marksData.find(record => record.user_id === student.user_id);
@@ -85,7 +85,7 @@ const StudentMarks = () => {
     // Function to create a student test record if it doesn't exist
     const createStudentTestRecord = async (userId) => {
       try {
-        const newRecordResponse = await fetch('https://api.students.sainikschoolcadet.com/api/studenttestrecords/', {
+        const newRecordResponse = await fetch('https://apistudents.sainikschoolcadet.com/api/studenttestrecords/', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -119,7 +119,7 @@ const StudentMarks = () => {
 
   const updateStudentMarks = async (recordId, marks) => {
     try {
-      const response = await fetch(`https://api.students.sainikschoolcadet.com/api/studenttestrecords/${recordId}`, {
+      const response = await fetch(`https://apistudents.sainikschoolcadet.com/api/studenttestrecords/${recordId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ marks_obtained: marks }),
