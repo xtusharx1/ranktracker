@@ -13,7 +13,7 @@ const TestRecords = () => {
   useEffect(() => {
     const fetchBatches = async () => {
       try {
-        const response = await fetch('http://localhost:3002/api/batches/');
+        const response = await fetch('https://api.students.sainikschoolcadet.com/api/batches/');
         if (response.ok) {
           const data = await response.json();
           setBatches(data);
@@ -27,7 +27,7 @@ const TestRecords = () => {
 
     const fetchTests = async () => {
       try {
-        const response = await fetch('http://localhost:3002/api/test');
+        const response = await fetch('https://api.students.sainikschoolcadet.com/api/test');
         if (response.ok) {
           const data = await response.json();
           setTestRecords(data);
@@ -54,7 +54,7 @@ const TestRecords = () => {
 
   const handleAddTest = async () => {
     try {
-      const response = await fetch('http://localhost:3002/api/test', {
+      const response = await fetch('https://api.students.sainikschoolcadet.com/api/test', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -86,7 +86,7 @@ const TestRecords = () => {
 
   const handleUpdateTest = async () => {
     try {
-      const response = await fetch(`http://localhost:3002/api/test/${editTest.test_id}`, {
+      const response = await fetch(`https://api.students.sainikschoolcadet.com/api/test/${editTest.test_id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -113,7 +113,7 @@ const TestRecords = () => {
 
   const handleDeleteTest = async (testId) => {
     try {
-      const response = await fetch(`http://localhost:3002/api/test/${testId}`, {
+      const response = await fetch(`https://api.students.sainikschoolcadet.com/api/test/${testId}`, {
         method: 'DELETE',
       });
 

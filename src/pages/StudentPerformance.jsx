@@ -16,7 +16,7 @@ const StudentPerformance = () => {
   useEffect(() => {
     const fetchBatchDetails = async () => {
       setLoading(true);
-      const response = await fetch('http://localhost:3002/api/batches/');
+      const response = await fetch('https://api.students.sainikschoolcadet.com/api/batches/');
       if (response.ok) {
         const data = await response.json();
         setBatches(data);
@@ -42,7 +42,7 @@ const StudentPerformance = () => {
 
   const fetchStudentsByBatchId = async (batchId) => {
     setLoading(true);
-    const response = await fetch(`http://localhost:3002/api/studentBatches/students/batch/${batchId}`);
+    const response = await fetch(`https://api.students.sainikschoolcadet.com/api/studentBatches/students/batch/${batchId}`);
     if (response.ok) {
       const data = await response.json();
       // Fetch details for each student in the batch
@@ -56,7 +56,7 @@ const StudentPerformance = () => {
   };
 
   const fetchStudentDetails = async (userId) => {
-    const response = await fetch(`http://localhost:3002/api/users/user/${userId}`);
+    const response = await fetch(`https://api.students.sainikschoolcadet.com/api/users/user/${userId}`);
     if (response.ok) {
       return (await response.json()).user;
     }
@@ -71,7 +71,7 @@ const StudentPerformance = () => {
   };
 
   const fetchTestRecords = async (userId) => {
-    const response = await fetch(`http://localhost:3002/api/studenttestrecords/user/${userId}`);
+    const response = await fetch(`https://api.students.sainikschoolcadet.com/api/studenttestrecords/user/${userId}`);
     if (response.ok) {
       const data = await response.json();
       const recordsWithRank = await Promise.all(
@@ -89,7 +89,7 @@ const StudentPerformance = () => {
   };
 
   const fetchTestStatistics = async (testId) => {
-    const response = await fetch(`http://localhost:3002/api/studenttestrecords/statistics/${testId}`);
+    const response = await fetch(`https://api.students.sainikschoolcadet.com/api/studenttestrecords/statistics/${testId}`);
     if (response.ok) {
       const data = await response.json();
       setTestStatistics(prevStats => ({ ...prevStats, [testId]: data }));
@@ -98,7 +98,7 @@ const StudentPerformance = () => {
 
   const fetchRank = async (testId, userId) => {
     try {
-      const response = await fetch(`http://localhost:3002/api/studenttestrecords/rank/${testId}/${userId}`);
+      const response = await fetch(`https://api.students.sainikschoolcadet.com/api/studenttestrecords/rank/${testId}/${userId}`);
       if (response.ok) {
         const data = await response.json();
         return data.rank;
