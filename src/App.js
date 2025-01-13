@@ -36,8 +36,6 @@ import StudentMarks from "./pages/StudentMarks";
 import StudentPerformance from "./pages/StudentPerformance";
 import ClassPerformance from "./pages/ClassPerformance";
 
-// Import the WebSocket component
-import WebSocketComponent from './components/WebSocketComponent';
 
 const App = () => {
   const {
@@ -121,8 +119,7 @@ const App = () => {
             <Footer />
           </div>
         </div>
-        {/* Add the WebSocket component */}
-        <WebSocketComponent />
+        
       </BrowserRouter>
     </div>
   );
