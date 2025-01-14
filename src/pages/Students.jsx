@@ -121,34 +121,34 @@ const Students = () => {
       return;
     }
 
-    // Construct the studentData object to match the specified format
+    // Construct the studentData object in the exact format required by the API
     const studentData = {
       name: newStudent.name,
       email: newStudent.email,
       password: newStudent.password,
-      role_id: newStudent.role_id,
+      role_id: 2,
       phone_number: newStudent.phone_number,
-      date_of_admission: formatDateToIST(newStudent.date_of_admission), // Format date of admission
+      date_of_admission: formatDateToIST(newStudent.date_of_admission),
       present_class: newStudent.present_class,
-      date_of_birth: formatDateToIST(newStudent.date_of_birth), // Format date of birth
-      total_course_fees: parseFloat(newStudent.total_course_fees), // Ensure this is a number
-      father_name: newStudent.father_name,
-      mother_name: newStudent.mother_name,
-      full_address: newStudent.full_address,
-      child_aadhar_number: newStudent.child_aadhar_number,
-      mother_aadhar_number: newStudent.mother_aadhar_number,
-      father_aadhar_number: newStudent.father_aadhar_number,
-      permanent_education_number: newStudent.permanent_education_number,
-      student_registration_number: newStudent.student_registration_number,
-      previous_school_info: newStudent.previous_school_info,
+      date_of_birth: formatDateToIST(newStudent.date_of_birth),
+      total_course_fees: parseFloat(newStudent.total_course_fees),
+      father_name: newStudent.father_name || "",
+      mother_name: newStudent.mother_name || "",
+      full_address: newStudent.full_address || "",
+      child_aadhar_number: newStudent.child_aadhar_number || "",
+      mother_aadhar_number: newStudent.mother_aadhar_number || "",
+      father_aadhar_number: newStudent.father_aadhar_number || "",
+      permanent_education_number: newStudent.permanent_education_number || "",
+      student_registration_number: newStudent.student_registration_number || "",
+      previous_school_info: newStudent.previous_school_info || "",
       gender: newStudent.gender,
-      state: newStudent.state,
-      status: newStudent.status, // Ensure status is included
-      created_at: formatDateToIST(newStudent.created_at), // Format created_at
+      state: newStudent.state || "",
+      status: newStudent.status
     };
 
     try {
-      // Create the new student
+      console.log("Attempting to create student with data:", studentData);
+
       const response = await fetch("https://apistudents.sainikschoolcadet.com/api/users/register", {
         method: "POST",
         headers: {
@@ -158,7 +158,7 @@ const Students = () => {
       });
 
       const data = await response.json();
-      console.log("New student created:", data);
+      console.log("Response from student creation:", data);
 
       // Check if user object exists in the response
       if (data.user && data.user.id) {
