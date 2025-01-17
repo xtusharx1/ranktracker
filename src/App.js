@@ -24,7 +24,6 @@ import {
   Editor,
 } from "./pages";
 import Dashboard from "./pages/Dashboard";
-import Batch from "./pages/Batch";
 import "./App.css";
 import ClassAnalytics from "./pages/ClassAnalytics";
 import Students from "./pages/Students";
@@ -94,7 +93,6 @@ const App = () => {
                 <Route path="/Student-Performance" element={<StudentPerformance />} />
                 {/* Pages */}
                 <Route path="/ClassAnalytics" element={<ClassAnalytics/>} />
-                <Route path="/batch" element={<Batch />} />
                 <Route path="/employees" element={<Employees />} />
                 <Route path="/customers" element={<Customers />} />
 

@@ -70,7 +70,8 @@ const formatDateToIST = (dateStr) => {
 
 const Students = () => {
   const [students, setStudents] = useState([]);
-  const [batches, setBatches] = useState([]); // State for batches
+  const [batches, setBatches] = useState([]);
+  const [batchMapping, setBatchMapping] = useState({}); // New state for batch mapping
   const [showModal, setShowModal] = useState(false); // State for controlling modal visibility
   const [newStudent, setNewStudent] = useState({
     role_id: 2, // Default role_id for student
@@ -102,6 +103,34 @@ const Students = () => {
   const [sortField] = useState('created_at'); // Add this new state variable
   const [sortOrder] = useState('asc'); // Change default to ascending
 
+  const fetchStudentBatches = async () => {
+    try {
+      const studentBatchPromises = students.map(student =>
+        fetch(`https://apistudents.sainikschoolcadet.com/api/studentBatches/students/search/${student.user_id}`)
+          .then(response => response.json())
+          .then(data => {
+            if (data.length > 0) {
+              return { user_id: student.user_id, batch_id: data[0].batch_id };
+            }
+            return { user_id: student.user_id, batch_id: null };
+          })
+      );
+
+      const studentBatches = await Promise.all(studentBatchPromises);
+      const updatedStudents = students.map(student => {
+        const batchInfo = studentBatches.find(b => b.user_id === student.user_id);
+        return {
+          ...student,
+          batch_id: batchInfo.batch_id,
+          batch_name: batchInfo.batch_id ? batchMapping[batchInfo.batch_id] : "No Batch Assigned"
+        };
+      });
+      setStudents(updatedStudents);
+    } catch (error) {
+      console.error("Error fetching student batches:", error);
+    }
+  };
+
   useEffect(() => {
     const fetchStudents = async () => {
       try {
@@ -117,15 +146,27 @@ const Students = () => {
       try {
         const response = await fetch("https://apistudents.sainikschoolcadet.com/api/batches/");
         const data = await response.json();
-        setBatches(data); // Set batches data
+        setBatches(data);
+        // Create a mapping of batch_id to batch_name
+        const mapping = {};
+        data.forEach(batch => {
+          mapping[batch.batch_id] = batch.batch_name;
+        });
+        setBatchMapping(mapping);
       } catch (error) {
         console.error("Error fetching batch data:", error);
       }
     };
 
     fetchStudents();
-    fetchBatches(); // Fetch batches on component mount
-  }, []);
+    fetchBatches();
+  }, []); // Initially run on mount
+
+  useEffect(() => {
+    if (students.length > 0 && Object.keys(batchMapping).length > 0) {
+      fetchStudentBatches(); // Call the function here
+    }
+  }, [students, batchMapping]);
 
   // Add this debug log to check incoming data
   useEffect(() => {
@@ -333,8 +374,8 @@ const Students = () => {
     }));
   };
 
-  // Dynamically remove created_at from each student object
-  const filteredStudentsData = students.map(({ created_at, ...rest }) => rest);
+  // If you have filteredStudentsData, ensure it's used
+  const filteredStudentsData = students; // or your filtering logic
 
   return (
     <div className="m-2 mt-24 md:m-10 p-2 md:p-10 bg-gray-100 rounded-3xl">
@@ -350,99 +391,80 @@ const Students = () => {
 
       {/* Syncfusion Grid to display student data */}
       <GridComponent
-        dataSource={filteredStudentsData
-          .sort((a, b) => {
-            const dateA = new Date(a[sortField] || 0);
-            const dateB = new Date(b[sortField] || 0);
-            return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
-          })
-          .map(student => ({
-            ...student,
-            // Format both dates consistently
-            date_of_admission: student.date_of_admission 
-              ? new Date(normalizeDate(student.date_of_admission)).toLocaleDateString('en-GB', {
-                  day: '2-digit',
-                  month: '2-digit',
-                  year: 'numeric'
-                })
-              : '',
-            created_at: student.created_at 
-              ? new Date(student.created_at).toLocaleDateString('en-GB', {
-                  day: '2-digit',
-                  month: '2-digit',
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })
-              : ''
-          }))}
-        allowPaging={true}
-        allowSorting={true}
-        allowFiltering={true}
-        pageSettings={{ pageSize: 50 }}
-        filterSettings={filterOptions}
-        toolbar={['Search']}
-        sortSettings={null}
-      >
-        <ColumnsDirective>
-          <ColumnDirective 
-            field="name" 
-            headerText="Name" 
-            width="150"
-          />
-          <ColumnDirective 
-            field="email" 
-            headerText="Email" 
-            width="200"
-          />
-          <ColumnDirective 
-            field="phone_number" 
-            headerText="Phone Number" 
-            width="150"
-          />
-          <ColumnDirective 
-            field="date_of_admission"
-            headerText="Date of Admission" 
-            width="150"
-            allowSorting={true}
-            sortComparer={(a, b) => {
-              const dateA = new Date(normalizeDate(a));
-              const dateB = new Date(normalizeDate(b));
-              
-              // First compare years
-              const yearA = dateA.getFullYear();
-              const yearB = dateB.getFullYear();
-              if (yearA !== yearB) return yearB - yearA;
-              
-              // If years are equal, compare months
-              const monthA = dateA.getMonth();
-              const monthB = dateB.getMonth();
-              if (monthA !== monthB) return monthB - monthA;
-              
-              // If months are equal, compare days
-              return dateB.getDate() - dateA.getDate();
-            }}
-          />
-          <ColumnDirective 
-            field="status" 
-            headerText="Status" 
-            width="100"
-          />
-          <ColumnDirective
-            headerText="Actions"
-            width="100"
-            template={(props) => (
-              <button
-                onClick={() => handleEditClick(props.user_id)}
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded"
-              >
-                Edit
-              </button>
-            )}
-          />
-        </ColumnsDirective>
-        <Inject services={[Page, Sort, Filter, Search, Toolbar]} />
-      </GridComponent>
+  dataSource={filteredStudentsData} // Use this if you want to filter the students
+  allowPaging={true}
+  allowSorting={true}
+  allowFiltering={true}
+  pageSettings={{ pageSize: 50 }}
+  filterSettings={filterOptions}
+  toolbar={['Search']}
+  sortSettings={null}
+>
+  <ColumnsDirective>
+  <ColumnDirective 
+  field="s_no" 
+  headerText="S.No" 
+  width="100" // Adjust width to accommodate text and icon
+  template={(props) => (
+    <span>{props.index + 1}</span>
+  )}
+  headerTextAlign="Center" // Align header text centrally
+  textAlign="Center" // Align cell content centrally
+  customAttributes={{
+    style: {
+      whiteSpace: "nowrap", // Prevent wrapping
+      textOverflow: "ellipsis", // Add ellipsis if text overflows
+      overflow: "hidden", // Hide overflowing text
+    },
+  }}
+/>
+
+    <ColumnDirective 
+      field="name" 
+      headerText="Name" 
+      width="150"
+    />
+    <ColumnDirective 
+      field="email" 
+      headerText="Email" 
+      width="200"
+    />
+    <ColumnDirective 
+      field="phone_number" 
+      headerText="Phone Number" 
+      width="150"
+    />
+    <ColumnDirective 
+      field="batch_name" 
+      headerText="Batch Name" 
+      width="200" // Adjust width as needed
+    />
+    <ColumnDirective 
+      field="date_of_admission"
+      headerText="Date of Admission" 
+      width="150"
+    />
+    <ColumnDirective 
+      field="status" 
+      headerText="Status" 
+      width="100"
+    />
+    
+    <ColumnDirective
+      headerText="Actions"
+      width="100"
+      template={(props) => (
+        <button
+          onClick={() => handleEditClick(props.user_id)}
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded"
+        >
+          Edit
+        </button>
+      )}
+    />
+  </ColumnsDirective>
+  <Inject services={[Page, Sort, Filter, Search, Toolbar]} />
+</GridComponent>
 
       {/* Modal for Creating New Student */}
       {showModal && (

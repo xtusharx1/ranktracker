@@ -1,6 +1,5 @@
 export { default as Ecommerce } from './Dashboard';
 export { default as Kanban } from './Kanban';
-export { default as Orders } from './Batch';
 export { default as Employees } from './Employees';
 export { default as Editor } from './Editor';
 export { default as Customers } from './Customers';

@@ -6,6 +6,19 @@ const FeeReminders = () => {
   const [loading, setLoading] = useState(true);
   const [batches, setBatches] = useState({});
 
+  const getDueDateColor = (dueDate) => {
+    const today = new Date();
+    const dueDateObj = new Date(dueDate);
+
+    if (dueDateObj.toDateString() === today.toDateString()) {
+        return 'rgba(76, 175, 80, 0.2)'; // Light green for due today
+    } else if (dueDateObj > today) {
+        return 'rgba(255, 193, 7, 0.2)'; // Light yellow for due in the future
+    } else {
+        return 'rgba(244, 67, 54, 0.2)'; // Light red for due date has passed
+    }
+  };
+
   useEffect(() => {
     const fetchFeeSummary = async () => {
       try {
@@ -116,7 +129,7 @@ const FeeReminders = () => {
           </div>
           <div style={{ border: '1px solid #ccc', padding: '20px', borderRadius: '5px', flex: '1', margin: '10px' }}>
             <h3>Fees Due Today</h3>
-            <p style={{ fontSize: '24px', fontWeight: 'bold' }}>{feeSummary.totalDueToday}</p>
+            <p style={{ fontSize: '24px', fontWeight: 'bold' }}>₹{feeSummary.totalDueToday}</p>
           </div>
         </div>
       )}
@@ -138,7 +151,7 @@ const FeeReminders = () => {
           </thead>
           <tbody>
             {upcomingDues.map((due) => (
-              <tr key={due.id} style={{ borderBottom: '1px solid #ddd' }}>
+              <tr key={due.id} style={{ borderBottom: '1px solid #ddd', backgroundColor: getDueDateColor(due.nextDueDate) }}>
                 <td style={{ padding: '12px 15px' }}>{due.userDetails ? due.userDetails.name : 'N/A'}</td>
                 <td style={{ padding: '12px 15px' }}>{due.userDetails ? due.userDetails.email : 'N/A'}</td>
                 <td style={{ padding: '12px 15px' }}>

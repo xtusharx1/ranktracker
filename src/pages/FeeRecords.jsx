@@ -33,6 +33,7 @@ const FeeRecords = () => {
   const [remainingFees, setRemainingFees] = useState(totalFees - feesSubmitted);
   const [selectedBatch, setSelectedBatch] = useState(null);
   const [sortOrder, setSortOrder] = useState('asc');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const BASE_URL = 'https://apistudents.sainikschoolcadet.com';
 
@@ -176,6 +177,26 @@ const FeeRecords = () => {
     fetchAllStudents();
   }, []);
 
+  const fetchFeePaymentRecords = async (feeStatusId) => {
+    try {
+        const response = await axios.get(`${BASE_URL}/api/feepaymentrecords/payments/${feeStatusId}`);
+        const recordsWithType = response.data.map(record => ({ ...record, type: 'payment' }));
+        setFeePaymentRecords(recordsWithType);
+    } catch (error) {
+        console.error('Error fetching fee payment records:', error);
+    }
+  };
+
+  const fetchOtherChargesRecords = async (feeStatusId) => {
+    try {
+        const response = await axios.get(`${BASE_URL}/api/otherchargesrecords/charges/${feeStatusId}`);
+        const recordsWithType = response.data.map(record => ({ ...record, type: 'charge' }));
+        setOtherChargesRecords(recordsWithType);
+    } catch (error) {
+        console.error('Error fetching other charges records:', error);
+    }
+  };
+
   const handleStudentClick = async (student) => {
     console.log('Selected student:', student); // Log the selected student
 
@@ -206,12 +227,10 @@ const FeeRecords = () => {
 
     try {
         // Fetch fee payment records for the selected student's fee status ID
-        const feePaymentResponse = await axios.get(`${BASE_URL}/api/feepaymentrecords/payments/${student.feeStatusId}`);
-        setFeePaymentRecords(feePaymentResponse.data);
+        await fetchFeePaymentRecords(student.feeStatusId);
 
         // Fetch other charges records for the selected student's fee status ID
-        const otherChargesResponse = await axios.get(`${BASE_URL}/api/otherchargesrecords/charges/${student.feeStatusId}`);
-        setOtherChargesRecords(otherChargesResponse.data);
+        await fetchOtherChargesRecords(student.feeStatusId);
     } catch (error) {
         console.error('Error fetching records for selected student:', error);
     }
@@ -231,25 +250,33 @@ const FeeRecords = () => {
             title: paymentData.title,
             date: paymentData.date,
             amount: paymentData.amount,
-            isPaid: true, // Assuming the payment is marked as paid by default
-            feeStatusId: selectedStudent.feeStatusId // Use the selected student's fee status ID
+            isPaid: true,
+            feeStatusId: selectedStudent.feeStatusId,
+            nextDueDate: paymentData.nextDueDate
         });
 
         if (response.status === 201) {
-            // Update the selected student's fee status
-            const updatedStudent = {
-                ...selectedStudent,
-                feesSubmitted: response.data.feeStatus.feesSubmitted,
-                remainingFees: response.data.feeStatus.remainingFees
-            };
-            setSelectedStudent(updatedStudent);
-            setSelectedStudentFees({
-                totalFees: updatedStudent.totalFees,
-                feesSubmitted: updatedStudent.feesSubmitted,
-                remainingFees: updatedStudent.remainingFees
+            // Add type to the new record
+            const newRecord = { ...response.data, type: 'payment' };
+            setFeePaymentRecords([...feePaymentRecords, newRecord]);
+
+            // Update the fee status
+            const updatedFeesSubmitted = parseFloat(selectedStudentFees.feesSubmitted) + parseFloat(paymentData.amount);
+            const updatedRemainingFees = parseFloat(selectedStudentFees.totalFees) - updatedFeesSubmitted;
+
+            // Update fee status on the server
+            await axios.put(`${BASE_URL}/api/feestatus/${selectedStudent.feeStatusId}`, {
+                nextDueDate: paymentData.nextDueDate,
+                feesSubmitted: updatedFeesSubmitted,
+                remainingFees: updatedRemainingFees
             });
-            // Refresh the fee payment records
-            setFeePaymentRecords([...feePaymentRecords, response.data]);
+
+            setSelectedStudentFees({
+                ...selectedStudentFees,
+                feesSubmitted: updatedFeesSubmitted,
+                remainingFees: updatedRemainingFees
+            });
+
             // Close the modal
             setPaymentModalOpen(false);
         }
@@ -265,14 +292,14 @@ const FeeRecords = () => {
             title: chargeData.title,
             date: chargeData.date,
             amount: chargeData.amount,
-            feeStatusId: selectedStudent.feeStatusId // Use the selected student's fee status ID
+            feeStatusId: selectedStudent.feeStatusId
         });
 
         if (response.status === 201) {
-            // Refresh the other charges records
-            setOtherChargesRecords([...otherChargesRecords, response.data]);
-            // Close the modal
-            setChargeModalOpen(false);
+            // Update the state with the new charge record
+            setOtherChargesRecords([...otherChargesRecords, response.data]); // Assuming response.data contains the new record
+            // Optionally, you can also fetch the updated fee status
+            fetchUserDetails(selectedStudent.user_id); // Refresh user details if needed
         }
     } catch (error) {
         console.error('Error adding charge:', error);
@@ -505,6 +532,37 @@ const FeeRecords = () => {
     }
   }, [sortOrder]);
 
+  const mergeSortRecords = (records) => {
+    if (records.length <= 1) return records;
+
+    const mid = Math.floor(records.length / 2);
+    const left = mergeSortRecords(records.slice(0, mid));
+    const right = mergeSortRecords(records.slice(mid));
+
+    return mergeRecords(left, right);
+  };
+
+  const mergeRecords = (left, right) => {
+    const result = [];
+    let leftIndex = 0;
+    let rightIndex = 0;
+
+    while (leftIndex < left.length && rightIndex < right.length) {
+        if (new Date(left[leftIndex].date) > new Date(right[rightIndex].date)) {
+            result.push(left[leftIndex]);
+            leftIndex++;
+        } else {
+            result.push(right[rightIndex]);
+            rightIndex++;
+        }
+    }
+
+    return result.concat(left.slice(leftIndex)).concat(right.slice(rightIndex));
+  };
+
+  // Update the rendering of records to merge payment and charge records by date in descending order
+  const combinedRecords = mergeSortRecords([...feePaymentRecords, ...otherChargesRecords]);
+
   if (loading) {
     return <div style={{ textAlign: 'center', fontSize: '18px' }}>Loading fee summary...</div>;
   }
@@ -512,9 +570,9 @@ const FeeRecords = () => {
   return (
     <div style={{ display: 'flex', fontFamily: 'Arial, sans-serif', color: '#333', height: '100vh' }}>
       <div style={{ width: '250px', borderRight: '1px solid #ddd', padding: '20px', backgroundColor: '#f8f8f8', overflowY: 'auto' }}>
-        <h2 style={{ textAlign: 'center', color: '#4A90E2' }}>Batch Filter</h2>
+        <h2 style={{ textAlign: 'center', color: '#4A90E2' }}>Search For Course</h2>
         <select onChange={handleBatchChange} style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc', marginBottom: '20px' }}>
-          <option value="">Select Batch</option>
+          <option value="">Select Course</option>
           {batches.map(batch => (
             <option key={batch.batch_id} value={batch.batch_id}>{batch.batch_name}</option>
           ))}
@@ -523,9 +581,22 @@ const FeeRecords = () => {
         
 
         <h2 style={{ textAlign: 'center', color: '#4A90E2' }}>Students</h2>
+        <div style={{ marginBottom: '20px', textAlign: 'center' }}>
+          <input
+            type="text"
+            placeholder="Search by name"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{ width: '80%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
+          />
+        </div>
         <ul style={{ listStyleType: 'none', padding: '0' }}>
-          {students.length > 0 ? (
-            students.map((student) => (
+          {students.filter(student => 
+            student.name?.toLowerCase().includes(searchTerm.toLowerCase())
+          ).length > 0 ? (
+            students.filter(student => 
+              student.name?.toLowerCase().includes(searchTerm.toLowerCase())
+            ).map((student) => (
               <li key={student.user_id} style={{ padding: '10px', borderBottom: '1px solid #ddd', cursor: 'pointer', backgroundColor: '#f0f0f0', marginBottom: '5px', transition: 'background-color 0.3s' }} onClick={() => handleStudentClick(student)}>
                 <div style={{ fontWeight: 'bold', color: '#333' }}>{student.name || 'Unnamed Student'}</div>
                 <div style={{ fontSize: '12px', color: '#888' }}>{student.remainingFees}</div>
@@ -540,7 +611,7 @@ const FeeRecords = () => {
         {selectedStudent ? (
           <div>
             <h2 style={{ textAlign: 'center', marginBottom: '20px', color: '#4A90E2' }}>{selectedStudent.name}'s Fee Details</h2>
-            
+
             {!feeStatusExists ? (
               <div style={{ textAlign: 'center' }}>
                 <button onClick={handleCreateFeeStatus} style={{ padding: '10px 20px', backgroundColor: '#4A90E2', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
@@ -562,142 +633,52 @@ const FeeRecords = () => {
                     <h3>Remaining Fees</h3>
                     <p style={{ fontSize: '24px', fontWeight: 'bold' }}>{selectedStudentFees.remainingFees}</p>
                   </div>
-                </div>
-                <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center' }}>
-                  <button onClick={() => handleTabChange('payments')} style={{ marginRight: '10px', padding: '10px 20px', backgroundColor: activeTab === 'payments' ? '#4A90E2' : '#f0f0f0', color: activeTab === 'payments' ? '#fff' : '#333', border: 'none', borderRadius: '5px', cursor: 'pointer', transition: 'background-color 0.3s' }}>
-                    Fee Payment Records
-                  </button>
-                  <button onClick={() => handleTabChange('charges')} style={{ padding: '10px 20px', backgroundColor: activeTab === 'charges' ? '#4A90E2' : '#f0f0f0', color: activeTab === 'charges' ? '#fff' : '#333', border: 'none', borderRadius: '5px', cursor: 'pointer', transition: 'background-color 0.3s' }}>
-                    Other Charges Record
-                  </button>
-                </div>
-                {activeTab === 'payments' ? (
-                  <div style={{ marginTop: '20px' }}>
-                    {feePaymentRecords.length === 0 ? (
-                      <div style={{ textAlign: 'center', color: 'red' }}>
-                        <p>No fee payment records found for this student.</p>
-                      </div>
-                    ) : (
-                      <div>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
-                          <thead>
-                            <tr>
-                              <th style={{ border: '1px solid #ddd', padding: '8px', backgroundColor: '#f2f2f2' }}>Title</th>
-                              <th style={{ border: '1px solid #ddd', padding: '8px', backgroundColor: '#f2f2f2' }}>Date</th>
-                              <th style={{ border: '1px solid #ddd', padding: '8px', backgroundColor: '#f2f2f2' }}>Amount</th>
-                              <th style={{ border: '1px solid #ddd', padding: '8px', backgroundColor: '#f2f2f2' }}>Status</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {feePaymentRecords.map(record => (
-                              <tr key={record.id}>
-                                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.title}</td>
-                                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.date}</td>
-                                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.amount}</td>
-                                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.isPaid ? 'Paid' : 'Pending'}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                    <button onClick={() => setPaymentModalOpen(true)} style={{ padding: '10px 20px', backgroundColor: '#388E3C', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer', transition: 'background-color 0.3s', display: 'block', margin: '20px auto' }}>
-                      Add Payment Record
-                    </button>
+                  <div style={{ border: '1px solid #ccc', padding: '20px', borderRadius: '5px', flex: '1', margin: '10px', textAlign: 'center', backgroundColor: '#FFF3E0', color: '#E65100' }}>
+                    <h3>Next Due Date</h3>
+                    <p style={{ fontSize: '24px', fontWeight: 'bold' }}>{selectedStudent.nextDueDate}</p>
                   </div>
-                ) : (
-                  <div style={{ marginTop: '20px' }}>
-                    {otherChargesRecords.length === 0 ? (
-                      <div>
-                        <center><p>No other charges records found for this student.</p></center>
-                      </div>
-                    ) : (
-                      <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
+                </div>
+
+                <div style={{ marginTop: '20px' }}>
+                  {combinedRecords.length === 0 ? (
+                    <div style={{ textAlign: 'center', color: 'red' }}>
+                        <p>No records found for this student.</p>
+                    </div>
+                  ) : (
+                    <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
                         <thead>
-                          <tr>
-                            <th style={{ border: '1px solid #ddd', padding: '8px', backgroundColor: '#f2f2f2' }}>Title</th>
-                            <th style={{ border: '1px solid #ddd', padding: '8px', backgroundColor: '#f2f2f2' }}>Date</th>
-                            <th style={{ border: '1px solid #ddd', padding: '8px', backgroundColor: '#f2f2f2' }}>Amount</th>
-                          </tr>
+                            <tr>
+                                <th style={{ border: '1px solid #ddd', padding: '8px', backgroundColor: '#f2f2f2' }}>Title</th>
+                                <th style={{ border: '1px solid #ddd', padding: '8px', backgroundColor: '#f2f2f2' }}>Date</th>
+                                <th style={{ border: '1px solid #ddd', padding: '8px', backgroundColor: '#f2f2f2' }}>Amount</th>
+                                <th style={{ border: '1px solid #ddd', padding: '8px', backgroundColor: '#f2f2f2' }}>Type</th>
+                            </tr>
                         </thead>
                         <tbody>
-                          {otherChargesRecords.map(record => (
-                            <tr key={record.id}>
-                              <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.title}</td>
-                              <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.date}</td>
-                              <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.amount}</td>
-                            </tr>
-                          ))}
+                            {combinedRecords.map(record => (
+                                <tr key={record.id} style={{ backgroundColor: record.type === 'charge' ? '#FFEBEE' : '#E8F5E9' }}>
+                                    <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.title}</td>
+                                    <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.date}</td>
+                                    <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.amount}</td>
+                                    <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                                        {record.type === 'charge' ? 'You Gave' : 'You Got'}
+                                    </td>
+                                </tr>
+                            ))}
                         </tbody>
-                      </table>
-                    )}
-                    <button onClick={() => setChargeModalOpen(true)} style={{ padding: '10px 20px', backgroundColor: '#388E3C', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer', transition: 'background-color 0.3s', display: 'block', margin: '20px auto' }}>
-                      Add Other Charges
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
+                    </table>
+                  )}
+                </div>
 
-            {showFeeStatusForm && (
-              <Modal onClose={() => setShowFeeStatusForm(false)}>
-                <form onSubmit={handleSubmitFeeStatus} style={{ marginTop: '20px' }}>
-                  <div style={{ marginBottom: '15px' }}>
-                    <label style={{ display: 'block', marginBottom: '5px' }}>User ID:</label>
-                    <input type="text" value={newFeeStatus.user_id} readOnly style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }} />
-                  </div>
-                  <div style={{ marginBottom: '15px' }}>
-                    <label style={{ display: 'block', marginBottom: '5px' }}>Admission Date:</label>
-                    <input type="text" value={newFeeStatus.admissionDate} readOnly style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }} />
-                  </div>
-                  <div style={{ marginBottom: '15px' }}>
-                    <label style={{ display: 'block', marginBottom: '5px' }}>Total Fees:</label>
-                    <input
-                      type="text"
-                      value={newFeeStatus.totalFees}
-                      onChange={(e) => {
-                        // Update the state with the new value
-                        setNewFeeStatus((prev) => ({
-                          ...prev,
-                          totalFees: e.target.value, // Use the current input value
-                        }));
-                      }}
-                      required
-                      style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
-                    />
-                  </div>
-                  <div style={{ marginBottom: '15px' }}>
-                    <label style={{ display: 'block', marginBottom: '5px' }}>Fees Submitted:</label>
-                    <input
-                      type="text"
-                      value={newFeeStatus.feesSubmitted}
-                      onChange={(e) => setNewFeeStatus({ ...newFeeStatus, feesSubmitted: e.target.value })}
-                      style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
-                    />
-                  </div>
-                  <div style={{ marginBottom: '15px' }}>
-                    <label style={{ display: 'block', marginBottom: '5px' }}>Remaining Fees:</label>
-                    <input
-                      type="text"
-                      value={newFeeStatus.remainingFees}
-                      readOnly
-                      style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
-                    />
-                  </div>
-                  <div style={{ marginBottom: '15px' }}>
-                    <label style={{ display: 'block', marginBottom: '5px' }}>Next Due Date:</label>
-                    <input
-                      type="date"
-                      value={newFeeStatus.nextDueDate}
-                      onChange={(e) => setNewFeeStatus({ ...newFeeStatus, nextDueDate: e.target.value })}
-                      style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
-                    />
-                  </div>
-                  <button type="submit" style={{ padding: '10px 20px', backgroundColor: '#388E3C', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
-                    Submit Fee Status
+                <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center' }}>
+                  <button onClick={() => setPaymentModalOpen(true)} style={{ marginRight: '10px', padding: '10px 20px', backgroundColor: '#388E3C', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer', transition: 'background-color 0.3s' }}>
+                    You Got
                   </button>
-                </form>
-              </Modal>
+                  <button onClick={() => setChargeModalOpen(true)} style={{ padding: '10px 20px', backgroundColor: '#D32F2F', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer', transition: 'background-color 0.3s' }}>
+                    You Gave
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         ) : (
@@ -712,7 +693,7 @@ const FeeRecords = () => {
           display: 'flex', justifyContent: 'center', alignItems: 'center'
         }}>
           <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '5px', width: '400px' }}>
-          <h2 style={{ marginBottom: '20px', color: '#4A90E2' }}>Add Payment Record</h2>
+            <h2 style={{ marginBottom: '20px', color: '#4A90E2' }}>You Get</h2>
             <form onSubmit={handleAddPayment}>
               <div style={{ marginBottom: '10px' }}>
                 <label style={{ display: 'block', marginBottom: '5px' }}>Installment</label>
@@ -732,7 +713,7 @@ const FeeRecords = () => {
                 </select>
               </div>
               <div style={{ marginBottom: '10px' }}>
-                <label style={{ display: 'block', marginBottom: '5px' }}>Date</label>
+                <label style={{ display: 'block', marginBottom: '5px' }}>Payment Date</label>
                 <input
                   type="date"
                   value={paymentData.date}
@@ -747,6 +728,16 @@ const FeeRecords = () => {
                   type="number"
                   value={paymentData.amount}
                   onChange={(e) => setPaymentData({ ...paymentData, amount: e.target.value })}
+                  required
+                  style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
+                />
+              </div>
+              <div style={{ marginBottom: '10px' }}>
+                <label style={{ display: 'block', marginBottom: '5px' }}>Next Due Date</label>
+                <input
+                  type="date"
+                  value={paymentData.nextDueDate}
+                  onChange={(e) => setPaymentData({ ...paymentData, nextDueDate: e.target.value })}
                   required
                   style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
                 />
@@ -827,6 +818,115 @@ const FeeRecords = () => {
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {showFeeStatusForm && (
+        <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1000,
+        }}>
+            <div style={{
+                backgroundColor: '#fff',
+                padding: '20px',
+                borderRadius: '5px',
+                width: '400px',
+                position: 'relative',
+            }}>
+                <button onClick={() => setShowFeeStatusForm(false)} style={{
+                    position: 'absolute',
+                    top: '10px',
+                    right: '10px',
+                    background: 'none',
+                    border: 'none',
+                    fontSize: '16px',
+                    cursor: 'pointer',
+                }}>✖</button>
+                <h2 style={{ marginBottom: '20px', color: '#4A90E2', textAlign: 'center' }}>Create Fee Status</h2>
+                <form onSubmit={handleSubmitFeeStatus}>
+                    <div style={{ marginBottom: '10px' }}>
+                        <label style={{ display: 'block', marginBottom: '5px' }}>Admission Date</label>
+                        <input
+                            type="date"
+                            value={newFeeStatus.admissionDate}
+                            onChange={(e) => setNewFeeStatus({ ...newFeeStatus, admissionDate: e.target.value })}
+                            required
+                            style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
+                        />
+                    </div>
+                    <div style={{ marginBottom: '10px' }}>
+                        <label style={{ display: 'block', marginBottom: '5px' }}>Total Fees</label>
+                        <input
+                            type="number"
+                            value={newFeeStatus.totalFees}
+                            onChange={(e) => setNewFeeStatus({ ...newFeeStatus, totalFees: e.target.value })}
+                            required
+                            style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
+                        />
+                    </div>
+                    <div style={{ marginBottom: '10px' }}>
+                        <label style={{ display: 'block', marginBottom: '5px' }}>Fees Submitted</label>
+                        <input
+                            type="number"
+                            value={newFeeStatus.feesSubmitted}
+                            onChange={(e) => setNewFeeStatus({ ...newFeeStatus, feesSubmitted: e.target.value })}
+                            required
+                            style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
+                        />
+                    </div>
+                    <div style={{ marginBottom: '10px' }}>
+                        <label style={{ display: 'block', marginBottom: '5px' }}>Remaining Fees</label>
+                        <input
+                            type="number"
+                            value={newFeeStatus.remainingFees}
+                            onChange={(e) => setNewFeeStatus({ ...newFeeStatus, remainingFees: e.target.value })}
+                            required
+                            style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
+                        />
+                    </div>
+                    <div style={{ marginBottom: '10px' }}>
+                        <label style={{ display: 'block', marginBottom: '5px' }}>Next Due Date</label>
+                        <input
+                            type="date"
+                            value={newFeeStatus.nextDueDate}
+                            onChange={(e) => setNewFeeStatus({ ...newFeeStatus, nextDueDate: e.target.value })}
+                            required
+                            style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
+                        />
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                        <button type="button" onClick={() => setShowFeeStatusForm(false)} style={{
+                            marginRight: '10px',
+                            padding: '10px 20px',
+                            backgroundColor: '#f0f0f0',
+                            color: '#333',
+                            border: 'none',
+                            borderRadius: '5px',
+                            cursor: 'pointer',
+                        }}>
+                            Cancel
+                        </button>
+                        <button type="submit" style={{
+                            padding: '10px 20px',
+                            backgroundColor: '#4A90E2',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '5px',
+                            cursor: 'pointer',
+                        }}>
+                            Submit
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
       )}
     </div>
