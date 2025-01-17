@@ -116,7 +116,6 @@ const App = () => {
                 <Route path="/Class-Performance" element={<ClassPerformance />} />
               </Routes>
             </div>{" "}
-            <Footer />
           </div>
         </div>
         
