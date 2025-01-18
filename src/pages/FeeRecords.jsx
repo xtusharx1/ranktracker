@@ -633,10 +633,30 @@ const FeeRecords = () => {
                     <h3>Remaining Fees</h3>
                     <p style={{ fontSize: '24px', fontWeight: 'bold' }}>{selectedStudentFees.remainingFees}</p>
                   </div>
-                  <div style={{ border: '1px solid #ccc', padding: '20px', borderRadius: '5px', flex: '1', margin: '10px', textAlign: 'center', backgroundColor: '#FFF3E0', color: '#E65100' }}>
-                    <h3>Next Due Date</h3>
-                    <p style={{ fontSize: '24px', fontWeight: 'bold' }}>{selectedStudent.nextDueDate}</p>
-                  </div>
+                  <div
+  style={{
+    border: '1px solid #ccc',
+    padding: '20px',
+    borderRadius: '5px',
+    flex: '1',
+    margin: '10px',
+    textAlign: 'center',
+    backgroundColor: '#FFF3E0',
+    color: '#E65100',
+  }}
+>
+  <h3>Next Due Date</h3>
+  <p style={{ fontSize: '24px', fontWeight: 'bold' }}>
+    {selectedStudent.nextDueDate
+      ? new Date(selectedStudent.nextDueDate).toLocaleDateString('en-US', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+        })
+      : 'No Due Date'}
+  </p>
+</div>
+
                 </div>
 
                 <div style={{ marginTop: '20px' }}>
@@ -646,27 +666,59 @@ const FeeRecords = () => {
                     </div>
                   ) : (
                     <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
-                        <thead>
-                            <tr>
-                                <th style={{ border: '1px solid #ddd', padding: '8px', backgroundColor: '#f2f2f2' }}>Title</th>
-                                <th style={{ border: '1px solid #ddd', padding: '8px', backgroundColor: '#f2f2f2' }}>Date</th>
-                                <th style={{ border: '1px solid #ddd', padding: '8px', backgroundColor: '#f2f2f2' }}>Amount</th>
-                                <th style={{ border: '1px solid #ddd', padding: '8px', backgroundColor: '#f2f2f2' }}>Type</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {combinedRecords.map(record => (
-                                <tr key={record.id} style={{ backgroundColor: record.type === 'charge' ? '#FFEBEE' : '#E8F5E9' }}>
-                                    <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.title}</td>
-                                    <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.date}</td>
-                                    <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.amount}</td>
-                                    <td style={{ border: '1px solid #ddd', padding: '8px' }}>
-                                        {record.type === 'charge' ? 'You Gave' : 'You Got'}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+  <thead>
+    <tr>
+      <th style={{ border: '1px solid #ddd', padding: '8px', backgroundColor: '#f2f2f2' }}>Title</th>
+      <th style={{ border: '1px solid #ddd', padding: '8px', backgroundColor: '#f2f2f2' }}>Date</th>
+      <th style={{ border: '1px solid #ddd', padding: '8px', backgroundColor: '#f2f2f2' }}>You Gave</th>
+      <th style={{ border: '1px solid #ddd', padding: '8px', backgroundColor: '#f2f2f2' }}>You Got</th>
+    </tr>
+  </thead>
+  <tbody>
+    {combinedRecords.map(record => (
+      <tr
+        key={record.id}
+        style={{
+          backgroundColor: record.type === 'charge' ? '#FFEBEE' : record.type === 'payment' ? '#E8F5E9' : '#fff'
+        }}
+      >
+        <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.title}</td>
+        <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+        {new Date(record.date).toLocaleDateString('en-US', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+        })}
+      </td>
+
+        {/* "You Gave" Column */}
+        <td
+          style={{
+            border: '1px solid #ddd',
+            padding: '8px',
+            color: record.type === 'charge' ? 'red' : 'inherit',
+            backgroundColor: record.type === 'charge' ? '#FFEBEE' : '#fff',
+          }}
+        >
+          {record.type === 'charge' ? record.amount : '-'}
+        </td>
+
+        {/* "You Got" Column */}
+        <td
+          style={{
+            border: '1px solid #ddd',
+            padding: '8px',
+            color: record.type === 'payment' ? 'green' : 'inherit',
+            backgroundColor: record.type === 'payment' ? '#E8F5E9' : '#fff',
+          }}
+        >
+          {record.type === 'payment' ? record.amount : '-'}
+        </td>
+      </tr>
+    ))}
+  </tbody>
+</table>
+
                   )}
                 </div>
 
