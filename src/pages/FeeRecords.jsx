@@ -136,30 +136,34 @@ const FeeRecords = () => {
             let totalFees = 0;
             let feesSubmitted = 0;
             let feeStatusId = null;
+            let paymentCompleted = false;  // Default value
+    
             if (feeResponse.ok) {
               const feeData = await feeResponse.json();
               if (feeData.message && feeData.message.includes("No fee statuses found")) {
                 console.warn(`No fee statuses found for user_id ${student.user_id}`);
               } else if (Array.isArray(feeData) && feeData.length > 0) {
-                remainingFees = `₹${feeData[0].remainingFees}`;
-                nextDueDate = feeData[0].nextDueDate;
-                totalFees = feeData[0].totalFees;
-                feesSubmitted = feeData[0].feesSubmitted;
-                feeStatusId = feeData[0].id;
+                const fee = feeData[0];
+                remainingFees = `₹${fee.remainingFees}`;
+                nextDueDate = fee.nextDueDate;
+                totalFees = fee.totalFees;
+                feesSubmitted = fee.feesSubmitted;
+                feeStatusId = fee.id;
+                paymentCompleted = fee.remainingFees === "0" || fee.paymentCompleted;
               }
             } else {
               console.error('Failed to fetch fee data for user_id:', student.user_id);
             }
-            return { ...student, remainingFees, nextDueDate, totalFees, feesSubmitted, feeStatusId };
+            return { ...student, remainingFees, nextDueDate, totalFees, feesSubmitted, feeStatusId, paymentCompleted };
           }));
-
+    
           // Separate students with and without due dates
           const studentsWithDueDates = studentsWithFees.filter(student => student.nextDueDate);
           const studentsWithoutDueDates = studentsWithFees.filter(student => !student.nextDueDate);
-
+    
           // Sort students with due dates by nearest due date
           const sortedStudentsWithDueDates = studentsWithDueDates.sort((a, b) => new Date(a.nextDueDate) - new Date(b.nextDueDate));
-
+    
           // Combine sorted students with due dates and students without due dates
           const sortedStudents = [...sortedStudentsWithDueDates, ...studentsWithoutDueDates];
           setStudents(sortedStudents);
@@ -170,6 +174,7 @@ const FeeRecords = () => {
         console.error('Error fetching students:', error);
       }
     };
+    
 
     fetchFeeSummary();
     fetchAllBatches();
@@ -245,15 +250,23 @@ const FeeRecords = () => {
 
   const handleAddPayment = async (e) => {
     e.preventDefault();
+
+    // Create the payment data to send to the API
+    const paymentDataToSend = {
+        title: paymentData.title,
+        date: paymentData.date,
+        amount: paymentData.amount,
+        isPaid: true,
+        feeStatusId: selectedStudent.feeStatusId,
+    };
+
+    // Only add nextDueDate if payment is not complete
+    if (!paymentData.paymentCompleted) {
+        paymentDataToSend.nextDueDate = paymentData.nextDueDate;
+    }
+
     try {
-        const response = await axios.post(`${BASE_URL}/api/feepaymentrecords/add-payment`, {
-            title: paymentData.title,
-            date: paymentData.date,
-            amount: paymentData.amount,
-            isPaid: true,
-            feeStatusId: selectedStudent.feeStatusId,
-            nextDueDate: paymentData.nextDueDate
-        });
+        const response = await axios.post(`${BASE_URL}/api/feepaymentrecords/add-payment`, paymentDataToSend);
 
         if (response.status === 201) {
             // Add type to the new record
@@ -264,26 +277,33 @@ const FeeRecords = () => {
             const updatedFeesSubmitted = parseFloat(selectedStudentFees.feesSubmitted) + parseFloat(paymentData.amount);
             const updatedRemainingFees = parseFloat(selectedStudentFees.totalFees) - updatedFeesSubmitted;
 
+            // If payment is completed, mark paymentCompleted as true
+            const paymentCompleted = updatedRemainingFees <= 0;
+
             // Update fee status on the server
             await axios.put(`${BASE_URL}/api/feestatus/${selectedStudent.feeStatusId}`, {
-                nextDueDate: paymentData.nextDueDate,
+                // If payment is complete, don't update nextDueDate
+                nextDueDate: paymentCompleted ? null : paymentData.nextDueDate,
                 feesSubmitted: updatedFeesSubmitted,
-                remainingFees: updatedRemainingFees
+                remainingFees: updatedRemainingFees,
+                paymentCompleted: paymentCompleted, // Mark payment as complete
             });
 
             setSelectedStudentFees({
                 ...selectedStudentFees,
                 feesSubmitted: updatedFeesSubmitted,
-                remainingFees: updatedRemainingFees
+                remainingFees: updatedRemainingFees,
+                paymentCompleted: paymentCompleted,
             });
-
+            console.log('Updated Fee Status Response:', response.data); 
             // Close the modal
             setPaymentModalOpen(false);
         }
     } catch (error) {
         console.error('Error adding payment:', error);
     }
-  };
+};
+
 
   const handleAddCharge = async (e) => {
     e.preventDefault();
@@ -645,16 +665,19 @@ const FeeRecords = () => {
     color: '#E65100',
   }}
 >
-  <h3>Next Due Date</h3>
-  <p style={{ fontSize: '24px', fontWeight: 'bold' }}>
-    {selectedStudent.nextDueDate
-      ? new Date(selectedStudent.nextDueDate).toLocaleDateString('en-US', {
-          day: '2-digit',
-          month: 'short',
-          year: 'numeric',
-        })
-      : 'No Due Date'}
-  </p>
+<h3>Next Due Date</h3>
+<p style={{ fontSize: '24px', fontWeight: 'bold' }}>
+  {selectedStudent.nextDueDate
+    ? new Date(selectedStudent.nextDueDate).toLocaleDateString('en-US', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      })
+    : selectedStudent.paymentCompleted
+    ? 'Payment Completed'
+    : 'No Due Date'}
+</p>
+
 </div>
 
                 </div>
@@ -740,79 +763,98 @@ const FeeRecords = () => {
 
       {/* Payment Modal */}
       {isPaymentModalOpen && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex', justifyContent: 'center', alignItems: 'center'
-        }}>
-          <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '5px', width: '400px' }}>
-            <h2 style={{ marginBottom: '20px', color: '#4A90E2' }}>You Get</h2>
-            <form onSubmit={handleAddPayment}>
-              <div style={{ marginBottom: '10px' }}>
-                <label style={{ display: 'block', marginBottom: '5px' }}>Installment</label>
-                <select
-                  value={paymentData.title}
-                  onChange={(e) => setPaymentData({ ...paymentData, title: e.target.value })}
-                  required
-                  style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
-                >
-                  <option value="">Select Installment</option>
-                  <option value="1st Installment">1st Installment</option>
-                  <option value="2nd Installment">2nd Installment</option>
-                  <option value="3rd Installment">3rd Installment</option>
-                  <option value="4th Installment">4th Installment</option>
-                  <option value="5th Installment">5th Installment</option>
-                  <option value="6th Installment">6th Installment</option>
-                </select>
-              </div>
-              <div style={{ marginBottom: '10px' }}>
-                <label style={{ display: 'block', marginBottom: '5px' }}>Payment Date</label>
-                <input
-                  type="date"
-                  value={paymentData.date}
-                  onChange={(e) => setPaymentData({ ...paymentData, date: e.target.value })}
-                  required
-                  style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
-                />
-              </div>
-              <div style={{ marginBottom: '10px' }}>
-                <label style={{ display: 'block', marginBottom: '5px' }}>Amount</label>
-                <input
-                  type="number"
-                  value={paymentData.amount}
-                  onChange={(e) => setPaymentData({ ...paymentData, amount: e.target.value })}
-                  required
-                  style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
-                />
-              </div>
-              <div style={{ marginBottom: '10px' }}>
-                <label style={{ display: 'block', marginBottom: '5px' }}>Next Due Date</label>
-                <input
-                  type="date"
-                  value={paymentData.nextDueDate}
-                  onChange={(e) => setPaymentData({ ...paymentData, nextDueDate: e.target.value })}
-                  required
-                  style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
-                />
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <button
-                  type="button"
-                  onClick={() => setPaymentModalOpen(false)}
-                  style={{ marginRight: '10px', padding: '10px 20px', backgroundColor: '#f0f0f0', color: '#333', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  style={{ padding: '10px 20px', backgroundColor: '#4A90E2', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
-                >
-                  Add Payment
-                </button>
-              </div>
-            </form>
-          </div>
+  <div style={{
+    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)',
+    display: 'flex', justifyContent: 'center', alignItems: 'center'
+  }}>
+    <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '5px', width: '400px' }}>
+      <h2 style={{ marginBottom: '20px', color: '#4A90E2' }}>You Get</h2>
+      <form onSubmit={handleAddPayment}>
+        <div style={{ marginBottom: '10px' }}>
+          <label style={{ display: 'block', marginBottom: '5px' }}>Installment</label>
+          <select
+            value={paymentData.title}
+            onChange={(e) => setPaymentData({ ...paymentData, title: e.target.value })}
+            required
+            style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
+          >
+            <option value="">Select Installment</option>
+            <option value="1st Installment">1st Installment</option>
+            <option value="2nd Installment">2nd Installment</option>
+            <option value="3rd Installment">3rd Installment</option>
+            <option value="4th Installment">4th Installment</option>
+            <option value="5th Installment">5th Installment</option>
+            <option value="6th Installment">6th Installment</option>
+          </select>
         </div>
-      )}
+        <div style={{ marginBottom: '10px' }}>
+          <label style={{ display: 'block', marginBottom: '5px' }}>Payment Date</label>
+          <input
+            type="date"
+            value={paymentData.date}
+            onChange={(e) => setPaymentData({ ...paymentData, date: e.target.value })}
+            required
+            style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
+          />
+        </div>
+        <div style={{ marginBottom: '10px' }}>
+          <label style={{ display: 'block', marginBottom: '5px' }}>Amount</label>
+          <input
+            type="number"
+            value={paymentData.amount}
+            onChange={(e) => setPaymentData({ ...paymentData, amount: e.target.value })}
+            required
+            style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
+          />
+        </div>
+        
+        {/* New field to mark if payment is complete */}
+        <div style={{ marginBottom: '10px' }}>
+          <label style={{ display: 'block', marginBottom: '5px' }}>
+            <input
+              type="checkbox"
+              checked={paymentData.paymentCompleted}
+              onChange={(e) => setPaymentData({ ...paymentData, paymentCompleted: e.target.checked })}
+            />
+            Payment Completed
+          </label>
+        </div>
+
+        {/* Conditionally render the 'Next Due Date' field */}
+        {!paymentData.paymentCompleted && (
+          <div style={{ marginBottom: '10px' }}>
+            <label style={{ display: 'block', marginBottom: '5px' }}>Next Due Date</label>
+            <input
+              type="date"
+              value={paymentData.nextDueDate}
+              onChange={(e) => setPaymentData({ ...paymentData, nextDueDate: e.target.value })}
+              required
+              style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
+            />
+          </div>
+        )}
+
+        <div style={{ textAlign: 'right' }}>
+          <button
+            type="button"
+            onClick={() => setPaymentModalOpen(false)}
+            style={{ marginRight: '10px', padding: '10px 20px', backgroundColor: '#f0f0f0', color: '#333', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            style={{ padding: '10px 20px', backgroundColor: '#4A90E2', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
+          >
+            Add Payment
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
+
+
 
       {/* Charge Modal */}
       {isChargeModalOpen && (
