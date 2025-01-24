@@ -69,7 +69,13 @@ const Students = () => {
     if (students.length > 0 && Object.keys(batchMapping).length > 0) {
       fetchStudentBatches();
     }
-  }, [students, batchMapping]);
+  }, []);
+
+  useEffect(() => {
+    if (students.length > 0 && Object.keys(batchMapping).length > 0) {
+      fetchStudentBatches();
+    }
+  }, [batchMapping]);
 
   const fetchStudentBatches = async () => {
     try {
@@ -117,25 +123,28 @@ const Students = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Check if all mandatory fields are filled
     if (!newStudent.name || !newStudent.email || !newStudent.phone_number || !newStudent.password || !newStudent.status || !newStudent.gender) {
       alert("Please fill in all required fields.");
       return;
     }
 
+    // Validate total_course_fees as mandatory
     if (newStudent.total_course_fees === "" || isNaN(newStudent.total_course_fees)) {
       alert("Total course fees must be a valid number and is required.");
       return;
     }
 
+    // Construct the studentData object in the exact format required by the API
     const studentData = {
       name: newStudent.name,
       email: newStudent.email,
       password: newStudent.password,
       role_id: 2,
       phone_number: newStudent.phone_number,
-      date_of_admission: newStudent.date_of_admission,
+      date_of_admission: formatDateForAPI(newStudent.date_of_admission),
       present_class: newStudent.present_class,
-      date_of_birth: newStudent.date_of_birth,
+      date_of_birth: formatDateForAPI(newStudent.date_of_birth),
       total_course_fees: parseFloat(newStudent.total_course_fees),
       father_name: newStudent.father_name || "",
       mother_name: newStudent.mother_name || "",
@@ -152,6 +161,8 @@ const Students = () => {
     };
 
     try {
+      console.log("Attempting to create student with data:", studentData);
+
       const response = await fetch("https://apistudents.sainikschoolcadet.com/api/users/register", {
         method: "POST",
         headers: {
@@ -161,27 +172,47 @@ const Students = () => {
       });
 
       const data = await response.json();
+      console.log("Response from student creation:", data);
 
+      // Check if user object exists in the response
       if (data.user && data.user.id) {
         setStudents([...students, data]);
 
-        const user_id = data.user.id;
-        const selectedBatch = newStudent.batch_id;
+        // Get user_id and selectedBatch
+        const user_id = data.user.id; // Use id from the response as user_id
+        const selectedBatch = newStudent.batch_id; // Get the selected batch ID
 
-        await axios.post(`https://apistudents.sainikschoolcadet.com/api/studentBatches/students/batch/`, {
-          user_id: user_id,
-          batch_id: selectedBatch
+        // Log batch_id and user_id
+        console.log("Batch ID:", selectedBatch);
+        console.log("User ID:", user_id);
+
+        // Use the specified API endpoint and request format to add the student to the batch
+        const addStudentToBatchResponse = await axios.post(`https://apistudents.sainikschoolcadet.com/api/studentBatches/students/batch/`, {
+          user_id: user_id, // Send user_id in the request body
+          batch_id: selectedBatch // Send batch_id in the request body
         });
 
+        console.log("Student added to batch:", addStudentToBatchResponse.data);
         setShowModal(false);
       } else {
+        console.error("User registration failed:", data);
         alert("User registration failed. Please check the input data.");
       }
     } catch (error) {
       console.error("Error creating student or adding to batch:", error);
     }
+    window.location.reload(); 
   };
-
+  const formatDateForAPI = (dateStr) => {
+    if (!dateStr) return '';
+    
+    // Convert from YYYY-MM-DD to DD-MM-YY
+    const date = new Date(dateStr);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear().toString().slice(-2);
+    return `${day}-${month}-${year}`;
+  };
   const handleEditClick = async (userId) => {
     const studentDetails = await fetchStudentDetails(userId);
     if (studentDetails) {
