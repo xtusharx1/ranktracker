@@ -1,13 +1,26 @@
 import React from "react";
 import { MdOutlineCancel } from "react-icons/md";
-
 import { Button } from ".";
-import { userProfileData } from "../data/dummy";
-import { useStateContext } from "../contexts/ContextProvider";
-import avatar from "../data/avatar5.jpeg";
+import { useNavigate } from "react-router-dom";
 
 const UserProfile = () => {
-  const { currentColor } = useStateContext();
+  const navigate = useNavigate();
+
+  // Get user details from localStorage
+  const name = localStorage.getItem('name');
+  const email = localStorage.getItem('email');
+  const role = localStorage.getItem('role');
+
+  // Logout function
+  const handleLogout = () => {
+    // Clear the localStorage or sessionStorage
+    localStorage.removeItem('role');
+    localStorage.removeItem('name');
+    localStorage.removeItem('email');
+
+    // Redirect to the login page
+    navigate('/login');
+  };
 
   return (
     <div className="nav-item absolute right-1 top-16 bg-white dark:bg-[#42464D] p-8 rounded-lg w-96">
@@ -22,58 +35,21 @@ const UserProfile = () => {
           opt="userProfile"
         />
       </div>
-      <div className="flex gap-5 items-center mt-6 border-color border-b-1 pb-6">
-        <img
-          className="rounded-full h-24 w-24"
-          src={avatar}
-          alt="user-profile"
-        />
-        <div>
-          <p className="font-semibold text-xl dark:text-gray-200">
-            {" "}
-            Liron Abutbul{" "}
-          </p>
-          <p className="text-gray-500 text-sm dark:text-gray-400">
-            {" "}
-            Administrator{" "}
-          </p>
-          <p className="text-gray-500 text-sm font-semibold dark:text-gray-400">
-            {" "}
-            info@shop.com{" "}
-          </p>
-        </div>
-      </div>
-      <div>
-        {userProfileData.map((item, index) => (
-          <div
-            key={index}
-            className="flex gap-5 border-b-1 border-color p-4 hover:bg-light-gray cursor-pointer  dark:hover:bg-[#42464D]"
-          >
-            <button
-              type="button"
-              style={{ color: item.iconColor, backgroundColor: item.iconBg }}
-              className=" text-xl rounded-lg p-3 hover:bg-light-gray"
-            >
-              {item.icon}
-            </button>
-
-            <div>
-              <p className="font-semibold dark:text-gray-200 ">{item.title}</p>
-              <p className="text-gray-500 text-sm dark:text-gray-400">
-                {" "}
-                {item.desc}{" "}
-              </p>
-            </div>
-          </div>
-        ))}
+      <div className="mt-6">
+        {/* Display user's name and email */}
+        <p className="font-semibold text-xl dark:text-gray-200">{name}</p>
+        <p className="text-gray-500 text-sm dark:text-gray-400">{email}</p>
+        <p className="text-gray-500 text-sm dark:text-gray-400">{role}</p>
       </div>
       <div className="mt-5">
+        {/* Logout button */}
         <Button
           color="white"
-          bgColor={currentColor}
+          bgColor="#ff4d4d"
           text="Logout"
           borderRadius="10px"
           width="full"
+          onClick={handleLogout} // Bind the logout function to the button
         />
       </div>
     </div>

@@ -5,8 +5,8 @@ const Course = () => {
   const [batches, setBatches] = useState([]);
   const [newBatchName, setNewBatchName] = useState('');
   const [showNewBatchModal, setShowNewBatchModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false); // Track whether edit modal is shown
-  const [editingBatch, setEditingBatch] = useState(null); // Track which batch is being edited
+  const [showEditModal, setShowEditModal] = useState(false); 
+  const [editingBatch, setEditingBatch] = useState(null); 
 
   useEffect(() => {
     const fetchBatches = async () => {
@@ -53,7 +53,6 @@ const Course = () => {
         }
       );
   
-      // Reload batches from the API to get the updated data
       const reloadBatches = await axios.get(
         'https://apistudents.sainikschoolcadet.com/api/batches/'
       );
@@ -68,13 +67,12 @@ const Course = () => {
       setBatches(enrichedBatches);
   
       alert('Batch updated successfully');
-      setShowEditModal(false); // Close the edit modal
-      setEditingBatch(null); // Clear the batch being edited
+      setShowEditModal(false);
+      setEditingBatch(null);
     } catch (error) {
       console.error('Error updating batch:', error);
     }
   };
-  
 
   const handleEditClick = (batch) => {
     setEditingBatch({ ...batch });
@@ -83,10 +81,9 @@ const Course = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-      <div className="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-lg">
-        <h1 className="text-2xl font-bold text-gray-800 mb-6">Batches</h1>
+      <div className="max-w-6xl mx-auto bg-white p-6 rounded-lg shadow-lg">
+        <h1 className="text-3xl font-bold text-gray-800 mb-6">Batches</h1>
 
-        {/* Create New Batch Button */}
         <button
           onClick={() => setShowNewBatchModal(true)}
           className="mb-6 bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition duration-200"
