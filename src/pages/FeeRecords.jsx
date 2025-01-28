@@ -589,44 +589,123 @@ const FeeRecords = () => {
 
   return (
     <div style={{ display: 'flex', fontFamily: 'Arial, sans-serif', color: '#333', height: '100vh' }}>
-      <div style={{ width: '250px', borderRight: '1px solid #ddd', padding: '20px', backgroundColor: '#f8f8f8', overflowY: 'auto' }}>
-        <h2 style={{ textAlign: 'center', color: '#4A90E2' }}>Search For Course</h2>
-        <select onChange={handleBatchChange} style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc', marginBottom: '20px' }}>
-          <option value="">Select Course</option>
-          {batches.map(batch => (
-            <option key={batch.batch_id} value={batch.batch_id}>{batch.batch_name}</option>
-          ))}
-        </select>
+      <div style={{
+  width: '300px',
+  borderRight: '1px solid #ddd',
+  padding: '20px',
+  backgroundColor: '#f9fafb',
+  overflowY: 'auto',
+  boxShadow: '2px 0px 8px rgba(0, 0, 0, 0.1)',
+  height: '100vh',
+}}>
+  <h2 style={{
+    textAlign: 'center',
+    color: '#1D72B8',
+    fontSize: '18px',
+    marginBottom: '20px',
+    fontWeight: '500',
+  }}>
+    Search For Course
+  </h2>
+  <select onChange={handleBatchChange} style={{
+    width: '100%',
+    padding: '12px',
+    borderRadius: '8px',
+    border: '1px solid #ccc',
+    marginBottom: '20px',
+    fontSize: '14px',
+    color: '#555',
+    backgroundColor: '#fff',
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+    transition: 'border-color 0.3s',
+  }}>
+    <option value="">Select Course</option>
+    {batches.map(batch => (
+      <option key={batch.batch_id} value={batch.batch_id}>{batch.batch_name}</option>
+    ))}
+  </select>
 
-        
+  <h2 style={{
+    textAlign: 'center',
+    color: '#1D72B8',
+    fontSize: '18px',
+    marginBottom: '20px',
+    fontWeight: '500',
+  }}>
+    Students
+  </h2>
+  <div style={{
+    marginBottom: '20px',
+    textAlign: 'center',
+  }}>
+    <input
+      type="text"
+      placeholder="Search by name"
+      value={searchTerm}
+      onChange={(e) => setSearchTerm(e.target.value)}
+      style={{
+        width: '80%',
+        padding: '12px',
+        borderRadius: '8px',
+        border: '1px solid #ccc',
+        fontSize: '14px',
+        color: '#555',
+        backgroundColor: '#fff',
+        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+        transition: 'border-color 0.3s',
+      }}
+    />
+  </div>
 
-        <h2 style={{ textAlign: 'center', color: '#4A90E2' }}>Students</h2>
-        <div style={{ marginBottom: '20px', textAlign: 'center' }}>
-          <input
-            type="text"
-            placeholder="Search by name"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ width: '80%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
-          />
-        </div>
-        <ul style={{ listStyleType: 'none', padding: '0' }}>
-          {students.filter(student => 
-            student.name?.toLowerCase().includes(searchTerm.toLowerCase())
-          ).length > 0 ? (
-            students.filter(student => 
-              student.name?.toLowerCase().includes(searchTerm.toLowerCase())
-            ).map((student) => (
-              <li key={student.user_id} style={{ padding: '10px', borderBottom: '1px solid #ddd', cursor: 'pointer', backgroundColor: '#f0f0f0', marginBottom: '5px', transition: 'background-color 0.3s' }} onClick={() => handleStudentClick(student)}>
-                <div style={{ fontWeight: 'bold', color: '#333' }}>{student.name || 'Unnamed Student'}</div>
-                <div style={{ fontSize: '12px', color: '#888' }}>{student.remainingFees}</div>
-              </li>
-            ))
-          ) : (
-            <li style={{ padding: '10px', color: '#888' }}>No students found for this batch.</li>
-          )}
-        </ul>
-      </div>
+  <ul style={{
+    listStyleType: 'none',
+    padding: '0',
+    margin: '0',
+  }}>
+    {students.filter(student =>
+      student.name?.toLowerCase().includes(searchTerm.toLowerCase())
+    ).length > 0 ? (
+      students.filter(student =>
+        student.name?.toLowerCase().includes(searchTerm.toLowerCase())
+      ).map((student) => (
+        <li key={student.user_id} style={{
+          padding: '15px',
+          borderBottom: '1px solid #ddd',
+          cursor: 'pointer',
+          backgroundColor: '#ffffff',
+          marginBottom: '10px',
+          transition: 'background-color 0.3s, box-shadow 0.3s',
+          borderRadius: '8px',
+          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+        }} onClick={() => handleStudentClick(student)}>
+          <div style={{
+            fontWeight: 'bold',
+            color: '#333',
+            fontSize: '16px',
+            marginBottom: '5px',
+          }}>
+            {student.name || 'Unnamed Student'}
+          </div>
+          <div style={{
+            fontSize: '14px',
+            color: '#888',
+          }}>
+            Balance : {student.remainingFees ? `${student.remainingFees}` : 'No Fees Due'}
+          </div>
+        </li>
+      ))
+    ) : (
+      <li style={{
+        padding: '10px',
+        color: '#888',
+        textAlign: 'center',
+      }}>
+        No students found for this batch.
+      </li>
+    )}
+  </ul>
+</div>
+
       <div style={{ flex: '1', padding: '20px', overflowY: 'auto', backgroundColor: '#fff' }}>
         {selectedStudent ? (
           <div>

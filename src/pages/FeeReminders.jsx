@@ -11,11 +11,11 @@ const FeeReminders = () => {
     const dueDateObj = new Date(dueDate);
 
     if (dueDateObj.toDateString() === today.toDateString()) {
-        return 'rgba(76, 175, 80, 0.2)'; // Light green for due today
+      return 'rgba(76, 175, 80, 0.2)'; // Light green for due today
     } else if (dueDateObj > today) {
-        return 'rgba(255, 193, 7, 0.2)'; // Light yellow for due in the future
+      return 'rgba(255, 193, 7, 0.2)'; // Light yellow for due in the future
     } else {
-        return 'rgba(244, 67, 54, 0.2)'; // Light red for due date has passed
+      return 'rgba(244, 67, 54, 0.2)'; // Light red for due date has passed
     }
   };
 
@@ -39,11 +39,17 @@ const FeeReminders = () => {
         const response = await fetch('https://apistudents.sainikschoolcadet.com/api/feestatus/upcoming-dues');
         if (response.ok) {
           const data = await response.json();
-          const enrichedData = await Promise.all(data.map(async (due) => {
-            const userDetails = await fetchUserDetails(due.user_id);
-            const batchId = await fetchBatchId(due.user_id);
-            return { ...due, userDetails, batch_id: batchId };
-          }));
+
+          // Filter out dues where payment is completed
+          const filteredData = data.filter(due => !due.paymentCompleted);
+
+          const enrichedData = await Promise.all(
+            filteredData.map(async (due) => {
+              const userDetails = await fetchUserDetails(due.user_id);
+              const batchId = await fetchBatchId(due.user_id);
+              return { ...due, userDetails, batch_id: batchId };
+            })
+          );
           setUpcomingDues(enrichedData);
         } else {
           console.error('Failed to fetch upcoming dues');
@@ -123,10 +129,7 @@ const FeeReminders = () => {
             <h3>Total Students</h3>
             <p style={{ fontSize: '24px', fontWeight: 'bold' }}>{feeSummary.totalStudents}</p>
           </div>
-          <div style={{ border: '1px solid #ccc', padding: '20px', borderRadius: '5px', flex: '1', margin: '10px' }}>
-            <h3>Total Fee Collection</h3>
-            <p style={{ fontSize: '24px', fontWeight: 'bold' }}>₹{feeSummary.totalDueFee}</p>
-          </div>
+          
           <div style={{ border: '1px solid #ccc', padding: '20px', borderRadius: '5px', flex: '1', margin: '10px' }}>
             <h3>Fees Due Today</h3>
             <p style={{ fontSize: '24px', fontWeight: 'bold' }}>₹{feeSummary.totalDueToday}</p>
@@ -155,9 +158,7 @@ const FeeReminders = () => {
                 <td style={{ padding: '12px 15px' }}>{due.userDetails ? due.userDetails.name : 'N/A'}</td>
                 <td style={{ padding: '12px 15px' }}>{due.userDetails ? due.userDetails.email : 'N/A'}</td>
                 <td style={{ padding: '12px 15px' }}>
-                  {due.batch_id ? (
-                    batches[due.batch_id] ? batches[due.batch_id].batch_name : 'N/A'
-                  ) : 'N/A'}
+                  {due.batch_id ? (batches[due.batch_id] ? batches[due.batch_id].batch_name : 'N/A') : 'N/A'}
                 </td>
                 <td style={{ padding: '12px 15px' }}>{due.admissionDate}</td>
                 <td style={{ padding: '12px 15px' }}>₹{due.totalFees}</td>
