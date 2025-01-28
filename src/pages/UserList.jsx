@@ -48,15 +48,7 @@ const UserList = () => {
         fetchUsers();
     }, [role_id]);
 
-    const fetchUserDetails = async (user_id) => {
-        try {
-            const response = await axios.get(`https://apistudents.sainikschoolcadet.com/api/users/user/${user_id}`);
-            setSelectedUser(response.data.user);
-            setViewModalIsOpen(true);
-        } catch (err) {
-            setError(err);
-        }
-    };
+    
 
     const openCreateModal = () => {
         setCreateModalIsOpen(true);
@@ -184,12 +176,7 @@ const UserList = () => {
                                         </td>
 
                                         <td className="border border-gray-300 px-4 py-2">
-                                            <button
-                                                className="bg-blue-500 text-white py-1 px-4 rounded-lg hover:bg-blue-600 transition duration-200 mr-2"
-                                                onClick={() => fetchUserDetails(user.user_id)}
-                                            >
-                                                View Details
-                                            </button>
+                                            
                                             <button
                                                 className="bg-yellow-500 text-white py-1 px-4 rounded-lg hover:bg-yellow-600 transition duration-200"
                                                 onClick={() => openEditModal(user)}
