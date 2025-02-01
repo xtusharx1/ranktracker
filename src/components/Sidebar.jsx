@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FiHome, FiUsers, FiFileText, FiBarChart, FiBook, FiClock, FiSettings, FiClipboard } from 'react-icons/fi';
+import { FiHome, FiUsers, FiFileText, FiBarChart, FiBook, FiClock, FiSettings, FiClipboard, FiCalendar } from 'react-icons/fi';
 
 const Sidebar = ({ role }) => {
   const adminRoutes = [
@@ -11,7 +11,9 @@ const Sidebar = ({ role }) => {
     { path: '/fee-records', name: 'Fee Records', icon: <FiClipboard /> },
     { path: '/fee-reminders', name: 'Fee Reminders', icon: <FiClock /> },
     { path: '/notice', name: 'Notice', icon: <FiClipboard /> },
-    { path: '/attendance', name: 'Attendance', icon: <FiClipboard /> },
+    { path: '/attendance', name: 'Attendance', icon: <FiCalendar /> },
+    
+    { path: '/view-attendance', name: 'View Attendance', icon: <FiCalendar /> },
     { path: '/students', name: 'Students', icon: <FiUsers /> },
     { path: '/course', name: 'Course', icon: <FiBook /> },
     { path: '/user-roles', name: 'User Roles', icon: <FiSettings /> },
@@ -23,6 +25,8 @@ const Sidebar = ({ role }) => {
     { path: '/class-performance', name: 'Class Performance', icon: <FiBarChart /> },
     { path: '/student-performance', name: 'Student Performance', icon: <FiUsers /> },
     { path: '/attendance', name: 'Attendance', icon: <FiClipboard /> },
+    
+    { path: '/view-attendance', name: 'View Attendance', icon: <FiCalendar /> },
   ];
 
   const counselorRoutes = [
@@ -33,7 +37,8 @@ const Sidebar = ({ role }) => {
     { path: '/fee-records', name: 'Fee Records', icon: <FiClipboard /> },
     { path: '/fee-reminders', name: 'Fee Reminders', icon: <FiClock /> },
     { path: '/notice', name: 'Notice', icon: <FiClipboard /> },
-    { path: '/attendance', name: 'Attendance', icon: <FiClipboard /> },
+    
+    { path: '/view-attendance', name: 'View Attendance', icon: <FiCalendar /> },
     { path: '/students', name: 'Students', icon: <FiUsers /> },
   ];
 

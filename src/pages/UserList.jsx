@@ -191,8 +191,7 @@ const UserList = () => {
                     </div>
                 )}
             </div>
-
-            {/* Edit Modal */}
+\
             <Modal
                 isOpen={editModalIsOpen}
                 onRequestClose={closeEditModal}

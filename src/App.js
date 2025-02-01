@@ -17,7 +17,8 @@ import ClassPerformance from './pages/ClassPerformance';
 import UserRoles from './pages/UserRoles';
 import UserList from './pages/UserList';
 import Login from './pages/Login';
-
+import Attendance from './pages/Attendance';
+import ViewAttendance from './pages/ViewAttendance';
 const App = () => {
   const {
     activeMenu,
@@ -50,6 +51,8 @@ const App = () => {
       { path: '/student-marks/:testId', element: <StudentMarks /> },
       { path: '/student-performance', element: <StudentPerformance /> },
       { path: '/user-roles', element: <UserRoles /> },
+      { path: '/attendance', element: <Attendance /> },
+      { path: '/view-attendance', element: <ViewAttendance /> },
       //{ path: '/notice', element: <Notice /> }, 
       //{ path: '/attendance', element: <Attendance /> },  
       { path: '/class-performance', element: <ClassPerformance /> },
@@ -61,6 +64,8 @@ const App = () => {
       { path: '/student-marks/:testId', element: <StudentMarks /> },
       { path: '/student-performance', element: <StudentPerformance /> },
       { path: '/class-performance', element: <ClassPerformance /> },
+      { path: '/view-attendance', element: <ViewAttendance /> },
+      { path: '/attendance', element: <Attendance /> },
     ],
     counselor: [
       { path: '/', element: <Dashboard /> },
@@ -70,8 +75,8 @@ const App = () => {
       { path: '/fee-records', element: <FeeRecords /> },
       { path: '/fee-reminders', element: <FeeReminders /> },
       //{ path: '/notice', element: <Notice /> }, 
-      //{ path: '/attendance', element: <Attendance /> },  
       { path: '/students', element: <Students /> },
+      { path: '/view-attendance', element: <ViewAttendance /> },
     ],
   };
 
