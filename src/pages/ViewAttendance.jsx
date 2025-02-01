@@ -10,87 +10,61 @@ const ViewAttendance = () => {
   const [errorMessage, setErrorMessage] = useState(''); // State to handle errors
 
   useEffect(() => {
-    axios.get('https://apistudents.sainikschoolcadet.com/api/batches')
-      .then(res => setBatches(res.data.filter(batch => batch.is_active)))
-      .catch(err => {
-        console.error('Error fetching batches:', err);
-        setErrorMessage('Error fetching batch data. Please try again later.');
-      });
-  }, []);
-  useEffect(() => {
-    if (selectedBatch && month) {
-      const formattedMonth = `${month}-01`;  // Add the day to the month (e.g., 2025-02-01)
-
-      axios.get(`https://apistudents.sainikschoolcadet.com/api/attendance/batch/${selectedBatch}/month/${formattedMonth}`)
-        .then(res => {
-          setAttendanceData(res.data);
+    const fetchData = async () => {
+      try {
+        // Fetch all active batches
+        const batchesRes = await axios.get('https://apistudents.sainikschoolcadet.com/api/batches');
+        const activeBatches = batchesRes.data.filter(batch => batch.is_active);
+        setBatches(activeBatches);
+  
+        if (selectedBatch && month) {
+          // Fetch attendance data for the selected batch and month
+          const attendanceRes = await axios.get(`https://apistudents.sainikschoolcadet.com/api/attendance/batch/${selectedBatch}/month/${month}`);
+          setAttendanceData(attendanceRes.data);
           setErrorMessage(''); // Clear any previous error message
-
-          const uniqueStudents = [...new Set(res.data.map(record => record.user_id))];
-          const studentPromises = uniqueStudents.map(userId =>
-            axios.get(`https://apistudents.sainikschoolcadet.com/api/users/user/${userId}`)
-          );
-
-          Promise.all(studentPromises)
-            .then(responses => {
-              const studentsData = responses.map(response => response.data.user);
-              studentsData.sort((a, b) => a.name.localeCompare(b.name));
-              setStudents(studentsData);
+  
+          // Fetch all students for the selected batch (whether they have attendance or not)
+          const studentsRes = await axios.get(`https://apistudents.sainikschoolcadet.com/api/studentbatches/students/batch/${selectedBatch}`);
+          let studentsData = studentsRes.data;
+  
+          // Fetch names for each student
+          const studentsWithNames = await Promise.all(
+            studentsData.map(async (student) => {
+              try {
+                const userRes = await axios.get(`https://apistudents.sainikschoolcadet.com/api/users/user/${student.user_id}`);
+                const userName = userRes.data.user.name || 'Unnamed';
+                return { ...student, name: userName };
+              } catch (error) {
+                console.error('Error fetching user name:', error);
+                return { ...student, name: 'Unnamed' };
+              }
             })
-            .catch(err => {
-              console.error('Error fetching student details:', err);
-              setErrorMessage('Error fetching student details. Please try again later.');
-            });
-        })
-        .catch(err => {
-          console.error('Error fetching attendance records:', err);
-          if (err.response?.status === 404) {
-            setErrorMessage('No attendance records found for the selected batch and month.');
-          } else if (err.response?.status === 500) {
-            setErrorMessage('Something went wrong on the server. Please try again later.');
-          } else {
-            setErrorMessage('Error fetching attendance records. Please try again later.');
-          }
-        });
-    }
-  }, [selectedBatch, month]);
-
-  useEffect(() => {
-    if (selectedBatch && month) {
-      axios.get(`https://apistudents.sainikschoolcadet.com/api/attendance/batch/${selectedBatch}/month/${month}`)
-        .then(res => {
-          setAttendanceData(res.data);
-          setErrorMessage(''); // Clear any previous error message
-
-          const uniqueStudents = [...new Set(res.data.map(record => record.user_id))];
-          const studentPromises = uniqueStudents.map(userId =>
-            axios.get(`https://apistudents.sainikschoolcadet.com/api/users/user/${userId}`)
           );
-
-          Promise.all(studentPromises)
-            .then(responses => {
-              const studentsData = responses.map(response => response.data.user);
-              studentsData.sort((a, b) => a.name.localeCompare(b.name));
-              setStudents(studentsData);
-            })
-            .catch(err => {
-              console.error('Error fetching student details:', err);
-              setErrorMessage('Error fetching student details. Please try again later.');
-            });
-        })
-        .catch(err => {
-          console.error('Error fetching attendance records:', err);
-          if (err.response?.status === 404) {
-            setErrorMessage('No attendance records found for the selected batch and month.');
-          } else if (err.response?.status === 500) {
-            setErrorMessage('Something went wrong on the server. Please try again later.');
-          } else {
-            setErrorMessage('Error fetching attendance records. Please try again later.');
-          }
-        });
-    }
+  
+          // Sort students by name
+          studentsWithNames.sort((a, b) => {
+            const nameA = a.name || '';  // Fallback to empty string if name is missing
+            const nameB = b.name || '';  // Fallback to empty string if name is missing
+            return nameA.localeCompare(nameB);
+          });
+  
+          setStudents(studentsWithNames);
+        }
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        if (err.response?.status === 404) {
+          setErrorMessage('No records found for the selected batch and month.');
+        } else if (err.response?.status === 500) {
+          setErrorMessage('Something went wrong on the server. Please try again later.');
+        } else {
+          setErrorMessage('Error fetching data. Please try again later.');
+        }
+      }
+    };
+  
+    fetchData();
   }, [selectedBatch, month]);
-
+  
   const getDaysInMonth = (year, month) => {
     return new Date(year, month, 0).getDate();
   };
