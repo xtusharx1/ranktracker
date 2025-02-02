@@ -7,6 +7,7 @@
     "@emotion/styled": "^11.14.0",
     "@mui/icons-material": "^6.4.1",
     "@mui/material": "^6.3.0",
+    "@salesforce-ux/design-system": "^2.25.6",
     "@syncfusion/ej2": "^19.4.48",
     "@syncfusion/ej2-react-calendars": "^19.4.48",
     "@syncfusion/ej2-react-charts": "^19.4.50",

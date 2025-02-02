@@ -122,26 +122,12 @@ const FeeReminders = () => {
 
   return (
     <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif', color: '#333' }}>
-      <h2 style={{ textAlign: 'center' }}>Fee Status Summary</h2>
-      {feeSummary && (
-        <div style={{ display: 'flex', justifyContent: 'space-around', marginTop: '20px' }}>
-          <div style={{ border: '1px solid #ccc', padding: '20px', borderRadius: '5px', flex: '1', margin: '10px' }}>
-            <h3>Total Students</h3>
-            <p style={{ fontSize: '24px', fontWeight: 'bold' }}>{feeSummary.totalStudents}</p>
-          </div>
-          
-          <div style={{ border: '1px solid #ccc', padding: '20px', borderRadius: '5px', flex: '1', margin: '10px' }}>
-            <h3>Fees Due Today</h3>
-            <p style={{ fontSize: '24px', fontWeight: 'bold' }}>₹{feeSummary.totalDueToday}</p>
-          </div>
-        </div>
-      )}
-
-      <h2 style={{ textAlign: 'center', marginTop: '40px' }}>Upcoming Dues</h2>
+      <h2 style={{ textAlign: 'center', marginTop: '20px' }}>Upcoming Dues</h2>
       {upcomingDues.length > 0 ? (
         <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px' }}>
           <thead>
             <tr style={{ backgroundColor: '#f0f0f0', borderBottom: '2px solid #ddd' }}>
+              <th style={{ padding: '12px 15px', textAlign: 'left' }}>S.No</th>
               <th style={{ padding: '12px 15px', textAlign: 'left' }}>Student Name</th>
               <th style={{ padding: '12px 15px', textAlign: 'left' }}>Email</th>
               <th style={{ padding: '12px 15px', textAlign: 'left' }}>Batch</th>
@@ -153,8 +139,9 @@ const FeeReminders = () => {
             </tr>
           </thead>
           <tbody>
-            {upcomingDues.map((due) => (
+            {upcomingDues.map((due, index) => (
               <tr key={due.id} style={{ borderBottom: '1px solid #ddd', backgroundColor: getDueDateColor(due.nextDueDate) }}>
+                <td style={{ padding: '12px 15px' }}>{index + 1}</td>
                 <td style={{ padding: '12px 15px' }}>{due.userDetails ? due.userDetails.name : 'N/A'}</td>
                 <td style={{ padding: '12px 15px' }}>{due.userDetails ? due.userDetails.email : 'N/A'}</td>
                 <td style={{ padding: '12px 15px' }}>

@@ -144,7 +144,7 @@ const FeeRecords = () => {
                 console.warn(`No fee statuses found for user_id ${student.user_id}`);
               } else if (Array.isArray(feeData) && feeData.length > 0) {
                 const fee = feeData[0];
-                remainingFees = `₹${fee.remainingFees}`;
+                remainingFees = `${fee.remainingFees}`;
                 nextDueDate = fee.nextDueDate;
                 totalFees = fee.totalFees;
                 feesSubmitted = fee.feesSubmitted;
@@ -289,42 +289,79 @@ const FeeRecords = () => {
                 paymentCompleted: paymentCompleted, // Mark payment as complete
             });
 
-            setSelectedStudentFees({
-                ...selectedStudentFees,
-                feesSubmitted: updatedFeesSubmitted,
-                remainingFees: updatedRemainingFees,
-                paymentCompleted: paymentCompleted,
-            });
+            
             console.log('Updated Fee Status Response:', response.data); 
             // Close the modal
+            
             setPaymentModalOpen(false);
+            handleStudentClick(selectedStudent);
+            setSelectedStudentFees({
+              ...selectedStudentFees,
+              feesSubmitted: updatedFeesSubmitted,
+              remainingFees: updatedRemainingFees,
+              paymentCompleted: paymentCompleted,
+          });
         }
     } catch (error) {
         console.error('Error adding payment:', error);
     }
 };
 
+const handleAddCharge = async (e) => {
+  e.preventDefault();
+  try {
+      const response = await axios.post(`${BASE_URL}/api/otherchargesrecords/add-other-charges`, {
+          title: chargeData.title,
+          date: chargeData.date,
+          amount: chargeData.amount,
+          feeStatusId: selectedStudent.feeStatusId
+      });
 
-  const handleAddCharge = async (e) => {
-    e.preventDefault();
-    try {
-        const response = await axios.post(`${BASE_URL}/api/otherchargesrecords/add-other-charges`, {
-            title: chargeData.title,
-            date: chargeData.date,
-            amount: chargeData.amount,
-            feeStatusId: selectedStudent.feeStatusId
-        });
+      if (response.status === 201) {
+          // Update the state with the new charge record
+          setOtherChargesRecords([...otherChargesRecords, response.data]);
 
-        if (response.status === 201) {
-            // Update the state with the new charge record
-            setOtherChargesRecords([...otherChargesRecords, response.data]); // Assuming response.data contains the new record
-            // Optionally, you can also fetch the updated fee status
-            fetchUserDetails(selectedStudent.user_id); // Refresh user details if needed
-        }
-    } catch (error) {
-        console.error('Error adding charge:', error);
-    }
-  };
+          // Optionally, you can also fetch the updated fee status
+          fetchUserDetails(selectedStudent.user_id);
+
+          // Ensure remainingFees is a number by removing any currency symbols and converting to float
+          const currentRemainingFees = parseFloat(selectedStudentFees.remainingFees.replace(/[^0-9.-]+/g, "")); // Remove currency symbol
+
+          console.log('Current Remaining Fees:', currentRemainingFees);
+          console.log('Charge Amount:', chargeData.amount);
+
+          // Update selected student fees after adding the charge
+          const updatedTotalFees = parseFloat(selectedStudentFees.totalFees) + parseFloat(chargeData.amount);
+
+          // Ensure remainingFees is updated correctly
+          const updatedRemainingFees = currentRemainingFees + parseFloat(chargeData.amount);
+
+          console.log('Updated Remaining Fees after Charge:', updatedRemainingFees);
+
+          // If payment is completed, mark paymentCompleted as true
+          const paymentCompleted = updatedRemainingFees <= 0;
+
+          handleStudentClick(selectedStudent);
+          // Update the selectedStudentFees state
+          setSelectedStudentFees({
+            ...selectedStudentFees,
+            totalFees: updatedTotalFees,
+            remainingFees: updatedRemainingFees,
+            paymentCompleted: paymentCompleted,
+          });
+
+          // Close the charge modal
+          setChargeModalOpen(false);
+
+          // Reload student data after adding charge
+      }
+  } catch (error) {
+      console.error('Error adding charge:', error);
+  }
+};
+
+
+
 
   const handleCreateFeeStatus = () => {
     setShowFeeStatusForm(true);
