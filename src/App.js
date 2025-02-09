@@ -19,6 +19,7 @@ import UserList from './pages/UserList';
 import Login from './pages/Login';
 import Attendance from './pages/Attendance';
 import ViewAttendance from './pages/ViewAttendance';
+import SchoolMap from './pages/SchoolMap';
 const App = () => {
   const {
     activeMenu,
@@ -56,6 +57,7 @@ const App = () => {
       //{ path: '/notice', element: <Notice /> }, 
       //{ path: '/attendance', element: <Attendance /> },  
       { path: '/class-performance', element: <ClassPerformance /> },
+      {path: '/school-map', element: <SchoolMap />}
     ],
     teacher: [
       { path: '/', element: <Dashboard /> },

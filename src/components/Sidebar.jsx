@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FiHome, FiUsers, FiFileText, FiBarChart, FiBook, FiClock, FiSettings, FiClipboard, FiCalendar } from 'react-icons/fi';
+import { FiHome, FiUsers, FiFileText, FiBarChart, FiBook, FiClock, FiSettings, FiClipboard, FiCalendar, FiMap } from 'react-icons/fi';
 
 const Sidebar = ({ role }) => {
   const adminRoutes = [
@@ -17,6 +17,7 @@ const Sidebar = ({ role }) => {
     { path: '/students', name: 'Students', icon: <FiUsers /> },
     { path: '/course', name: 'Course', icon: <FiBook /> },
     { path: '/user-roles', name: 'User Roles', icon: <FiSettings /> },
+    { path: '/school-map', name: 'School Map', icon: <FiMap/> },
   ];
 
   const teacherRoutes = [
