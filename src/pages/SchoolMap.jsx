@@ -109,11 +109,7 @@ const schools = [
       "lat": 28.36114989819328,
       "lng": 77.07952647061997
     },
-    {
-      "name": "MAHARISHI VIDYA MANDIR PUBLIC SCHOOL",
-      "lat": 26.22581445262943,
-      "lng": 82.06129296759735
-    },
+    
     {
       "name": "ST. SOLDIER PUBLIC SCHOOL",
       "lat": 28.512354734347486,
