@@ -40,9 +40,9 @@ const SchoolMap = () => {
   const fetchData = async () => {
     try {
       const [visitsRes, schoolsRes, personnelRes] = await Promise.all([
-        fetch("hhttps://apistudents.sainikschoolcadet.com/api/visits").then(res => res.json()),
-        fetch("hhttps://apistudents.sainikschoolcadet.com/api/schools").then(res => res.json()),
-        fetch("hhttps://apistudents.sainikschoolcadet.com/api/marketing-personnel/").then(res => res.json()),
+        fetch("https://apistudents.sainikschoolcadet.com/api/visits").then(res => res.json()),
+        fetch("https://apistudents.sainikschoolcadet.com/api/schools").then(res => res.json()),
+        fetch("https://apistudents.sainikschoolcadet.com/api/marketing-personnel/").then(res => res.json()),
       ]);
       
       setVisits(visitsRes.data || []);
@@ -71,7 +71,7 @@ const handleInputChange = (e) => {
 // Handle visit assignment
 const handleAssignVisit = async () => {
   try {
-    await fetch("hhttps://apistudents.sainikschoolcadet.com/api/visits", {
+    await fetch("https://apistudents.sainikschoolcadet.com/api/visits", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(newVisit),
@@ -91,7 +91,7 @@ const handleAssignVisit = async () => {
 
   const handleEditVisit = async () => {
     try {
-      await fetch(`hhttps://apistudents.sainikschoolcadet.com/api/visits/${editVisit.visit_id}`, {
+      await fetch(`https://apistudents.sainikschoolcadet.com/api/visits/${editVisit.visit_id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(editVisit),
