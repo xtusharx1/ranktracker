@@ -167,7 +167,7 @@ const [editId, setEditId] = useState(null);
 
       {/* Add Entry Dialog */}
       <Dialog open={open} onClose={() => setOpen(false)}>
-        <DialogTitle>Add Classwork</DialogTitle>
+        <DialogTitle>Add/Edit Classwork Report</DialogTitle>
         <DialogContent>
           <Grid container spacing={2}>
             <Grid item xs={12}>
@@ -190,7 +190,7 @@ const [editId, setEditId] = useState(null);
         <DialogActions>
           <Button onClick={() => setOpen(false)}>Cancel</Button>
           <Button variant="contained" onClick={handleAddEntry}>
-  {editMode ? "Update" : "Save"}
+  {"Done"}
 </Button>
 
         </DialogActions>
