@@ -20,6 +20,8 @@ import Login from './pages/Login';
 import Attendance from './pages/Attendance';
 import ViewAttendance from './pages/ViewAttendance';
 import SchoolMap from './pages/SchoolMap';
+import ClassRecords from './pages/ClassRecord';
+import path from 'path-browserify';
 const App = () => {
   const {
     activeMenu,
@@ -57,7 +59,8 @@ const App = () => {
       //{ path: '/notice', element: <Notice /> }, 
       //{ path: '/attendance', element: <Attendance /> },  
       { path: '/class-performance', element: <ClassPerformance /> },
-      {path: '/school-map', element: <SchoolMap />}
+      {path: '/school-map', element: <SchoolMap />},
+      {path: '/class-records', element: <ClassRecords />}
     ],
     teacher: [
       { path: '/', element: <Dashboard /> },
