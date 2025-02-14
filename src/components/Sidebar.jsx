@@ -18,7 +18,7 @@ const Sidebar = ({ role }) => {
     { path: '/course', name: 'Course', icon: <FiBook /> },
     { path: '/user-roles', name: 'User Roles', icon: <FiSettings /> },
     { path: '/school-map', name: 'School Map', icon: <FiMap/> },
-    {path: '/class-records', name: 'Class Records', icon: <FiBook />}
+    {path: '/class-records', name: 'Classwork Records', icon: <FiBook />}
   ];
 
   const teacherRoutes = [
@@ -27,7 +27,7 @@ const Sidebar = ({ role }) => {
     { path: '/class-performance', name: 'Class Performance', icon: <FiBarChart /> },
     { path: '/student-performance', name: 'Student Performance', icon: <FiUsers /> },
     { path: '/attendance', name: 'Attendance', icon: <FiClipboard /> },
-    
+    {path: '/class-records', name: 'Classwork Records', icon: <FiBook />},
     { path: '/view-attendance', name: 'View Attendance', icon: <FiCalendar /> },
   ];
 

@@ -71,6 +71,7 @@ const App = () => {
       { path: '/class-performance', element: <ClassPerformance /> },
       { path: '/view-attendance', element: <ViewAttendance /> },
       { path: '/attendance', element: <Attendance /> },
+      {path: '/class-records', element: <ClassRecords />}
     ],
     counselor: [
       { path: '/', element: <Dashboard /> },
