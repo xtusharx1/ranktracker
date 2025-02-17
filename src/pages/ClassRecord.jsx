@@ -38,7 +38,7 @@ const ClassRecord = () => {
   const [form, setForm] = useState({ date: new Date().toISOString().split('T')[0], description: "", chapterName: "", homeworkAssigned: "", isTeacherAbsent: false });
   const [viewOpen, setViewOpen] = useState(false);
   const [viewEntry, setViewEntry] = useState(null);
-
+  const role = localStorage.getItem("role");
   useEffect(() => {
     axios.get("https://apistudents.sainikschoolcadet.com/api/batches")
       .then(res => setBatches(res.data))
@@ -118,26 +118,29 @@ const ClassRecord = () => {
               </select>
             </Grid>
             <Grid item xs={12} sm={6}>
-              <select
-                id="subject"
-                value={selectedSubject}
-                onChange={(e) => setSelectedSubject(e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  fontSize: "16px",
-                  borderRadius: "5px",
-                  border: "1px solid #ccc",
-                  backgroundColor: "#fff",
-                }}
-              >
-                <option value="">Select Subject</option>
-                {subjects.map((subject) => (
-                  <option key={subject.subject_id} value={subject.subject_id}>
-                    {subject.subject_name}
-                  </option>
-                ))}
-              </select>
+            <select
+    id="subject"
+    value={selectedSubject}
+    onChange={(e) => setSelectedSubject(e.target.value)}
+    disabled={role !== "admin"} // Lock dropdown if the user is not an admin
+    style={{
+      width: "100%",
+      padding: "10px",
+      fontSize: "16px",
+      borderRadius: "5px",
+      border: "1px solid #ccc",
+      backgroundColor: role !== "admin" ? "#f0f0f0" : "#fff", // Grey out when disabled
+      cursor: role !== "admin" ? "not-allowed" : "pointer", // Show not-allowed cursor when locked
+    }}
+  >
+    <option value="">Select Subject</option>
+    {subjects.map((subject) => (
+      <option key={subject.subject_id} value={subject.subject_id}>
+        {subject.subject_name}
+      </option>
+    ))}
+  </select>
+
             </Grid>
             <Grid item xs={12}>
               <Button variant="contained" startIcon={<Add />} onClick={() => setOpen(true)}>

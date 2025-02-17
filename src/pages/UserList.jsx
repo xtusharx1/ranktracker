@@ -21,6 +21,9 @@ const UserList = () => {
     const [viewModalIsOpen, setViewModalIsOpen] = useState(false);
     const [createModalIsOpen, setCreateModalIsOpen] = useState(false);
     const [editModalIsOpen, setEditModalIsOpen] = useState(false);
+    const [subjects, setSubjects] = useState([]);
+    const [assignedSubjects, setAssignedSubjects] = useState({});
+    const [selectedSubject, setSelectedSubject] = useState('');
     const [newUser, setNewUser] = useState({
         name: '',
         email: '',
@@ -34,6 +37,26 @@ const UserList = () => {
             try {
                 const response = await axios.get(`https://apistudents.sainikschoolcadet.com/api/users/role/${role_id}`);
                 setUsers(response.data);
+
+                if (role_id === '3') {
+                    const assignedSubjectsResponse = await Promise.all(response.data.map(user => 
+                        axios.get(`https://apistudents.sainikschoolcadet.com/api/subject-teachers/teacher/${user.user_id}`)
+                        .then(res => res.data)
+                        .catch(err => {
+                            if (err.response && err.response.status === 404) {
+                                return null;
+                            }
+                            throw err;
+                        })
+                    ));
+
+                    const assignedSubjectsMap = {};
+                    assignedSubjectsResponse.forEach((res, index) => {
+                        assignedSubjectsMap[response.data[index].user_id] = res ? res.map(subject => subject.subject_id) : null;
+                    });
+
+                    setAssignedSubjects(assignedSubjectsMap);
+                }
             } catch (err) {
                 if (err.response && err.response.status === 404) {
                     setUsers([]); // No users exist for the role
@@ -45,10 +68,18 @@ const UserList = () => {
             }
         };
 
-        fetchUsers();
-    }, [role_id]);
+        const fetchSubjects = async () => {
+            try {
+                const response = await axios.get('https://apistudents.sainikschoolcadet.com/api/subjects/');
+                setSubjects(response.data);
+            } catch (err) {
+                console.error('Error fetching subjects:', err);
+            }
+        };
 
-    
+        fetchUsers();
+        fetchSubjects();
+    }, [role_id]);
 
     const openCreateModal = () => {
         setCreateModalIsOpen(true);
@@ -57,9 +88,10 @@ const UserList = () => {
     const closeCreateModal = () => {
         setCreateModalIsOpen(false);
         setNewUser({ name: '', email: '', password: '', role_id, status: 'active' });
+        setSelectedSubject('');
     };
 
-    const openEditModal = (user) => {
+    const openEditModal = async (user) => {
         setSelectedUser(user);
         setNewUser({
             name: user.name,
@@ -68,12 +100,27 @@ const UserList = () => {
             role_id: user.role_id,
             status: user.status,
         });
+
+        if (role_id === '3') {
+            try {
+                const response = await axios.get(`https://apistudents.sainikschoolcadet.com/api/subject-teachers/teacher/${user.user_id}`);
+                setSelectedSubject(response.data[0]?.subject_id || '');
+            } catch (err) {
+                if (err.response && err.response.status === 404) {
+                    setSelectedSubject('');
+                } else {
+                    console.error('Error fetching assigned subject:', err);
+                }
+            }
+        }
+
         setEditModalIsOpen(true);
     };
 
     const closeEditModal = () => {
         setEditModalIsOpen(false);
         setSelectedUser(null);
+        setSelectedSubject('');
     };
 
     const handleInputChange = (e) => {
@@ -84,7 +131,16 @@ const UserList = () => {
     const handleCreateUser = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('https://apistudents.sainikschoolcadet.com/api/users/register', newUser);
+            const response = await axios.post('https://apistudents.sainikschoolcadet.com/api/users/register', newUser);
+            const createdUser = response.data;
+
+            if (role_id === '3' && selectedSubject) {
+                await axios.post('https://apistudents.sainikschoolcadet.com/api/subject-teachers/assign', {
+                    subject_id: selectedSubject,
+                    user_id: createdUser.user_id,
+                });
+            }
+
             alert('User created successfully!');
             closeCreateModal();
             setLoading(true); // Refresh user list
@@ -96,25 +152,62 @@ const UserList = () => {
 
     const handleEditUser = async (e) => {
         e.preventDefault();
+    
+        console.log("Selected User Data:", selectedUser);  // Debugging log
+        console.log("Selected Subject from Dropdown:", selectedSubject);  // Debugging log
+    
         try {
-            // Check if a new password is provided
-            if (newUser.password) {
-                const saltRounds = 10;
-                const hashedPassword = await bcrypt.hash(newUser.password, saltRounds);
-                newUser.password = hashedPassword;
+            // Update user's basic info
+            const userUpdateResponse = await axios.put(
+                `https://apistudents.sainikschoolcadet.com/api/users/user/${selectedUser.user_id}`,
+                {
+                    name: newUser.name,
+                    email: newUser.email,
+                    password: newUser.password ? newUser.password : undefined,
+                    status: newUser.status
+                }
+            );
+    
+            console.log('User updated:', userUpdateResponse.data);
+    
+            // Check if selectedSubject is valid
+            if (!selectedSubject) {
+                console.error("Error: selectedSubject is undefined or null!");
+                return;
             }
-
-            await axios.put(`https://apistudents.sainikschoolcadet.com/api/users/user/${selectedUser.user_id}`, newUser);
-
-            alert('User updated successfully!');
-            closeEditModal();
-            window.location.reload(); // Reload the page to refresh user list
-        } catch (err) {
-            console.error('Error updating user:', err);
-            alert(err.response?.data?.message || 'Failed to update user.');
+    
+            // Get the current assigned subject for the user from assignedSubjects
+            const currentAssignedSubject = assignedSubjects[selectedUser.user_id]
+                ? assignedSubjects[selectedUser.user_id][0] // Assume one subject per user
+                : null;
+    
+            console.log("Current assigned subject:", currentAssignedSubject); // Debugging log
+    
+            // If the current subject is different from the selected subject, update the subject
+            if (currentAssignedSubject && currentAssignedSubject !== selectedSubject) {
+                try {
+                    console.log(`Updating subject from ${currentAssignedSubject} to ${selectedSubject}`);
+    
+                    const subjectUpdateResponse = await axios.put(
+                        `https://apistudents.sainikschoolcadet.com/api/subject-teachers/update/${currentAssignedSubject}/${selectedUser.user_id}`,
+                        { new_subject_id: selectedSubject }
+                    );
+                    console.log('Subject updated:', subjectUpdateResponse.data);
+                } catch (error) {
+                    console.error('Error updating Subject:', error.response?.data || error.message);
+                }
+            }
+            window.location.reload();
+            closeEditModal(); // Close modal on success
+        } catch (error) {
+            console.error('Error updating user:', error.response?.data || error.message);
         }
     };
-
+    
+    
+    
+    
+    
     if (loading) {
         return (
             <div className="flex justify-center items-center h-screen">
@@ -156,6 +249,7 @@ const UserList = () => {
                                     <th className="border border-gray-300 px-4 py-2 text-left">User Name</th>
                                     <th className="border border-gray-300 px-4 py-2 text-left">Email</th>
                                     <th className="border border-gray-300 px-4 py-2 text-left">Status</th>
+                                    {role_id === '3' && <th className="border border-gray-300 px-4 py-2 text-left">Assigned Subject</th>}
                                     <th className="border border-gray-300 px-4 py-2 text-left">Actions</th>
                                 </tr>
                             </thead>
@@ -174,9 +268,14 @@ const UserList = () => {
                                                 {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
                                             </span>
                                         </td>
-
+                                        {role_id === '3' && (
+                                            <td className="border border-gray-300 px-4 py-2">
+                                                {assignedSubjects[user.user_id] !== null 
+                                                    ? assignedSubjects[user.user_id]?.map(subjectId => subjects.find(subject => subject.subject_id === subjectId)?.subject_name).join(', ') || 'N/A'
+                                                    : 'Not assigned to any subject'}
+                                            </td>
+                                        )}
                                         <td className="border border-gray-300 px-4 py-2">
-                                            
                                             <button
                                                 className="bg-yellow-500 text-white py-1 px-4 rounded-lg hover:bg-yellow-600 transition duration-200"
                                                 onClick={() => openEditModal(user)}
@@ -191,7 +290,7 @@ const UserList = () => {
                     </div>
                 )}
             </div>
-\
+
             <Modal
                 isOpen={editModalIsOpen}
                 onRequestClose={closeEditModal}
@@ -246,6 +345,26 @@ const UserList = () => {
                                 <option value="inactive">Inactive</option>
                             </select>
                         </div>
+                        {role_id === '3' && (
+                            <div className="mb-4">
+                                <label className="block text-gray-700">Assign Subject</label>
+                                <select
+    name="subject"
+    value={selectedSubject}
+    onChange={(e) => setSelectedSubject(e.target.value)}
+    required
+    className="w-full border px-3 py-2 rounded-lg"
+>
+    <option value="">Select a subject</option>
+    {subjects.map((subject) => (
+        <option key={subject.subject_id} value={subject.subject_id}>
+            {subject.subject_name}
+        </option>
+    ))}
+</select>
+
+                            </div>
+                        )}
                         <div className="flex justify-end">
                             <button
                                 type="button"
@@ -321,6 +440,25 @@ const UserList = () => {
                                 <option value="inactive">Inactive</option>
                             </select>
                         </div>
+                        {role_id === '3' && (
+                            <div className="mb-4">
+                                <label className="block text-gray-700">Assign Subject</label>
+                                <select
+                                    name="subject"
+                                    value={selectedSubject}
+                                    onChange={(e) => setSelectedSubject(e.target.value)}
+                                    required
+                                    className="w-full border px-3 py-2 rounded-lg"
+                                >
+                                    <option value="">Select a subject</option>
+                                    {subjects.map((subject) => (
+                                        <option key={subject.subject_id} value={subject.subject_id}>
+                                            {subject.subject_name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
                         <div className="flex justify-end">
                             <button
                                 type="button"
@@ -344,3 +482,4 @@ const UserList = () => {
 };
 
 export default UserList;
+

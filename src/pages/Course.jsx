@@ -82,13 +82,13 @@ const Course = () => {
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-6xl mx-auto bg-white p-6 rounded-lg shadow-lg">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">Batches</h1>
+        <h1 className="text-3xl font-bold text-gray-800 mb-6">List of Courses</h1>
 
         <button
           onClick={() => setShowNewBatchModal(true)}
           className="mb-6 bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition duration-200"
         >
-          Create New Batch
+          Create New Course
         </button>
 
         {/* Batch List */}
@@ -96,7 +96,7 @@ const Course = () => {
           <thead>
             <tr className="bg-gray-200">
               <th className="border border-gray-300 px-4 py-2">S.No</th>
-              <th className="border border-gray-300 px-4 py-2">Batch Name</th>
+              <th className="border border-gray-300 px-4 py-2">Course Name</th>
               <th className="border border-gray-300 px-4 py-2">No. of Students</th>
               <th className="border border-gray-300 px-4 py-2">Status</th>
               <th className="border border-gray-300 px-4 py-2">Actions</th>
@@ -129,12 +129,12 @@ const Course = () => {
       {showNewBatchModal && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center">
           <div className="bg-white rounded-lg shadow-md p-6 w-1/3">
-            <h2 className="text-xl font-semibold text-gray-700 mb-4">Create New Batch</h2>
+            <h2 className="text-xl font-semibold text-gray-700 mb-4">Create New Course</h2>
             <input
               type="text"
               value={newBatchName}
               onChange={(e) => setNewBatchName(e.target.value)}
-              placeholder="Enter batch name"
+              placeholder="Enter Course Name"
               className="w-full mb-4 px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
             />
             <button
@@ -157,12 +157,12 @@ const Course = () => {
       {showEditModal && editingBatch && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center">
           <div className="bg-white rounded-lg shadow-md p-6 w-1/3">
-            <h2 className="text-xl font-semibold text-gray-700 mb-4">Edit Batch</h2>
+            <h2 className="text-xl font-semibold text-gray-700 mb-4">Edit Course</h2>
             <input
               type="text"
               value={editingBatch.batch_name}
               onChange={(e) => setEditingBatch({ ...editingBatch, batch_name: e.target.value })}
-              placeholder="Enter batch name"
+              placeholder="Enter Course name"
               className="w-full mb-4 px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
             />
             <select
