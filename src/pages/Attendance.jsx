@@ -11,6 +11,7 @@ const Attendance = () => {
   const [attendance, setAttendance] = useState({});
   const [reasons, setReasons] = useState({});
   const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().split('T')[0]);
+  const [role, setRole] = useState(localStorage.getItem("role"));  // Get role from localStorage
 
   useEffect(() => {
     // Fetching batches first
@@ -48,12 +49,24 @@ const Attendance = () => {
 
   useEffect(() => {
     if (selectedBatch) {
-      // Fetching subjects from the subjects API
-      axios.get('https://apistudents.sainikschoolcadet.com/api/subjects/')
-        .then(res => setSubjects(res.data))  // Assuming the API returns an array of subjects
-        .catch(err => console.error('Error fetching subjects:', err));
+      // Fetching subjects from the subjects API for admins or all roles
+      const Id = localStorage.getItem("user_id");
+      if (role === "admin") {
+        axios.get('https://apistudents.sainikschoolcadet.com/api/subjects/')
+          .then(res => setSubjects(res.data))  // Assuming the API returns an array of subjects
+          .catch(err => console.error('Error fetching subjects:', err));
+      } else if (role === "teacher") {
+        // Fetching the teacher's subject
+        axios.get(`https://apistudents.sainikschoolcadet.com/api/subject-teachers/teacher/${Id}`)
+          .then(res => {
+            if (res.data.length > 0) {
+              setSelectedSubject(res.data[0].subject_id); // Auto-set subject for teacher
+            }
+          })
+          .catch(err => console.error("Error fetching teacher's subject:", err));
+      }
     }
-  }, [selectedBatch]);
+  }, [selectedBatch, role]);
 
   const handleAttendanceChange = (studentId, status) => {
     setAttendance({ ...attendance, [studentId]: status });
@@ -72,16 +85,26 @@ const Attendance = () => {
   };
 
   const submitAttendance = () => {
+    if (!selectedSubject) {
+      alert('Please select a subject');
+      return;
+    }
+  
+    if (!teacherName) {
+      alert('Teacher name is not available');
+      return;
+    }
+  
     const attendanceRecords = students.map(student => ({
       user_id: student.user_id,
       batch_id: selectedBatch,
-      subject_id: selectedSubject,
+      subject_id: selectedSubject, // Ensure subject is selected
       status: attendance[student.user_id] || 'Absent',
       attendance_date: attendanceDate,
       teacher_name: teacherName,  // Adding teacher's name to the request
       reason: (attendance[student.user_id] === 'Absent' || attendance[student.user_id] === 'Late') ? reasons[student.user_id] : null,
     }));
-
+  
     // Send the bulk attendance data to the backend API
     axios.post('https://apistudents.sainikschoolcadet.com/api/attendance/bulk', { records: attendanceRecords })
       .then(() => {
@@ -94,7 +117,7 @@ const Attendance = () => {
         alert('Error submitting attendance');
       });
   };
-
+  
   return (
     <div style={{ padding: '30px', fontFamily: 'Arial, sans-serif', maxWidth: '1200px', margin: '0 auto' }}>
       <h1 style={{ textAlign: 'center', color: '#333', fontSize: '32px', marginBottom: '20px' }}>Attendance</h1>
@@ -110,15 +133,26 @@ const Attendance = () => {
               <option key={batch.batch_id} value={batch.batch_id}>{batch.batch_name}</option>
             ))}
           </select>
-          <select
-            onChange={e => setSelectedSubject(e.target.value)}
-            style={{ padding: '12px', fontSize: '16px', borderRadius: '5px', border: '1px solid #ddd' }}
-          >
-            <option value="">Select Subject</option>
-            {subjects.map(subject => (
-              <option key={subject.subject_id} value={subject.subject_id}>{subject.subject_name}</option>
-            ))}
-          </select>
+          {role === "teacher" ? (
+            // Teachers have a locked subject input field
+            <input
+              type="text"
+              value={subjects.find(subject => subject.subject_id === selectedSubject)?.subject_name || "Subject Name"}
+              readOnly
+              style={{ padding: '12px', fontSize: '16px', borderRadius: '5px', border: '1px solid #ddd' }}
+            />
+          ) : (
+            // Admins and other roles get a dropdown for selecting a subject
+            <select
+              onChange={e => setSelectedSubject(e.target.value)}
+              style={{ padding: '12px', fontSize: '16px', borderRadius: '5px', border: '1px solid #ddd' }}
+            >
+              <option value="">Select Subject</option>
+              {subjects.map(subject => (
+                <option key={subject.subject_id} value={subject.subject_id}>{subject.subject_name}</option>
+              ))}
+            </select>
+          )}
           <input
             type="date"
             value={attendanceDate}

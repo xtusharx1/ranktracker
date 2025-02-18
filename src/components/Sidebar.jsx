@@ -27,8 +27,8 @@ const Sidebar = ({ role }) => {
     { path: '/class-performance', name: 'Class Performance', icon: <FiBarChart /> },
     { path: '/student-performance', name: 'Student Performance', icon: <FiUsers /> },
     { path: '/attendance', name: 'Attendance', icon: <FiClipboard /> },
-    {path: '/class-records', name: 'Classwork Records', icon: <FiBook />},
     { path: '/view-attendance', name: 'View Attendance', icon: <FiCalendar /> },
+    {path: '/class-records', name: 'Classwork Records', icon: <FiBook />},
   ];
 
   const counselorRoutes = [
@@ -39,7 +39,6 @@ const Sidebar = ({ role }) => {
     { path: '/fee-records', name: 'Fee Records', icon: <FiClipboard /> },
     { path: '/fee-reminders', name: 'Fee Reminders', icon: <FiClock /> },
     { path: '/notice', name: 'Notice', icon: <FiClipboard /> },
-    
     { path: '/view-attendance', name: 'View Attendance', icon: <FiCalendar /> },
     { path: '/students', name: 'Students', icon: <FiUsers /> },
   ];

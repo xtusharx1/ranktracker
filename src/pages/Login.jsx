@@ -10,11 +10,11 @@ const Login = ({ setUserRole, setUserDetails }) => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-
+  
     try {
       const response = await axios.post('https://apistudents.sainikschoolcadet.com/api/users/login', { email, password });
-      const { role_id, name, email: userEmail } = response.data.user;
-
+      const { id, role_id, name, email: userEmail } = response.data.user;
+  
       // Map role_id to role name
       let role = '';
       switch(role_id) {
@@ -30,22 +30,24 @@ const Login = ({ setUserRole, setUserDetails }) => {
         default:
           throw new Error('Invalid role');
       }
-
+  
       // Save user role and details in localStorage
+      localStorage.setItem('user_id', id);
       localStorage.setItem('role', role);
       localStorage.setItem('name', name);
       localStorage.setItem('email', userEmail);
-
+  
       setUserRole(role); // Set the role in context
-      setUserDetails({ name, email: userEmail }); // Set the user details in context
-
-      console.log('Login successful!', { name, role });
-
+      setUserDetails({ id, name, email: userEmail }); // Set the user details in context
+  
+      console.log('Login successful!', { id, name, role });
+  
       navigate('/'); // Redirect to the home page or dashboard
     } catch (error) {
       setError(error.response?.data?.message || 'An error occurred during login');
     }
   };
+  
 
   return (
     <div className="login-container flex justify-center items-center min-h-screen bg-gray-100">

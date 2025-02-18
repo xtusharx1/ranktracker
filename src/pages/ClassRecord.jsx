@@ -39,15 +39,35 @@ const ClassRecord = () => {
   const [viewOpen, setViewOpen] = useState(false);
   const [viewEntry, setViewEntry] = useState(null);
   const role = localStorage.getItem("role");
+  const userId = localStorage.getItem("user_id");
   useEffect(() => {
-    axios.get("https://apistudents.sainikschoolcadet.com/api/batches")
-      .then(res => setBatches(res.data))
-      .catch(err => console.error('Error fetching batches:', err));
-
-    axios.get("https://apistudents.sainikschoolcadet.com/api/subjects")
-      .then(res => setSubjects(res.data))
-      .catch(err => console.error('Error fetching subjects:', err));
+    const userId = localStorage.getItem("user_id"); // Get logged-in user ID
+  
+    // Fetch batches (common for both admin & teachers)
+    axios
+      .get("https://apistudents.sainikschoolcadet.com/api/batches")
+      .then((res) => setBatches(res.data))
+      .catch((err) => console.error("Error fetching batches:", err));
+  
+    if (role === "admin") {
+      // Admin fetches all subjects
+      axios
+        .get("https://apistudents.sainikschoolcadet.com/api/subjects")
+        .then((res) => setSubjects(res.data))
+        .catch((err) => console.error("Error fetching subjects:", err));
+    } else if (role === "teacher") {
+      // Teachers fetch only their assigned subject
+      axios
+        .get(`https://apistudents.sainikschoolcadet.com/api/subject-teachers/teacher/${userId}`)
+        .then((res) => {
+          if (res.data.length > 0) {
+            setSelectedSubject(res.data[0].subject_id); // Auto-set subject
+          }
+        })
+        .catch((err) => console.error("Error fetching teacher's subject:", err));
+    }
   }, []);
+  
 
   useEffect(() => {
     if (selectedBatch && selectedSubject) {
@@ -235,10 +255,10 @@ const ClassRecord = () => {
                     <Typography><b>Chapter Name:</b> {viewEntry.chapter_name}</Typography>
                   </Grid>
                   <Grid item xs={12}>
-                    <Typography><b>Homework Assigned:</b> {viewEntry.homework_assigned}</Typography>
+                    <Typography><b>Classwork: </b> {viewEntry.detailed_description || "No description provided."}</Typography>
                   </Grid>
                   <Grid item xs={12}>
-                    <Typography><b>Detailed Description:</b> {viewEntry.detailed_description || "No description provided."}</Typography>
+                    <Typography><b>Homework: </b> {viewEntry.homework_assigned}</Typography>
                   </Grid>
                   <Grid item xs={12}>
                     <Typography><b>Submission Time:</b> {new Date(viewEntry.createdAt).toLocaleTimeString()}</Typography>
@@ -263,8 +283,9 @@ const ClassRecord = () => {
             <TableRow>
               <TableCell><b>Date</b></TableCell>
               <TableCell><b>Chapter Name</b></TableCell>
-              <TableCell><b>Homework Assigned</b></TableCell>
-              <TableCell><b>Attendance</b></TableCell>
+              <TableCell><b>Classwork</b></TableCell>
+              <TableCell><b>Homework</b></TableCell>
+              <TableCell><b>Teacher's Attendance</b></TableCell>
               <TableCell><b>Actions</b></TableCell>
             </TableRow>
           </TableHead>
@@ -273,6 +294,7 @@ const ClassRecord = () => {
               <TableRow key={entry.id} sx={{ "&:nth-of-type(odd)": { backgroundColor: "#fafafa" } }}>
                 <TableCell>{entry.date}</TableCell>
                 <TableCell>{entry.chapter_name}</TableCell>
+                <TableCell>{entry.detailed_description}</TableCell>
                 <TableCell>{entry.homework_assigned}</TableCell>
                 <TableCell>
                   <Typography color={entry.is_teacher_absent ? "red" : "green"}>
