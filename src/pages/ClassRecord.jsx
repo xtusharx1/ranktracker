@@ -206,7 +206,7 @@ const ClassRecord = () => {
             </Grid>
             <Grid item xs={12}>
               <TextField
-                label="Detailed Description"
+                label="Classwork"
                 fullWidth
                 multiline
                 rows={4}
@@ -217,7 +217,7 @@ const ClassRecord = () => {
             </Grid>
             <Grid item xs={12}>
               <TextField
-                label="Homework Assigned"
+                label="Homework"
                 fullWidth
                 multiline
                 rows={2}
