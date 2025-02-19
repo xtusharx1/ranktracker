@@ -122,7 +122,7 @@ const FeeRecords = () => {
 
     const fetchAllStudents = async () => {
       try {
-        const response = await fetch(`${BASE_URL}/api/users/role/2`);
+        const response = await fetch(`${BASE_URL}/api/users/active/role/2`);
         if (response.ok) {
           const data = await response.json();
           const studentsWithFees = await Promise.all(data.map(async (student) => {

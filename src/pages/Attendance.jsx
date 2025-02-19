@@ -14,11 +14,33 @@ const Attendance = () => {
   const [role, setRole] = useState(localStorage.getItem("role"));  // Get role from localStorage
 
   useEffect(() => {
-    // Fetching batches first
-    axios.get('https://apistudents.sainikschoolcadet.com/api/batches')
-      .then(res => setBatches(res.data.filter(batch => batch.is_active)))
-      .catch(err => console.error('Error fetching batches:', err));
-  }, []);
+    const userId = localStorage.getItem("user_id");
+  
+    if (role === "admin") {
+      // Fetch all active batches for admin
+      axios.get("https://apistudents.sainikschoolcadet.com/api/batches")
+        .then(res => setBatches(res.data.filter(batch => batch.is_active)))
+        .catch(err => console.error("Error fetching batches:", err));
+    } else if (role === "teacher") {
+      // Fetch only assigned batches for teachers
+      axios.get(`https://apistudents.sainikschoolcadet.com/api/teacher-batches/teacher/${userId}/batches`)
+        .then(res => {
+          const assignedBatchIds = res.data.map(batch => batch.batch_id);
+  
+          // Fetch all batches, then filter active & assigned ones
+          axios.get("https://apistudents.sainikschoolcadet.com/api/batches")
+            .then(batchRes => {
+              const filteredBatches = batchRes.data.filter(batch => 
+                batch.is_active && assignedBatchIds.includes(batch.batch_id)
+              );
+              setBatches(filteredBatches);
+            })
+            .catch(err => console.error("Error fetching batch details:", err));
+        })
+        .catch(err => console.error("Error fetching teacher's assigned batches:", err));
+    }
+  }, [role]); // Re-run when role changes
+  
 
   useEffect(() => {
     if (selectedBatch) {

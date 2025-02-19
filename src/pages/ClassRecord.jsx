@@ -43,19 +43,38 @@ const ClassRecord = () => {
   useEffect(() => {
     const userId = localStorage.getItem("user_id"); // Get logged-in user ID
   
-    // Fetch batches (common for both admin & teachers)
-    axios
-      .get("https://apistudents.sainikschoolcadet.com/api/batches")
-      .then((res) => setBatches(res.data))
-      .catch((err) => console.error("Error fetching batches:", err));
-  
     if (role === "admin") {
+      // Admin fetches all batches
+      axios
+        .get("https://apistudents.sainikschoolcadet.com/api/batches")
+        .then((res) => setBatches(res.data))
+        .catch((err) => console.error("Error fetching batches:", err));
+  
       // Admin fetches all subjects
       axios
         .get("https://apistudents.sainikschoolcadet.com/api/subjects")
         .then((res) => setSubjects(res.data))
         .catch((err) => console.error("Error fetching subjects:", err));
     } else if (role === "teacher") {
+      // Teachers fetch only their assigned batches
+      axios
+        .get(`https://apistudents.sainikschoolcadet.com/api/teacher-batches/teacher/${userId}/batches`)
+        .then((res) => {
+          const assignedBatchIds = res.data.map((batch) => batch.batch_id);
+          
+          // Fetch details of these batches
+          axios
+            .get("https://apistudents.sainikschoolcadet.com/api/batches")
+            .then((batchRes) => {
+              const filteredBatches = batchRes.data.filter((batch) =>
+                assignedBatchIds.includes(batch.batch_id)
+              );
+              setBatches(filteredBatches);
+            })
+            .catch((err) => console.error("Error fetching batch details:", err));
+        })
+        .catch((err) => console.error("Error fetching teacher's assigned batches:", err));
+  
       // Teachers fetch only their assigned subject
       axios
         .get(`https://apistudents.sainikschoolcadet.com/api/subject-teachers/teacher/${userId}`)
