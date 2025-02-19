@@ -979,7 +979,7 @@ const handleAddCharge = async (e) => {
           display: 'flex', justifyContent: 'center', alignItems: 'center'
         }}>
           <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '5px', width: '400px' }}>
-            <h2 style={{ marginBottom: '20px', color: '#4A90E2' }}>Add Other Charges</h2>
+            <h2 style={{ marginBottom: '20px', color: '#4A90E2' }}>You Gave</h2>
             <form onSubmit={handleAddCharge}>
               <div style={{ marginBottom: '10px' }}>
                 <label style={{ display: 'block', marginBottom: '5px' }}>Title</label>
