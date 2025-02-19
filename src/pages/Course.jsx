@@ -11,7 +11,7 @@ const Course = () => {
   useEffect(() => {
     const fetchBatches = async () => {
       try {
-        const response = await axios.get('https://apistudents.sainikschoolcadet.com/api/batches/');
+        const response = await axios.get('https://apistudents.sainikschoolcadet.com/api/batches/all');
         const enrichedBatches = await Promise.all(
           response.data.map(async (batch) => {
             const countResponse = await axios.get(
