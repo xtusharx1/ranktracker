@@ -236,34 +236,77 @@ const Students = () => {
     e.preventDefault();
 
     try {
-      const response = await fetch(`https://apistudents.sainikschoolcadet.com/api/users/user/${editingStudent.user_id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(editingStudent),
-      });
+        // ✅ Step 1: Update student's basic info
+        const response = await fetch(`https://apistudents.sainikschoolcadet.com/api/users/user/${editingStudent.user_id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(editingStudent),
+        });
 
-      const data = await response.json();
+        const data = await response.json();
 
-      if (response.ok) {
-        setStudents(students.map(student => 
-          student.user_id === editingStudent.user_id ? editingStudent : student
-        ));
-        setShowEditModal(false);
-        setEditingStudent(null);
-        
-        const refreshResponse = await fetch("https://apistudents.sainikschoolcadet.com/api/users/role/2");
-        const refreshData = await refreshResponse.json();
-        setStudents(refreshData);
-      } else {
-        alert('Failed to update student: ' + (data.message || 'Unknown error'));
-      }
+        if (response.ok) {
+            console.log("Student updated successfully:", data);
+
+            // ✅ Step 2: Fetch the student's current batch
+            let oldBatchId = null;
+            try {
+                const batchResponse = await axios.get(
+                    `https://apistudents.sainikschoolcadet.com/api/studentBatches/students/search/${editingStudent.user_id}`
+                );
+                const batchData = batchResponse.data;
+                if (batchData.length > 0) {
+                    oldBatchId = batchData[0].batch_id; // Assuming the first record is the current batch
+                    console.log(`Current batch found: ${oldBatchId}`);
+                } else {
+                    console.log("No existing batch found for the student.");
+                }
+            } catch (error) {
+                console.warn("Failed to fetch student's current batch:", error);
+            }
+
+            const newBatchId = editingStudent.batch_id;
+
+            if (!oldBatchId && newBatchId) {
+                // 🟢 No batch assigned before, so assign the student to the new batch
+                console.log(`Assigning student ${editingStudent.user_id} to batch ${newBatchId}`);
+                await axios.post(`https://apistudents.sainikschoolcadet.com/api/studentBatches/students/batch/`, {
+                    user_id: editingStudent.user_id, 
+                    batch_id: newBatchId, 
+                });
+                console.log("Student successfully assigned to batch.");
+            } else if (oldBatchId !== newBatchId) {
+                // 🟠 Batch is different, update the assignment
+                console.log(`Updating batch for student ${editingStudent.user_id} from ${oldBatchId} to ${newBatchId}`);
+                await axios.put(`https://apistudents.sainikschoolcadet.com/api/studentBatches/update`, {
+                    user_id: editingStudent.user_id,
+                    old_batch_id: oldBatchId,
+                    new_batch_id: newBatchId,
+                });
+                console.log("Student batch updated successfully.");
+            } else {
+                console.warn("No batch change detected.");
+            }
+
+            // ✅ Step 3: Refresh student list
+            const refreshResponse = await fetch("https://apistudents.sainikschoolcadet.com/api/users/role/2");
+            const refreshData = await refreshResponse.json();
+            setStudents(refreshData);
+
+            // ✅ Step 4: Close modal
+            setShowEditModal(false);
+            setEditingStudent(null);
+
+        } else {
+            alert('Failed to update student: ' + (data.message || 'Unknown error'));
+        }
     } catch (error) {
-      console.error('Error updating student:', error);
-      alert('Error updating student: ' + error.message);
+        console.error('Error updating student:', error);
+        alert('Error updating student: ' + error.message);
     }
-  };
+};
+
+
 
   const handleEditChange = (e) => {
     const { name, value } = e.target;
@@ -750,21 +793,21 @@ const Students = () => {
               </div>
 
               <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Batch ID</label>
-                <select
-                  name="batch_id"
-                  value={editingStudent.batch_id}
-                  onChange={handleEditChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                >
-                  <option value="">Select Batch</option>
-                  {batches.map((batch) => (
-                    <option key={batch.batch_id} value={batch.batch_id}>
-                      {batch.batch_name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+    <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Batch</label>
+    <select
+        name="batch_id"
+        value={editingStudent.batch_id || ""}
+        onChange={handleEditChange}
+        style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+    >
+        <option value="">Select Batch</option>
+        {batches.map((batch) => (
+            <option key={batch.batch_id} value={batch.batch_id}>
+                {batch.batch_name}
+            </option>
+        ))}
+    </select>
+</div>
 
               <div style={{ marginBottom: '1rem' }}>
                 <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Father's Name</label>
