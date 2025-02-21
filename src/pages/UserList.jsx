@@ -262,22 +262,38 @@ useEffect(() => {
         try {
             const response = await axios.post('https://apistudents.sainikschoolcadet.com/api/users/register', newUser);
             const createdUser = response.data;
-
-            if (role_id === '3' && selectedSubject) {
+    
+            console.log("Created User Response:", createdUser); // Debugging
+            console.log("Subject ID:", selectedSubject); // Debugging
+    
+            const userId = createdUser.user?.id; // Fix: Use createdUser.user.id
+            if (!userId) {
+                console.error("User ID is missing in response!");
+                return;
+            }
+    
+            if (!selectedSubject) {
+                console.error("No subject selected!");
+                return;
+            }
+    
+            if (Number(role_id) === 3) {
                 await axios.post('https://apistudents.sainikschoolcadet.com/api/subject-teachers/assign', {
                     subject_id: selectedSubject,
-                    user_id: createdUser.user_id,
+                    user_id: userId, // Fix: Use userId instead of undefined createdUser.user_id
                 });
+                console.log("Subject assigned successfully!");
             }
-
+    
             alert('User created successfully!');
             closeCreateModal();
             setLoading(true); // Refresh user list
         } catch (err) {
-            console.error('Error creating user:', err);
+            console.error('Error creating user:', err.response?.data || err.message);
             alert(err.response?.data?.message || 'Failed to create user.');
         }
     };
+    
 
     const handleEditUser = async (e) => {
         e.preventDefault();
@@ -300,14 +316,14 @@ useEffect(() => {
             console.log('User updated:', userUpdateResponse.data);
     
             // ✅ Check if the user is a teacher (role_id == 3)
-            if (role_id == 3) {
-                console.log("User is a teacher. Proceeding with subject update.");
-            } else {
+            if (Number(role_id) !== 3) {
                 console.log("Skipping subject update as the user is not a teacher.");
                 window.location.reload();
-                closeEditModal(); // Close modal on success
+                closeEditModal();
                 return;
             }
+    
+            console.log("User is a teacher. Proceeding with subject update.");
     
             // ✅ Check if selectedSubject is valid
             if (!selectedSubject) {
@@ -318,33 +334,65 @@ useEffect(() => {
             }
     
             // ✅ Get the current assigned subject for the user
-            const currentAssignedSubject = assignedSubjects[selectedUser.user_id]
-                ? assignedSubjects[selectedUser.user_id][0] // Assume one subject per user
-                : null;
+            const currentAssignedSubject = assignedSubjects[selectedUser.user_id]?.[0] || null;
     
             console.log("Current assigned subject:", currentAssignedSubject);
     
-            // ✅ If the subject is different, update it
-            if (currentAssignedSubject && currentAssignedSubject !== selectedSubject) {
+            if (!currentAssignedSubject) {
+                // ✅ No subject is currently assigned → Assign the subject
+                try {
+                    console.log(`No subject assigned. Assigning new subject: ${selectedSubject}`);
+                    const subjectAssignResponse = await axios.post(
+                        'https://apistudents.sainikschoolcadet.com/api/subject-teachers/assign',
+                        {
+                            subject_id: selectedSubject,
+                            user_id: selectedUser.user_id,
+                        }
+                    );
+                    console.log('Subject assigned:', subjectAssignResponse.data);
+                } catch (assignError) {
+                    console.error('Error assigning Subject:', assignError.response?.data || assignError.message);
+                }
+            } else if (currentAssignedSubject !== selectedSubject) {
+                // ✅ If the subject is different, update it
                 try {
                     console.log(`Updating subject from ${currentAssignedSubject} to ${selectedSubject}`);
-    
                     const subjectUpdateResponse = await axios.put(
                         `https://apistudents.sainikschoolcadet.com/api/subject-teachers/update/${currentAssignedSubject}/${selectedUser.user_id}`,
                         { new_subject_id: selectedSubject }
                     );
                     console.log('Subject updated:', subjectUpdateResponse.data);
-                } catch (error) {
-                    console.error('Error updating Subject:', error.response?.data || error.message);
+                } catch (updateError) {
+                    console.error('Error updating Subject:', updateError.response?.data || updateError.message);
+    
+                    // ✅ If update fails because the subject doesn't exist, assign it instead
+                    if (updateError.response?.status === 404) {
+                        try {
+                            console.log(`No existing subject found. Assigning new subject: ${selectedSubject}`);
+                            const subjectAssignResponse = await axios.post(
+                                'https://apistudents.sainikschoolcadet.com/api/subject-teachers/assign',
+                                {
+                                    subject_id: selectedSubject,
+                                    user_id: selectedUser.user_id,
+                                }
+                            );
+                            console.log('Subject assigned:', subjectAssignResponse.data);
+                        } catch (assignError) {
+                            console.error('Error assigning Subject:', assignError.response?.data || assignError.message);
+                        }
+                    }
                 }
+            } else {
+                console.log("Subject is already assigned correctly. No changes needed.");
             }
     
             window.location.reload();
-            closeEditModal(); // Close modal on success
+            closeEditModal();
         } catch (error) {
             console.error('Error updating user:', error.response?.data || error.message);
         }
     };
+    
     
     
     
