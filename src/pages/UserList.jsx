@@ -303,16 +303,18 @@ useEffect(() => {
     
         try {
             // ✅ Update user's basic info
+            console.log("Updating user:", newUser);
+            console.log("New Pass",newUser.password);
             const userUpdateResponse = await axios.put(
                 `https://apistudents.sainikschoolcadet.com/api/users/user/${selectedUser.user_id}`,
                 {
-                    name: newUser.name,
-                    email: newUser.email,
-                    password: newUser.password ? newUser.password : undefined,
-                    status: newUser.status
+                  name: newUser.name,
+                  email: newUser.email,
+                  password_hash: newUser.password || undefined, // Correct field name
+                  status: newUser.status
                 }
-            );
-    
+              );
+              
             console.log('User updated:', userUpdateResponse.data);
     
             // ✅ Check if the user is a teacher (role_id == 3)
