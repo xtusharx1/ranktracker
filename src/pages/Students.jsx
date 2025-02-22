@@ -36,74 +36,57 @@ const Students = () => {
   const [editingStudent, setEditingStudent] = useState(null);
 
   useEffect(() => {
-    const fetchStudents = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch("https://apistudents.sainikschoolcadet.com/api/users/role/2");
-        const data = await response.json();
-        setStudents(data);
-      } catch (error) {
-        console.error("Error fetching student data:", error);
-      }
-    };
-
-    const fetchBatches = async () => {
-      try {
-        const response = await fetch("https://apistudents.sainikschoolcadet.com/api/batches/");
-        const data = await response.json();
-        setBatches(data);
-        const mapping = {};
-        data.forEach(batch => {
-          mapping[batch.batch_id] = batch.batch_name;
-        });
-        setBatchMapping(mapping);
-      } catch (error) {
-        console.error("Error fetching batch data:", error);
-      }
-    };
-
-    fetchStudents();
-    fetchBatches();
-  }, []);
-
-  useEffect(() => {
-    if (students.length > 0 && Object.keys(batchMapping).length > 0) {
-      fetchStudentBatches();
-    }
-  }, []);
-
-  useEffect(() => {
-    if (students.length > 0 && Object.keys(batchMapping).length > 0) {
-      fetchStudentBatches();
-    }
-  }, [batchMapping]);
-
-  const fetchStudentBatches = async () => {
-    try {
-      const studentBatchPromises = students.map(student =>
-        fetch(`https://apistudents.sainikschoolcadet.com/api/studentBatches/students/search/${student.user_id}`)
-          .then(response => response.json())
-          .then(data => {
+        // Fetch Students and Batches in Parallel
+        const [studentsResponse, batchesResponse] = await Promise.all([
+          fetch("https://apistudents.sainikschoolcadet.com/api/users/role/2"),
+          fetch("https://apistudents.sainikschoolcadet.com/api/batches/")
+        ]);
+  
+        const studentsData = await studentsResponse.json();
+        const batchesData = await batchesResponse.json();
+  
+        // Create Batch Mapping (batch_id => batch_name)
+        const batchMapping = batchesData.reduce((acc, batch) => {
+          acc[batch.batch_id] = batch.batch_name;
+          return acc;
+        }, {});
+  
+        setBatches(batchesData);
+        setBatchMapping(batchMapping);
+  
+        // Fetch Batch Info for Each Student
+        const studentBatchPromises = studentsData.map(async (student) => {
+          try {
+            const response = await fetch(
+              `https://apistudents.sainikschoolcadet.com/api/studentBatches/students/search/${student.user_id}`
+            );
+            const data = await response.json();
+  
+            // Map batch_id and batch_name if available
             if (data.length > 0) {
-              return { user_id: student.user_id, batch_id: data[0].batch_id };
+              const batchId = data[0].batch_id;
+              return { ...student, batch_id: batchId, batch_name: batchMapping[batchId] || "Unknown Batch" };
             }
-            return { user_id: student.user_id, batch_id: null };
-          })
-      );
-
-      const studentBatches = await Promise.all(studentBatchPromises);
-      const updatedStudents = students.map(student => {
-        const batchInfo = studentBatches.find(b => b.user_id === student.user_id);
-        return {
-          ...student,
-          batch_id: batchInfo.batch_id,
-          batch_name: batchInfo.batch_id ? batchMapping[batchInfo.batch_id] : "No Batch Assigned"
-        };
-      });
-      setStudents(updatedStudents);
-    } catch (error) {
-      console.error("Error fetching student batches:", error);
-    }
-  };
+  
+            return { ...student, batch_id: null, batch_name: "No Batch Assigned" };
+          } catch (error) {
+            console.error(`Error fetching batch for user ${student.user_id}:`, error);
+            return { ...student, batch_id: null, batch_name: "Batch Fetch Error" };
+          }
+        });
+  
+        const updatedStudents = await Promise.all(studentBatchPromises);
+        setStudents(updatedStudents);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+  
+    fetchData();
+  }, []);
+  
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -214,13 +197,27 @@ const Students = () => {
     return `${day}-${month}-${year}`;
   };
   const handleEditClick = async (userId) => {
-    const studentDetails = await fetchStudentDetails(userId);
-    if (studentDetails) {
-      setEditingStudent(studentDetails);
-      setShowEditModal(true);
+    try {
+      // Fetch both student details and batch info
+      const [studentDetails, studentBatch] = await Promise.all([
+        fetchStudentDetails(userId),
+        fetchStudentBatch(userId),
+      ]);
+  
+      if (studentDetails) {
+        // Ensure batch info is included
+        setEditingStudent({
+          ...studentDetails,
+          batch_id: studentBatch?.batch_id || "",
+        });
+        setShowEditModal(true);
+      }
+    } catch (error) {
+      console.error("Error fetching student data:", error);
     }
   };
-
+  
+  // Fetch individual student details
   const fetchStudentDetails = async (userId) => {
     try {
       const response = await fetch(`https://apistudents.sainikschoolcadet.com/api/users/user/${userId}`);
@@ -231,7 +228,19 @@ const Students = () => {
       return null;
     }
   };
-
+  
+  // Fetch batch details for a student
+  const fetchStudentBatch = async (userId) => {
+    try {
+      const response = await fetch(`https://apistudents.sainikschoolcadet.com/api/studentBatches/students/search/${userId}`);
+      const data = await response.json();
+      return data.length > 0 ? data[0] : null; // Assume the first batch is the current one
+    } catch (error) {
+      console.error("Error fetching student batch:", error);
+      return null;
+    }
+  };
+  
   const handleEditSubmit = async (e) => {
     e.preventDefault();
 
@@ -291,9 +300,8 @@ const Students = () => {
             // ✅ Step 3: Refresh student list
             const refreshResponse = await fetch("https://apistudents.sainikschoolcadet.com/api/users/role/2");
             const refreshData = await refreshResponse.json();
-            setStudents(refreshData);
+            window.location.reload();
 
-            // ✅ Step 4: Close modal
             setShowEditModal(false);
             setEditingStudent(null);
 
@@ -308,13 +316,13 @@ const Students = () => {
 
 
 
-  const handleEditChange = (e) => {
-    const { name, value } = e.target;
-    setEditingStudent(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
+const handleEditChange = (e) => {
+  const { name, value } = e.target;
+  setEditingStudent((prev) => ({
+    ...prev,
+    [name]: value,
+  }));
+};
 
   return (
     <div style={{ margin: '2rem', marginTop: '6rem', padding: '2rem', backgroundColor: '#fff', borderRadius: '1.5rem', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)' }}>
@@ -520,21 +528,49 @@ const Students = () => {
               </div>
 
               <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Batch </label>
-                <select
-                  name="batch_id"
-                  value={newStudent.batch_id}
-                  onChange={handleChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                >
-                  <option value="">Select Batch</option>
-                  {batches.map((batch) => (
-                    <option key={batch.batch_id} value={batch.batch_id}>
-                      {batch.batch_name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+  <label
+    htmlFor="batch"
+    style={{
+      display: 'block',
+      fontSize: '1.125rem',
+      fontWeight: '500',
+      color: '#333',
+      marginBottom: '0.5rem',
+    }}
+  >
+    Batch
+  </label>
+
+  <select
+    id="batch"
+    name="batch_id"
+    value={newStudent?.batch_id || ""}
+    onChange={handleChange}
+    style={{
+      width: '100%',
+      padding: '0.75rem',
+      border: '1px solid #ccc',
+      borderRadius: '0.5rem',
+      outline: 'none',
+      transition: 'border-color 0.3s ease',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+      cursor: 'pointer',
+    }}
+  >
+    <option value="">Select Batch</option>
+
+    {batches.length > 0 ? (
+      batches.map((batch) => (
+        <option key={batch.batch_id} value={batch.batch_id}>
+          {batch.batch_name}
+        </option>
+      ))
+    ) : (
+      <option disabled>Loading Batches...</option>
+    )}
+  </select>
+</div>
+
 
               <div style={{ marginBottom: '1rem' }}>
                 <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Father's Name</label>
@@ -793,21 +829,32 @@ const Students = () => {
               </div>
 
               <div style={{ marginBottom: '1rem' }}>
-    <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Batch</label>
-    <select
-        name="batch_id"
-        value={editingStudent.batch_id || ""}
-        onChange={handleEditChange}
-        style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-    >
-        <option value="">Select Batch</option>
-        {batches.map((batch) => (
-            <option key={batch.batch_id} value={batch.batch_id}>
-                {batch.batch_name}
-            </option>
-        ))}
-    </select>
+  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>
+    Batch
+  </label>
+
+  <select
+    name="batch_id"
+    value={editingStudent.batch_id || ""}
+    onChange={handleEditChange}
+    style={{
+      width: '100%',
+      padding: '0.75rem',
+      border: '1px solid #ccc',
+      borderRadius: '0.5rem',
+      outline: 'none',
+      transition: 'border-color 0.3s ease',
+    }}
+  >
+    <option value="">Select Batch</option>
+    {batches.map((batch) => (
+      <option key={batch.batch_id} value={batch.batch_id}>
+        {batch.batch_name}
+      </option>
+    ))}
+  </select>
 </div>
+
 
               <div style={{ marginBottom: '1rem' }}>
                 <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Father's Name</label>
