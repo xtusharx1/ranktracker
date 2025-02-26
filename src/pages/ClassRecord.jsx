@@ -40,31 +40,44 @@ const ClassRecord = () => {
   const [viewEntry, setViewEntry] = useState(null);
   const role = localStorage.getItem("role");
   const userId = localStorage.getItem("user_id");
+
   useEffect(() => {
-    const userId = localStorage.getItem("user_id"); // Get logged-in user ID
+    const Id = localStorage.getItem("user_id");
+    
+    if (role === "admin") {
+      axios.get('https://apistudents.sainikschoolcadet.com/api/subjects/')
+        .then(res => setSubjects(res.data))
+        .catch(err => console.error('Error fetching subjects:', err));
+    } else if (role === "teacher") {
+      axios.get(`https://apistudents.sainikschoolcadet.com/api/subject-teachers/teacher/${Id}`)
+        .then(res => {
+          if (res.data.length > 0) {
+            setSelectedSubject(res.data[0].subject_id);
+            return axios.get('https://apistudents.sainikschoolcadet.com/api/subjects/')
+              .then(subjectsRes => {
+                setSubjects(subjectsRes.data.filter(subject => 
+                  subject.subject_id === res.data[0].subject_id
+                ));
+              });
+          }
+        })
+        .catch(err => console.error("Error fetching teacher's subject:", err));
+    }
+  }, [role]);
+
+  useEffect(() => {
+    const userId = localStorage.getItem("user_id");
   
     if (role === "admin") {
-      // Admin fetches all batches
-      axios
-        .get("https://apistudents.sainikschoolcadet.com/api/batches")
+      axios.get("https://apistudents.sainikschoolcadet.com/api/batches")
         .then((res) => setBatches(res.data))
         .catch((err) => console.error("Error fetching batches:", err));
-  
-      // Admin fetches all subjects
-      axios
-        .get("https://apistudents.sainikschoolcadet.com/api/subjects")
-        .then((res) => setSubjects(res.data))
-        .catch((err) => console.error("Error fetching subjects:", err));
     } else if (role === "teacher") {
-      // Teachers fetch only their assigned batches
-      axios
-        .get(`https://apistudents.sainikschoolcadet.com/api/teacher-batches/teacher/${userId}/batches`)
+      axios.get(`https://apistudents.sainikschoolcadet.com/api/teacher-batches/teacher/${userId}/batches`)
         .then((res) => {
           const assignedBatchIds = res.data.map((batch) => batch.batch_id);
           
-          // Fetch details of these batches
-          axios
-            .get("https://apistudents.sainikschoolcadet.com/api/batches")
+          axios.get("https://apistudents.sainikschoolcadet.com/api/batches")
             .then((batchRes) => {
               const filteredBatches = batchRes.data.filter((batch) =>
                 assignedBatchIds.includes(batch.batch_id)
@@ -74,19 +87,8 @@ const ClassRecord = () => {
             .catch((err) => console.error("Error fetching batch details:", err));
         })
         .catch((err) => console.error("Error fetching teacher's assigned batches:", err));
-  
-      // Teachers fetch only their assigned subject
-      axios
-        .get(`https://apistudents.sainikschoolcadet.com/api/subject-teachers/teacher/${userId}`)
-        .then((res) => {
-          if (res.data.length > 0) {
-            setSelectedSubject(res.data[0].subject_id); // Auto-set subject
-          }
-        })
-        .catch((err) => console.error("Error fetching teacher's subject:", err));
     }
-  }, []);
-  
+  }, [role]);
 
   useEffect(() => {
     if (selectedBatch && selectedSubject) {
@@ -157,29 +159,43 @@ const ClassRecord = () => {
               </select>
             </Grid>
             <Grid item xs={12} sm={6}>
-            <select
-    id="subject"
-    value={selectedSubject}
-    onChange={(e) => setSelectedSubject(e.target.value)}
-    disabled={role !== "admin"} // Lock dropdown if the user is not an admin
-    style={{
-      width: "100%",
-      padding: "10px",
-      fontSize: "16px",
-      borderRadius: "5px",
-      border: "1px solid #ccc",
-      backgroundColor: role !== "admin" ? "#f0f0f0" : "#fff", // Grey out when disabled
-      cursor: role !== "admin" ? "not-allowed" : "pointer", // Show not-allowed cursor when locked
-    }}
-  >
-    <option value="">Select Subject</option>
-    {subjects.map((subject) => (
-      <option key={subject.subject_id} value={subject.subject_id}>
-        {subject.subject_name}
-      </option>
-    ))}
-  </select>
-
+              {role === "teacher" ? (
+                <input
+                  type="text"
+                  value={subjects[0]?.subject_name || "Loading..."}
+                  readOnly
+                  style={{
+                    width: "100%",
+                    padding: "10px",
+                    fontSize: "16px",
+                    borderRadius: "5px",
+                    border: "1px solid #ccc",
+                    backgroundColor: "#f0f0f0",
+                    cursor: "not-allowed"
+                  }}
+                />
+              ) : (
+                <select
+                  id="subject"
+                  value={selectedSubject}
+                  onChange={(e) => setSelectedSubject(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "10px",
+                    fontSize: "16px",
+                    borderRadius: "5px",
+                    border: "1px solid #ccc",
+                    backgroundColor: "#fff",
+                  }}
+                >
+                  <option value="">Select Subject</option>
+                  {subjects.map((subject) => (
+                    <option key={subject.subject_id} value={subject.subject_id}>
+                      {subject.subject_name}
+                    </option>
+                  ))}
+                </select>
+              )}
             </Grid>
             <Grid item xs={12}>
               <Button variant="contained" startIcon={<Add />} onClick={() => setOpen(true)}>

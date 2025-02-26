@@ -42,6 +42,33 @@ const Attendance = () => {
   }, [role]); // Re-run when role changes
   
 
+  // New useEffect for fetching subject first
+  useEffect(() => {
+    const Id = localStorage.getItem("user_id");
+    
+    if (role === "admin") {
+      axios.get('https://apistudents.sainikschoolcadet.com/api/subjects/')
+        .then(res => setSubjects(res.data))
+        .catch(err => console.error('Error fetching subjects:', err));
+    } else if (role === "teacher") {
+      // First fetch teacher's assigned subject
+      axios.get(`https://apistudents.sainikschoolcadet.com/api/subject-teachers/teacher/${Id}`)
+        .then(res => {
+          if (res.data.length > 0) {
+            setSelectedSubject(res.data[0].subject_id);
+            // Then fetch subject details
+            return axios.get('https://apistudents.sainikschoolcadet.com/api/subjects/')
+              .then(subjectsRes => {
+                setSubjects(subjectsRes.data.filter(subject => 
+                  subject.subject_id === res.data[0].subject_id
+                ));
+              });
+          }
+        })
+        .catch(err => console.error("Error fetching teacher's subject:", err));
+    }
+  }, [role]); // Only depends on role now
+
   useEffect(() => {
     if (selectedBatch) {
       // Fetching students in the selected batch
@@ -68,27 +95,6 @@ const Attendance = () => {
         .catch(err => console.error('Error fetching students for the batch:', err));
     }
   }, [selectedBatch]);
-
-  useEffect(() => {
-    if (selectedBatch) {
-      // Fetching subjects from the subjects API for admins or all roles
-      const Id = localStorage.getItem("user_id");
-      if (role === "admin") {
-        axios.get('https://apistudents.sainikschoolcadet.com/api/subjects/')
-          .then(res => setSubjects(res.data))  // Assuming the API returns an array of subjects
-          .catch(err => console.error('Error fetching subjects:', err));
-      } else if (role === "teacher") {
-        // Fetching the teacher's subject
-        axios.get(`https://apistudents.sainikschoolcadet.com/api/subject-teachers/teacher/${Id}`)
-          .then(res => {
-            if (res.data.length > 0) {
-              setSelectedSubject(res.data[0].subject_id); // Auto-set subject for teacher
-            }
-          })
-          .catch(err => console.error("Error fetching teacher's subject:", err));
-      }
-    }
-  }, [selectedBatch, role]);
 
   const handleAttendanceChange = (studentId, status) => {
     setAttendance({ ...attendance, [studentId]: status });
@@ -156,10 +162,10 @@ const Attendance = () => {
             ))}
           </select>
           {role === "teacher" ? (
-            // Teachers have a locked subject input field
+            // Teachers have a locked subject input field showing their assigned subject name
             <input
               type="text"
-              value={subjects.find(subject => subject.subject_id === selectedSubject)?.subject_name || "Subject Name"}
+              value={subjects[0]?.subject_name || "Loading..."}
               readOnly
               style={{ padding: '12px', fontSize: '16px', borderRadius: '5px', border: '1px solid #ddd' }}
             />
