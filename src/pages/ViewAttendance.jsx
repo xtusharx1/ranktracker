@@ -17,10 +17,13 @@ const ViewAttendance = () => {
         const userId = localStorage.getItem("user_id");
   
         let batchesRes;
-        if (role === "admin") {
-          // Admins: Fetch all active batches
-          batchesRes = await axios.get("https://apistudents.sainikschoolcadet.com/api/batches");
-          setBatches(batchesRes.data.filter(batch => batch.is_active));
+        if (role === "admin" || role === "counselor") {
+          try {
+            const batchesRes = await axios.get("https://apistudents.sainikschoolcadet.com/api/batches");
+            setBatches(batchesRes.data.filter(batch => batch.is_active));
+          } catch (error) {
+            console.error("Error fetching batches:", error);
+          }
         } else if (role === "teacher") {
           // Teachers: Fetch only assigned batches
           const assignedBatchesRes = await axios.get(`https://apistudents.sainikschoolcadet.com/api/teacher-batches/teacher/${userId}/batches`);
