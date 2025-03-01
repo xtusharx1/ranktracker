@@ -435,85 +435,81 @@ useEffect(() => {
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
-                        <table className="min-w-full table-auto bg-white border-collapse border border-gray-300">
-                            <thead>
-                                <tr className="bg-gray-200">
-                                    <th className="border border-gray-300 px-4 py-2 text-left">S.No</th>
-                                    <th className="border border-gray-300 px-4 py-2 text-left">Name</th>
-                                    <th className="border border-gray-300 px-4 py-2 text-left">Email</th>
-                                    <th className="border border-gray-300 px-4 py-2 text-left">Status</th>
-                                    {role_id === '3' && <th className="border border-gray-300 px-4 py-2 text-left">Assigned Subject</th>}
-                                    {role_id === '3' && <th className="border border-gray-300 px-4 py-2 text-left">Assigned Courses</th>}
-                                    {role_id === '3' && <th className="border border-gray-300 px-4 py-2 text-left">Assign Courses</th>}
-                                    <th className="border border-gray-300 px-4 py-2 text-left">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {users.map((user, index) => (
-                                    <tr key={user.user_id} className="hover:bg-gray-100">
-                                        <td className="border border-gray-300 px-4 py-2">{index + 1}</td>
-                                        <td className="border border-gray-300 px-4 py-2">{user.name}</td>
-                                        <td className="border border-gray-300 px-4 py-2">{user.email}</td>
-                                        <td className="border border-gray-300 px-4 py-2">
-                                            <span
-                                                className={`px-2 py-1 rounded-full ${
-                                                    user.status === 'active' ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'
-                                                }`}
-                                            >
-                                                {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
-                                            </span>
-                                        </td>
-                                        {role_id === '3' && (
-                        <>
-                            {/* Display Assigned Subjects */}
-                            <td className="border border-gray-300 px-4 py-2">
-                                {assignedSubjects[user.user_id] !== null 
-                                    ? assignedSubjects[user.user_id]?.map(subjectId => 
-                                        subjects.find(subject => subject.subject_id === subjectId)?.subject_name
-                                    ).join(', ') || 'N/A'
-                                    : 'Not assigned to any subject'}
-                            </td>
+                        <div className="overflow-x-auto">
+  <table className="min-w-full table-auto bg-white border-collapse border border-gray-300">
+    <thead>
+      <tr className="bg-gray-200">
+        <th className="border border-gray-300 px-4 py-2 text-left">S.No</th>
+        <th className="border border-gray-300 px-4 py-2 text-left">Name</th>
+        <th className="border border-gray-300 px-4 py-2 text-left">Email</th>
+        <th className="border border-gray-300 px-4 py-2 text-left">Status</th>
+        {role_id === '3' && <th className="border border-gray-300 px-4 py-2 text-left">Assigned Subject</th>}
+        {role_id === '3' && <th className="border border-gray-300 px-4 py-2 text-left">Assigned Courses</th>}
+        {role_id === '3' && <th className="border border-gray-300 px-4 py-2 text-left">Assign Courses</th>}
+        <th className="border border-gray-300 px-4 py-2 text-left">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {users.map((user, index) => (
+        <tr key={user.user_id} className="hover:bg-gray-100">
+          <td className="border border-gray-300 px-4 py-2">{index + 1}</td>
+          <td className="border border-gray-300 px-4 py-2">{user.name}</td>
+          <td className="border border-gray-300 px-4 py-2">{user.email}</td>
+          <td className="border border-gray-300 px-4 py-2">
+            <span
+              className={`px-2 py-1 rounded-full ${
+                user.status === 'active' ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'
+              }`}
+            >
+              {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
+            </span>
+          </td>
+          {role_id === '3' && (
+            <>
+              <td className="border border-gray-300 px-4 py-2">
+                {assignedSubjects[user.user_id] !== null 
+                  ? assignedSubjects[user.user_id]?.map(subjectId => 
+                      subjects.find(subject => subject.subject_id === subjectId)?.subject_name
+                    ).join(', ') || 'N/A'
+                  : 'Not assigned to any subject'}
+              </td>
+              <td className="border border-gray-300 px-4 py-2">
+                {assignedBatches[user.user_id]?.length > 0 ? (
+                  <ul className="list-disc list-inside space-y-1">
+                    {assignedBatches[user.user_id].map(batch => (
+                      <li key={batch.batch_id} className="text-gray-800">{batch.batch_name}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-gray-500">Not assigned to any batch</p>
+                )}
+              </td>
+            </>
+          )}
+          {role_id === '3' && (
+            <td className="border border-gray-300 px-4 py-2">
+              <button
+                className="bg-violet-500 text-white py-1 px-4 rounded-lg hover:bg-violet-600 transition duration-200"
+                onClick={() => openAssignModal(user)}
+              >
+                Assign
+              </button>
+            </td>
+          )}
+          <td className="border border-gray-300 px-4 py-2">
+            <button
+              className="bg-yellow-500 text-white py-1 px-4 rounded-lg hover:bg-yellow-600 transition duration-200"
+              onClick={() => openEditModal(user)}
+            >
+              Edit
+            </button>
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
 
-                            {/* Display Assigned Batches */}
-                            <td className="border border-gray-300 px-4 py-2">
-    {assignedBatches[user.user_id]?.length > 0 ? (
-        <ul className="list-disc list-inside space-y-1">
-            {assignedBatches[user.user_id].map(batch => (
-                <li key={batch.batch_id} className="text-gray-800">{batch.batch_name}</li>
-            ))}
-        </ul>
-    ) : (
-        <p className="text-gray-500">Not assigned to any batch</p>
-    )}
-</td>
-
-
-                        </>
-                    )}
-
-                                        {role_id === '3' && (
-                                            <td className="border border-gray-300 px-4 py-2">
-                                            <button
-                                                className="bg-violet-500 text-white py-1 px-4 rounded-lg hover:bg-violet-600 transition duration-200"
-                                                onClick={() => openAssignModal(user)} // Pass user to open modal
-                                            >
-                                                Assign
-                                            </button>
-                                        </td>
-                                        
-                                        )}
-                                        <td className="border border-gray-300 px-4 py-2">
-                                            <button
-                                                className="bg-yellow-500 text-white py-1 px-4 rounded-lg hover:bg-yellow-600 transition duration-200"
-                                                onClick={() => openEditModal(user)}
-                                            >
-                                                Edit
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
                     </div>
                 )}
             </div>

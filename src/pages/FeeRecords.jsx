@@ -625,520 +625,522 @@ const handleAddCharge = async (e) => {
   }
 
   return (
-    <div style={{ display: 'flex', fontFamily: 'Arial, sans-serif', color: '#333', height: '100vh' }}>
-      <div style={{
-  width: '300px',
-  borderRight: '1px solid #ddd',
-  padding: '20px',
-  backgroundColor: '#f9fafb',
-  overflowY: 'auto',
-  boxShadow: '2px 0px 8px rgba(0, 0, 0, 0.1)',
-  height: '100vh',
-}}>
-  <h2 style={{
-    textAlign: 'center',
-    color: '#1D72B8',
-    fontSize: '18px',
-    marginBottom: '20px',
-    fontWeight: '500',
-  }}>
-    Search For Course
-  </h2>
-  <select onChange={handleBatchChange} style={{
-    width: '100%',
-    padding: '12px',
-    borderRadius: '8px',
-    border: '1px solid #ccc',
-    marginBottom: '20px',
-    fontSize: '14px',
-    color: '#555',
-    backgroundColor: '#fff',
-    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-    transition: 'border-color 0.3s',
-  }}>
-    <option value="">Select Course</option>
-    {batches.map(batch => (
-      <option key={batch.batch_id} value={batch.batch_id}>{batch.batch_name}</option>
-    ))}
-  </select>
-
-  <h2 style={{
-    textAlign: 'center',
-    color: '#1D72B8',
-    fontSize: '18px',
-    marginBottom: '20px',
-    fontWeight: '500',
-  }}>
-    Students
-  </h2>
-  <div style={{
-    marginBottom: '20px',
-    textAlign: 'center',
-  }}>
-    <input
-      type="text"
-      placeholder="Search by name"
-      value={searchTerm}
-      onChange={(e) => setSearchTerm(e.target.value)}
-      style={{
-        width: '80%',
-        padding: '12px',
-        borderRadius: '8px',
-        border: '1px solid #ccc',
-        fontSize: '14px',
-        color: '#555',
-        backgroundColor: '#fff',
-        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-        transition: 'border-color 0.3s',
-      }}
-    />
-  </div>
-
-  <ul style={{
-    listStyleType: 'none',
-    padding: '0',
-    margin: '0',
-  }}>
-    {students.filter(student =>
-      student.name?.toLowerCase().includes(searchTerm.toLowerCase())
-    ).length > 0 ? (
-      students.filter(student =>
-        student.name?.toLowerCase().includes(searchTerm.toLowerCase())
-      ).map((student) => (
-        <li key={student.user_id} style={{
-          padding: '15px',
-          borderBottom: '1px solid #ddd',
-          cursor: 'pointer',
-          backgroundColor: '#ffffff',
-          marginBottom: '10px',
-          transition: 'background-color 0.3s, box-shadow 0.3s',
-          borderRadius: '8px',
-          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-        }} onClick={() => handleStudentClick(student)}>
+    <div style={{ fontFamily: 'Arial, sans-serif', padding: '20px', backgroundColor: '#f9f9f9' }}>
+      <div style={{ margin: '0 auto', border: '1px solid #e0e0e0', borderRadius: '8px', backgroundColor: '#fff', padding: '20px', boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)' }}>
+        <div style={{ display: 'flex', fontFamily: 'Arial, sans-serif', color: '#333', height: '100vh' }}>
           <div style={{
-            fontWeight: 'bold',
-            color: '#333',
-            fontSize: '16px',
-            marginBottom: '5px',
+            width: '300px',
+            borderRight: '1px solid #ddd',
+            padding: '20px',
+            backgroundColor: '#f9fafb',
+            overflowY: 'auto',
+            boxShadow: '2px 0px 8px rgba(0, 0, 0, 0.1)',
+            height: '100vh',
           }}>
-            {student.name || 'Unnamed Student'}
-          </div>
-          <div style={{
-            fontSize: '14px',
-            color: '#888',
-          }}>
-            Balance : {student.remainingFees ? `${student.remainingFees}` : 'No Fees Due'}
-          </div>
-        </li>
-      ))
-    ) : (
-      <li style={{
-        padding: '10px',
-        color: '#888',
-        textAlign: 'center',
-      }}>
-        No students found for this batch.
-      </li>
-    )}
-  </ul>
-</div>
+            <h2 style={{
+              textAlign: 'center',
+              color: '#1D72B8',
+              fontSize: '18px',
+              marginBottom: '20px',
+              fontWeight: '500',
+            }}>
+              Search For Course
+            </h2>
+            <select onChange={handleBatchChange} style={{
+              width: '100%',
+              padding: '12px',
+              borderRadius: '8px',
+              border: '1px solid #ccc',
+              marginBottom: '20px',
+              fontSize: '14px',
+              color: '#555',
+              backgroundColor: '#fff',
+              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+              transition: 'border-color 0.3s',
+            }}>
+              <option value="">Select Course</option>
+              {batches.map(batch => (
+                <option key={batch.batch_id} value={batch.batch_id}>{batch.batch_name}</option>
+              ))}
+            </select>
 
-      <div style={{ flex: '1', padding: '20px', overflowY: 'auto', backgroundColor: '#fff' }}>
-        {selectedStudent ? (
-          <div>
-            <h2 style={{ textAlign: 'center', marginBottom: '20px', color: '#4A90E2' }}>{selectedStudent.name}'s Fee Details</h2>
+            <h2 style={{
+              textAlign: 'center',
+              color: '#1D72B8',
+              fontSize: '18px',
+              marginBottom: '20px',
+              fontWeight: '500',
+            }}>
+              Students
+            </h2>
+            <div style={{
+              marginBottom: '20px',
+              textAlign: 'center',
+            }}>
+              <input
+                type="text"
+                placeholder="Search by name"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{
+                  width: '80%',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  border: '1px solid #ccc',
+                  fontSize: '14px',
+                  color: '#555',
+                  backgroundColor: '#fff',
+                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                  transition: 'border-color 0.3s',
+                }}
+              />
+            </div>
 
-            {!feeStatusExists ? (
-              <div style={{ textAlign: 'center' }}>
-                <button onClick={handleCreateFeeStatus} style={{ padding: '10px 20px', backgroundColor: '#4A90E2', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
-                  Create Fee Status
-                </button>
+            <ul style={{
+              listStyleType: 'none',
+              padding: '0',
+              margin: '0',
+            }}>
+              {students.filter(student =>
+                student.name?.toLowerCase().includes(searchTerm.toLowerCase())
+              ).length > 0 ? (
+                students.filter(student =>
+                  student.name?.toLowerCase().includes(searchTerm.toLowerCase())
+                ).map((student) => (
+                  <li key={student.user_id} style={{
+                    padding: '15px',
+                    borderBottom: '1px solid #ddd',
+                    cursor: 'pointer',
+                    backgroundColor: '#ffffff',
+                    marginBottom: '10px',
+                    transition: 'background-color 0.3s, box-shadow 0.3s',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                  }} onClick={() => handleStudentClick(student)}>
+                    <div style={{
+                      fontWeight: 'bold',
+                      color: '#333',
+                      fontSize: '16px',
+                      marginBottom: '5px',
+                    }}>
+                      {student.name || 'Unnamed Student'}
+                    </div>
+                    <div style={{
+                      fontSize: '14px',
+                      color: '#888',
+                    }}>
+                      Balance : {student.remainingFees ? `${student.remainingFees}` : 'No Fees Due'}
+                    </div>
+                  </li>
+                ))
+              ) : (
+                <li style={{
+                  padding: '10px',
+                  color: '#888',
+                  textAlign: 'center',
+                }}>
+                  No students found for this batch.
+                </li>
+              )}
+            </ul>
+          </div>
+
+          <div style={{ flex: '1', padding: '20px', overflowY: 'auto', backgroundColor: '#fff' }}>
+            {selectedStudent ? (
+              <div>
+                <h2 style={{ textAlign: 'center', marginBottom: '20px', color: '#4A90E2' }}>{selectedStudent.name}'s Fee Details</h2>
+
+                {!feeStatusExists ? (
+                  <div style={{ textAlign: 'center' }}>
+                    <button onClick={handleCreateFeeStatus} style={{ padding: '10px 20px', backgroundColor: '#4A90E2', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
+                      Create Fee Status
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-around', marginTop: '20px' }}>
+                      <div style={{ border: '1px solid #ccc', padding: '20px', borderRadius: '5px', flex: '1', margin: '10px', textAlign: 'center', backgroundColor: '#E0F7FA', color: '#00796B' }}>
+                        <h3>Total Fees</h3>
+                        <p style={{ fontSize: '24px', fontWeight: 'bold' }}>{selectedStudentFees.totalFees}</p>
+                      </div>
+                      <div style={{ border: '1px solid #ccc', padding: '20px', borderRadius: '5px', flex: '1', margin: '10px', textAlign: 'center', backgroundColor: '#E8F5E9', color: '#388E3C' }}>
+                        <h3>Fees Submitted</h3>
+                        <p style={{ fontSize: '24px', fontWeight: 'bold' }}>{selectedStudentFees.feesSubmitted}</p>
+                      </div>
+                      <div style={{ border: '1px solid #ccc', padding: '20px', borderRadius: '5px', flex: '1', margin: '10px', textAlign: 'center', backgroundColor: '#FFEBEE', color: '#D32F2F' }}>
+                        <h3>Remaining Fees</h3>
+                        <p style={{ fontSize: '24px', fontWeight: 'bold' }}>{selectedStudentFees.remainingFees}</p>
+                      </div>
+                      <div
+                        style={{
+                          border: '1px solid #ccc',
+                          padding: '20px',
+                          borderRadius: '5px',
+                          flex: '1',
+                          margin: '10px',
+                          textAlign: 'center',
+                          backgroundColor: '#FFF3E0',
+                          color: '#E65100',
+                        }}
+                      >
+                        <h3>Next Due Date</h3>
+                        <p style={{ fontSize: '24px', fontWeight: 'bold' }}>
+                          {selectedStudent.nextDueDate
+                            ? new Date(selectedStudent.nextDueDate).toLocaleDateString('en-US', {
+                                day: '2-digit',
+                                month: 'short',
+                                year: 'numeric',
+                              })
+                            : selectedStudent.paymentCompleted
+                            ? 'Payment Completed'
+                            : 'No Due Date'}
+                        </p>
+
+                      </div>
+
+                    </div>
+
+                    <div style={{ marginTop: '20px' }}>
+                      {combinedRecords.length === 0 ? (
+                        <div style={{ textAlign: 'center', color: 'red' }}>
+                            <p>No records found for this student.</p>
+                        </div>
+                      ) : (
+                        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
+                          <thead>
+                            <tr>
+                              <th style={{ border: '1px solid #ddd', padding: '8px', backgroundColor: '#f2f2f2' }}>Title</th>
+                              <th style={{ border: '1px solid #ddd', padding: '8px', backgroundColor: '#f2f2f2' }}>Date</th>
+                              <th style={{ border: '1px solid #ddd', padding: '8px', backgroundColor: '#f2f2f2' }}>You Gave</th>
+                              <th style={{ border: '1px solid #ddd', padding: '8px', backgroundColor: '#f2f2f2' }}>You Got</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {combinedRecords.map(record => (
+                              <tr
+                                key={record.id}
+                                style={{
+                                  backgroundColor: record.type === 'charge' ? '#FFEBEE' : record.type === 'payment' ? '#E8F5E9' : '#fff'
+                                }}
+                              >
+                                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.title}</td>
+                                <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                                {new Date(record.date).toLocaleDateString('en-US', {
+                                  day: '2-digit',
+                                  month: 'short',
+                                  year: 'numeric',
+                                })}
+                              </td>
+
+                                {/* "You Gave" Column */}
+                                <td
+                                  style={{
+                                    border: '1px solid #ddd',
+                                    padding: '8px',
+                                    color: record.type === 'charge' ? 'red' : 'inherit',
+                                    backgroundColor: record.type === 'charge' ? '#FFEBEE' : '#fff',
+                                  }}
+                                >
+                                  {record.type === 'charge' ? record.amount : '-'}
+                                </td>
+
+                                {/* "You Got" Column */}
+                                <td
+                                  style={{
+                                    border: '1px solid #ddd',
+                                    padding: '8px',
+                                    color: record.type === 'payment' ? 'green' : 'inherit',
+                                    backgroundColor: record.type === 'payment' ? '#E8F5E9' : '#fff',
+                                  }}
+                                >
+                                  {record.type === 'payment' ? record.amount : '-'}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+
+                      )}
+                    </div>
+
+                    <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center' }}>
+                      <button onClick={() => setPaymentModalOpen(true)} style={{ marginRight: '10px', padding: '10px 20px', backgroundColor: '#388E3C', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer', transition: 'background-color 0.3s' }}>
+                        You Got
+                      </button>
+                      <button onClick={() => setChargeModalOpen(true)} style={{ padding: '10px 20px', backgroundColor: '#D32F2F', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer', transition: 'background-color 0.3s' }}>
+                        You Gave
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-around', marginTop: '20px' }}>
-                  <div style={{ border: '1px solid #ccc', padding: '20px', borderRadius: '5px', flex: '1', margin: '10px', textAlign: 'center', backgroundColor: '#E0F7FA', color: '#00796B' }}>
-                    <h3>Total Fees</h3>
-                    <p style={{ fontSize: '24px', fontWeight: 'bold' }}>{selectedStudentFees.totalFees}</p>
-                  </div>
-                  <div style={{ border: '1px solid #ccc', padding: '20px', borderRadius: '5px', flex: '1', margin: '10px', textAlign: 'center', backgroundColor: '#E8F5E9', color: '#388E3C' }}>
-                    <h3>Fees Submitted</h3>
-                    <p style={{ fontSize: '24px', fontWeight: 'bold' }}>{selectedStudentFees.feesSubmitted}</p>
-                  </div>
-                  <div style={{ border: '1px solid #ccc', padding: '20px', borderRadius: '5px', flex: '1', margin: '10px', textAlign: 'center', backgroundColor: '#FFEBEE', color: '#D32F2F' }}>
-                    <h3>Remaining Fees</h3>
-                    <p style={{ fontSize: '24px', fontWeight: 'bold' }}>{selectedStudentFees.remainingFees}</p>
-                  </div>
-                  <div
-  style={{
-    border: '1px solid #ccc',
-    padding: '20px',
-    borderRadius: '5px',
-    flex: '1',
-    margin: '10px',
-    textAlign: 'center',
-    backgroundColor: '#FFF3E0',
-    color: '#E65100',
-  }}
->
-<h3>Next Due Date</h3>
-<p style={{ fontSize: '24px', fontWeight: 'bold' }}>
-  {selectedStudent.nextDueDate
-    ? new Date(selectedStudent.nextDueDate).toLocaleDateString('en-US', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-      })
-    : selectedStudent.paymentCompleted
-    ? 'Payment Completed'
-    : 'No Due Date'}
-</p>
-
-</div>
-
-                </div>
-
-                <div style={{ marginTop: '20px' }}>
-                  {combinedRecords.length === 0 ? (
-                    <div style={{ textAlign: 'center', color: 'red' }}>
-                        <p>No records found for this student.</p>
-                    </div>
-                  ) : (
-                    <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
-  <thead>
-    <tr>
-      <th style={{ border: '1px solid #ddd', padding: '8px', backgroundColor: '#f2f2f2' }}>Title</th>
-      <th style={{ border: '1px solid #ddd', padding: '8px', backgroundColor: '#f2f2f2' }}>Date</th>
-      <th style={{ border: '1px solid #ddd', padding: '8px', backgroundColor: '#f2f2f2' }}>You Gave</th>
-      <th style={{ border: '1px solid #ddd', padding: '8px', backgroundColor: '#f2f2f2' }}>You Got</th>
-    </tr>
-  </thead>
-  <tbody>
-    {combinedRecords.map(record => (
-      <tr
-        key={record.id}
-        style={{
-          backgroundColor: record.type === 'charge' ? '#FFEBEE' : record.type === 'payment' ? '#E8F5E9' : '#fff'
-        }}
-      >
-        <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.title}</td>
-        <td style={{ border: '1px solid #ddd', padding: '8px' }}>
-        {new Date(record.date).toLocaleDateString('en-US', {
-          day: '2-digit',
-          month: 'short',
-          year: 'numeric',
-        })}
-      </td>
-
-        {/* "You Gave" Column */}
-        <td
-          style={{
-            border: '1px solid #ddd',
-            padding: '8px',
-            color: record.type === 'charge' ? 'red' : 'inherit',
-            backgroundColor: record.type === 'charge' ? '#FFEBEE' : '#fff',
-          }}
-        >
-          {record.type === 'charge' ? record.amount : '-'}
-        </td>
-
-        {/* "You Got" Column */}
-        <td
-          style={{
-            border: '1px solid #ddd',
-            padding: '8px',
-            color: record.type === 'payment' ? 'green' : 'inherit',
-            backgroundColor: record.type === 'payment' ? '#E8F5E9' : '#fff',
-          }}
-        >
-          {record.type === 'payment' ? record.amount : '-'}
-        </td>
-      </tr>
-    ))}
-  </tbody>
-</table>
-
-                  )}
-                </div>
-
-                <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center' }}>
-                  <button onClick={() => setPaymentModalOpen(true)} style={{ marginRight: '10px', padding: '10px 20px', backgroundColor: '#388E3C', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer', transition: 'background-color 0.3s' }}>
-                    You Got
-                  </button>
-                  <button onClick={() => setChargeModalOpen(true)} style={{ padding: '10px 20px', backgroundColor: '#D32F2F', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer', transition: 'background-color 0.3s' }}>
-                    You Gave
-                  </button>
-                </div>
-              </div>
+              <p style={{ textAlign: 'center', marginTop: '20px', color: '#888' }}>Select a student to view their fee details.</p>
             )}
           </div>
-        ) : (
-          <p style={{ textAlign: 'center', marginTop: '20px', color: '#888' }}>Select a student to view their fee details.</p>
+        </div>
+
+        {/* Payment Modal */}
+        {isPaymentModalOpen && (
+          <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex', justifyContent: 'center', alignItems: 'center'
+          }}>
+            <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '5px', width: '400px' }}>
+              <h2 style={{ marginBottom: '20px', color: '#4A90E2' }}>You Get</h2>
+              <form onSubmit={handleAddPayment}>
+                <div style={{ marginBottom: '10px' }}>
+                  <label style={{ display: 'block', marginBottom: '5px' }}>Installment</label>
+                  <select
+                    value={paymentData.title}
+                    onChange={(e) => setPaymentData({ ...paymentData, title: e.target.value })}
+                    required
+                    style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
+                  >
+                    <option value="">Select Installment</option>
+                    <option value="1st Installment">1st Installment</option>
+                    <option value="2nd Installment">2nd Installment</option>
+                    <option value="3rd Installment">3rd Installment</option>
+                    <option value="4th Installment">4th Installment</option>
+                    <option value="5th Installment">5th Installment</option>
+                    <option value="6th Installment">6th Installment</option>
+                  </select>
+                </div>
+                <div style={{ marginBottom: '10px' }}>
+                  <label style={{ display: 'block', marginBottom: '5px' }}>Payment Date</label>
+                  <input
+                    type="date"
+                    value={paymentData.date}
+                    onChange={(e) => setPaymentData({ ...paymentData, date: e.target.value })}
+                    required
+                    style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
+                  />
+                </div>
+                <div style={{ marginBottom: '10px' }}>
+                  <label style={{ display: 'block', marginBottom: '5px' }}>Amount</label>
+                  <input
+                    type="number"
+                    value={paymentData.amount}
+                    onChange={(e) => setPaymentData({ ...paymentData, amount: e.target.value })}
+                    required
+                    style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
+                  />
+                </div>
+                
+                {/* New field to mark if payment is complete */}
+                <div style={{ marginBottom: '10px' }}>
+                  <label style={{ display: 'block', marginBottom: '5px' }}>
+                    <input
+                      type="checkbox"
+                      checked={paymentData.paymentCompleted}
+                      onChange={(e) => setPaymentData({ ...paymentData, paymentCompleted: e.target.checked })}
+                    />
+                    Payment Completed
+                  </label>
+                </div>
+
+                {/* Conditionally render the 'Next Due Date' field */}
+                {!paymentData.paymentCompleted && (
+                  <div style={{ marginBottom: '10px' }}>
+                    <label style={{ display: 'block', marginBottom: '5px' }}>Next Due Date</label>
+                    <input
+                      type="date"
+                      value={paymentData.nextDueDate}
+                      onChange={(e) => setPaymentData({ ...paymentData, nextDueDate: e.target.value })}
+                      required
+                      style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
+                    />
+                  </div>
+                )}
+
+                <div style={{ textAlign: 'right' }}>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentModalOpen(false)}
+                    style={{ marginRight: '10px', padding: '10px 20px', backgroundColor: '#f0f0f0', color: '#333', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    style={{ padding: '10px 20px', backgroundColor: '#4A90E2', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
+                  >
+                    Add Payment
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Charge Modal */}
+        {isChargeModalOpen && (
+          <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex', justifyContent: 'center', alignItems: 'center'
+          }}>
+            <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '5px', width: '400px' }}>
+              <h2 style={{ marginBottom: '20px', color: '#4A90E2' }}>You Gave</h2>
+              <form onSubmit={handleAddCharge}>
+                <div style={{ marginBottom: '10px' }}>
+                  <label style={{ display: 'block', marginBottom: '5px' }}>Title</label>
+                  <input
+                    type="text"
+                    value={chargeData.title}
+                    onChange={(e) => setChargeData({ ...chargeData, title: e.target.value })}
+                    required
+                    style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
+                  />
+                </div>
+                <div style={{ marginBottom: '10px' }}>
+                  <label style={{ display: 'block', marginBottom: '5px' }}>Date</label>
+                  <input
+                    type="date"
+                    value={chargeData.date}
+                    onChange={(e) => setChargeData({ ...chargeData, date: e.target.value })}
+                    required
+                    style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
+                  />
+                </div>
+                <div style={{ marginBottom: '10px' }}>
+                  <label style={{ display: 'block', marginBottom: '5px' }}>Amount</label>
+                  <input
+                    type="number"
+                    value={chargeData.amount}
+                    onChange={(e) => setChargeData({ ...chargeData, amount: e.target.value })}
+                    required
+                    style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
+                  />
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <button
+                    type="button"
+                    onClick={() => setChargeModalOpen(false)}
+                    style={{ marginRight: '10px', padding: '10px 20px', backgroundColor: '#f0f0f0', color: '#333', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    style={{ padding: '10px 20px', backgroundColor: '#4A90E2', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
+                  >
+                    Add Charge
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {showFeeStatusForm && (
+          <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              zIndex: 1000,
+          }}>
+              <div style={{
+                  backgroundColor: '#fff',
+                  padding: '20px',
+                  borderRadius: '5px',
+                  width: '400px',
+                  position: 'relative',
+              }}>
+                  <button onClick={() => setShowFeeStatusForm(false)} style={{
+                      position: 'absolute',
+                      top: '10px',
+                      right: '10px',
+                      background: 'none',
+                      border: 'none',
+                      fontSize: '16px',
+                      cursor: 'pointer',
+                  }}>✖</button>
+                  <h2 style={{ marginBottom: '20px', color: '#4A90E2', textAlign: 'center' }}>Create Fee Status</h2>
+                  <form onSubmit={handleSubmitFeeStatus}>
+                      <div style={{ marginBottom: '10px' }}>
+                          <label style={{ display: 'block', marginBottom: '5px' }}>Admission Date</label>
+                          <input
+                              type="date"
+                              value={newFeeStatus.admissionDate}
+                              onChange={(e) => setNewFeeStatus({ ...newFeeStatus, admissionDate: e.target.value })}
+                              required
+                              style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
+                          />
+                      </div>
+                      <div style={{ marginBottom: '10px' }}>
+                          <label style={{ display: 'block', marginBottom: '5px' }}>Total Fees</label>
+                          <input
+                              type="number"
+                              value={newFeeStatus.totalFees}
+                              onChange={(e) => setNewFeeStatus({ ...newFeeStatus, totalFees: e.target.value })}
+                              required
+                              style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
+                          />
+                      </div>
+                      <div style={{ marginBottom: '10px' }}>
+                          <label style={{ display: 'block', marginBottom: '5px' }}>Fees Submitted</label>
+                          <input
+                              type="number"
+                              value={newFeeStatus.feesSubmitted}
+                              onChange={(e) => setNewFeeStatus({ ...newFeeStatus, feesSubmitted: e.target.value })}
+                              required
+                              style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
+                          />
+                      </div>
+                      <div style={{ marginBottom: '10px' }}>
+                          <label style={{ display: 'block', marginBottom: '5px' }}>Remaining Fees</label>
+                          <input
+                              type="number"
+                              value={newFeeStatus.remainingFees}
+                              onChange={(e) => setNewFeeStatus({ ...newFeeStatus, remainingFees: e.target.value })}
+                              required
+                              style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
+                          />
+                      </div>
+                      <div style={{ marginBottom: '10px' }}>
+                          <label style={{ display: 'block', marginBottom: '5px' }}>Next Due Date</label>
+                          <input
+                              type="date"
+                              value={newFeeStatus.nextDueDate}
+                              onChange={(e) => setNewFeeStatus({ ...newFeeStatus, nextDueDate: e.target.value })}
+                              required
+                              style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
+                          />
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                          <button type="button" onClick={() => setShowFeeStatusForm(false)} style={{
+                              marginRight: '10px',
+                              padding: '10px 20px',
+                              backgroundColor: '#f0f0f0',
+                              color: '#333',
+                              border: 'none',
+                              borderRadius: '5px',
+                              cursor: 'pointer',
+                          }}>
+                              Cancel
+                          </button>
+                          <button type="submit" style={{
+                              padding: '10px 20px',
+                              backgroundColor: '#4A90E2',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: '5px',
+                              cursor: 'pointer',
+                          }}>
+                              Submit
+                          </button>
+                      </div>
+                  </form>
+              </div>
+          </div>
         )}
       </div>
-
-      {/* Payment Modal */}
-      {isPaymentModalOpen && (
-  <div style={{
-    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)',
-    display: 'flex', justifyContent: 'center', alignItems: 'center'
-  }}>
-    <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '5px', width: '400px' }}>
-      <h2 style={{ marginBottom: '20px', color: '#4A90E2' }}>You Get</h2>
-      <form onSubmit={handleAddPayment}>
-        <div style={{ marginBottom: '10px' }}>
-          <label style={{ display: 'block', marginBottom: '5px' }}>Installment</label>
-          <select
-            value={paymentData.title}
-            onChange={(e) => setPaymentData({ ...paymentData, title: e.target.value })}
-            required
-            style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
-          >
-            <option value="">Select Installment</option>
-            <option value="1st Installment">1st Installment</option>
-            <option value="2nd Installment">2nd Installment</option>
-            <option value="3rd Installment">3rd Installment</option>
-            <option value="4th Installment">4th Installment</option>
-            <option value="5th Installment">5th Installment</option>
-            <option value="6th Installment">6th Installment</option>
-          </select>
-        </div>
-        <div style={{ marginBottom: '10px' }}>
-          <label style={{ display: 'block', marginBottom: '5px' }}>Payment Date</label>
-          <input
-            type="date"
-            value={paymentData.date}
-            onChange={(e) => setPaymentData({ ...paymentData, date: e.target.value })}
-            required
-            style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
-          />
-        </div>
-        <div style={{ marginBottom: '10px' }}>
-          <label style={{ display: 'block', marginBottom: '5px' }}>Amount</label>
-          <input
-            type="number"
-            value={paymentData.amount}
-            onChange={(e) => setPaymentData({ ...paymentData, amount: e.target.value })}
-            required
-            style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
-          />
-        </div>
-        
-        {/* New field to mark if payment is complete */}
-        <div style={{ marginBottom: '10px' }}>
-          <label style={{ display: 'block', marginBottom: '5px' }}>
-            <input
-              type="checkbox"
-              checked={paymentData.paymentCompleted}
-              onChange={(e) => setPaymentData({ ...paymentData, paymentCompleted: e.target.checked })}
-            />
-            Payment Completed
-          </label>
-        </div>
-
-        {/* Conditionally render the 'Next Due Date' field */}
-        {!paymentData.paymentCompleted && (
-          <div style={{ marginBottom: '10px' }}>
-            <label style={{ display: 'block', marginBottom: '5px' }}>Next Due Date</label>
-            <input
-              type="date"
-              value={paymentData.nextDueDate}
-              onChange={(e) => setPaymentData({ ...paymentData, nextDueDate: e.target.value })}
-              required
-              style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
-            />
-          </div>
-        )}
-
-        <div style={{ textAlign: 'right' }}>
-          <button
-            type="button"
-            onClick={() => setPaymentModalOpen(false)}
-            style={{ marginRight: '10px', padding: '10px 20px', backgroundColor: '#f0f0f0', color: '#333', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            style={{ padding: '10px 20px', backgroundColor: '#4A90E2', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
-          >
-            Add Payment
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-)}
-
-
-
-      {/* Charge Modal */}
-      {isChargeModalOpen && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex', justifyContent: 'center', alignItems: 'center'
-        }}>
-          <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '5px', width: '400px' }}>
-            <h2 style={{ marginBottom: '20px', color: '#4A90E2' }}>You Gave</h2>
-            <form onSubmit={handleAddCharge}>
-              <div style={{ marginBottom: '10px' }}>
-                <label style={{ display: 'block', marginBottom: '5px' }}>Title</label>
-                <input
-                  type="text"
-                  value={chargeData.title}
-                  onChange={(e) => setChargeData({ ...chargeData, title: e.target.value })}
-                  required
-                  style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
-                />
-              </div>
-              <div style={{ marginBottom: '10px' }}>
-                <label style={{ display: 'block', marginBottom: '5px' }}>Date</label>
-                <input
-                  type="date"
-                  value={chargeData.date}
-                  onChange={(e) => setChargeData({ ...chargeData, date: e.target.value })}
-                  required
-                  style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
-                />
-              </div>
-              <div style={{ marginBottom: '10px' }}>
-                <label style={{ display: 'block', marginBottom: '5px' }}>Amount</label>
-                <input
-                  type="number"
-                  value={chargeData.amount}
-                  onChange={(e) => setChargeData({ ...chargeData, amount: e.target.value })}
-                  required
-                  style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
-                />
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <button
-                  type="button"
-                  onClick={() => setChargeModalOpen(false)}
-                  style={{ marginRight: '10px', padding: '10px 20px', backgroundColor: '#f0f0f0', color: '#333', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  style={{ padding: '10px 20px', backgroundColor: '#4A90E2', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
-                >
-                  Add Charge
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {showFeeStatusForm && (
-        <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 1000,
-        }}>
-            <div style={{
-                backgroundColor: '#fff',
-                padding: '20px',
-                borderRadius: '5px',
-                width: '400px',
-                position: 'relative',
-            }}>
-                <button onClick={() => setShowFeeStatusForm(false)} style={{
-                    position: 'absolute',
-                    top: '10px',
-                    right: '10px',
-                    background: 'none',
-                    border: 'none',
-                    fontSize: '16px',
-                    cursor: 'pointer',
-                }}>✖</button>
-                <h2 style={{ marginBottom: '20px', color: '#4A90E2', textAlign: 'center' }}>Create Fee Status</h2>
-                <form onSubmit={handleSubmitFeeStatus}>
-                    <div style={{ marginBottom: '10px' }}>
-                        <label style={{ display: 'block', marginBottom: '5px' }}>Admission Date</label>
-                        <input
-                            type="date"
-                            value={newFeeStatus.admissionDate}
-                            onChange={(e) => setNewFeeStatus({ ...newFeeStatus, admissionDate: e.target.value })}
-                            required
-                            style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
-                        />
-                    </div>
-                    <div style={{ marginBottom: '10px' }}>
-                        <label style={{ display: 'block', marginBottom: '5px' }}>Total Fees</label>
-                        <input
-                            type="number"
-                            value={newFeeStatus.totalFees}
-                            onChange={(e) => setNewFeeStatus({ ...newFeeStatus, totalFees: e.target.value })}
-                            required
-                            style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
-                        />
-                    </div>
-                    <div style={{ marginBottom: '10px' }}>
-                        <label style={{ display: 'block', marginBottom: '5px' }}>Fees Submitted</label>
-                        <input
-                            type="number"
-                            value={newFeeStatus.feesSubmitted}
-                            onChange={(e) => setNewFeeStatus({ ...newFeeStatus, feesSubmitted: e.target.value })}
-                            required
-                            style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
-                        />
-                    </div>
-                    <div style={{ marginBottom: '10px' }}>
-                        <label style={{ display: 'block', marginBottom: '5px' }}>Remaining Fees</label>
-                        <input
-                            type="number"
-                            value={newFeeStatus.remainingFees}
-                            onChange={(e) => setNewFeeStatus({ ...newFeeStatus, remainingFees: e.target.value })}
-                            required
-                            style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
-                        />
-                    </div>
-                    <div style={{ marginBottom: '10px' }}>
-                        <label style={{ display: 'block', marginBottom: '5px' }}>Next Due Date</label>
-                        <input
-                            type="date"
-                            value={newFeeStatus.nextDueDate}
-                            onChange={(e) => setNewFeeStatus({ ...newFeeStatus, nextDueDate: e.target.value })}
-                            required
-                            style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
-                        />
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                        <button type="button" onClick={() => setShowFeeStatusForm(false)} style={{
-                            marginRight: '10px',
-                            padding: '10px 20px',
-                            backgroundColor: '#f0f0f0',
-                            color: '#333',
-                            border: 'none',
-                            borderRadius: '5px',
-                            cursor: 'pointer',
-                        }}>
-                            Cancel
-                        </button>
-                        <button type="submit" style={{
-                            padding: '10px 20px',
-                            backgroundColor: '#4A90E2',
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: '5px',
-                            cursor: 'pointer',
-                        }}>
-                            Submit
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-      )}
     </div>
   );
 };

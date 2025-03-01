@@ -34,6 +34,8 @@ const Students = () => {
   });
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingStudent, setEditingStudent] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [studentsPerPage] = useState(50);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -324,668 +326,710 @@ const handleEditChange = (e) => {
   }));
 };
 
+const indexOfLastStudent = currentPage * studentsPerPage;
+const indexOfFirstStudent = indexOfLastStudent - studentsPerPage;
+const currentStudents = students.slice(indexOfFirstStudent, indexOfLastStudent);
+const totalPages = Math.ceil(students.length / studentsPerPage);
+
+const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
   return (
-    <div style={{ margin: '2rem', marginTop: '6rem', padding: '2rem', backgroundColor: '#fff', borderRadius: '1.5rem', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)' }}>
-      <Header category="" title="Students" />
+    <div style={{ fontFamily: 'Arial, sans-serif', backgroundColor: '#f9f9f9' }}>
+      <div style={{ margin: '0 auto', border: '1px solid #e0e0e0', borderRadius: '8px', backgroundColor: '#fff', padding: '20px', boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)' }}>
+        <Header category="" title="Students" />
 
-      <button
-        style={{
-          backgroundColor: '#4a90e2',
-          color: '#fff',
-          fontWeight: 'bold',
-          padding: '0.5rem 1rem',
-          borderRadius: '0.5rem',
-          marginBottom: '1rem',
-          cursor: 'pointer',
-          transition: 'background-color 0.3s ease',
-          border: 'none',
-        }}
-        onClick={() => setShowModal(true)}
-      >
-        Create New Student
-      </button>
+        <button
+          className="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-200 mb-4"
+          onClick={() => setShowModal(true)}
+        >
+          Create New Student
+        </button>
 
-      <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '2rem' }}>
-        <thead>
-          <tr style={{ backgroundColor: '#f4f4f4', textAlign: 'left' }}>
-            <th style={{ padding: '0.5rem', borderBottom: '1px solid #ddd' }}>S.No</th>
-            <th style={{ padding: '0.5rem', borderBottom: '1px solid #ddd' }}>Name</th>
-            <th style={{ padding: '0.5rem', borderBottom: '1px solid #ddd' }}>Email</th>
-            <th style={{ padding: '0.5rem', borderBottom: '1px solid #ddd' }}>Phone Number</th>
-            <th style={{ padding: '0.5rem', borderBottom: '1px solid #ddd' }}>Batch Name</th>
-            <th style={{ padding: '0.5rem', borderBottom: '1px solid #ddd' }}>Date of Admission</th>
-            <th style={{ padding: '0.5rem', borderBottom: '1px solid #ddd' }}>Status</th>
-            <th style={{ padding: '0.5rem', borderBottom: '1px solid #ddd' }}>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {students.map((student, index) => (
-            <tr key={student.user_id} style={{ borderBottom: '1px solid #ddd' }}>
-              <td style={{ padding: '0.5rem' }}>{index + 1}</td>
-              <td style={{ padding: '0.5rem' }}>{student.name}</td>
-              <td style={{ padding: '0.5rem' }}>{student.email}</td>
-              <td style={{ padding: '0.5rem' }}>{student.phone_number}</td>
-              <td style={{ padding: '0.5rem' }}>{student.batch_name}</td>
-              <td style={{ padding: '0.5rem' }}>{student.date_of_admission}</td>
-              <td style={{ padding: '0.5rem' }}>{student.status}</td>
-              <td style={{ padding: '0.5rem' }}>
-                <button
-                  onClick={() => handleEditClick(student.user_id)}
-                  style={{
-                    backgroundColor: '#2196F3',
-                    color: '#fff',
-                    fontWeight: 'bold',
-                    padding: '0.25rem 0.75rem',
-                    borderRadius: '0.25rem',
-                    cursor: 'pointer',
-                    transition: 'background-color 0.3s ease',
-                    border: 'none',
-                  }}
-                >
-                  Edit
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+        <div style={{ 
+          overflowX: 'auto', 
+          borderRadius: '8px', 
+          backgroundColor: '#fff',
+          padding: '5px',
+          boxShadow: '0 0 10px rgba(0,0,0,0.1)'
+        }}>
+          <table className="min-w-full table-auto bg-white border-collapse border border-gray-300">
+            <thead>
+              <tr className="bg-gray-200">
+                <th className="border border-gray-300 px-2 py-3 text-center" style={{ width: '40px' }}>S.No</th>
+                <th className="border border-gray-300 px-4 py-3 text-left">Name</th>
+                <th className="border border-gray-300 px-4 py-3 text-left">Email</th>
+                <th className="border border-gray-300 px-4 py-3 text-left">Phone Number</th>
+                <th className="border border-gray-300 px-4 py-3 text-left">Batch Name</th>
+                <th className="border border-gray-300 px-4 py-3 text-left">Date of Admission</th>
+                <th className="border border-gray-300 px-4 py-3 text-left">Status</th>
+                <th className="border border-gray-300 px-4 py-3 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {currentStudents.map((student, index) => (
+                <tr key={student.user_id} className="hover:bg-gray-50">
+                  <td className="border border-gray-300 px-2 py-3 text-center">{indexOfFirstStudent + index + 1}</td>
+                  <td className="border border-gray-300 px-4 py-3">{student.name}</td>
+                  <td className="border border-gray-300 px-4 py-3">{student.email}</td>
+                  <td className="border border-gray-300 px-4 py-3">{student.phone_number}</td>
+                  <td className="border border-gray-300 px-4 py-3">{student.batch_name}</td>
+                  <td className="border border-gray-300 px-4 py-3">{student.date_of_admission}</td>
+                  <td className="border border-gray-300 px-4 py-3">
+                    <span className={`px-2 py-1 rounded-full ${
+                      student.status === 'active' 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-red-100 text-red-800'
+                    }`}>
+                      {student.status.charAt(0).toUpperCase() + student.status.slice(1)}
+                    </span>
+                  </td>
+                  <td className="border border-gray-300 px-4 py-3 text-center">
+                    <button
+                      onClick={() => handleEditClick(student.user_id)}
+                      className="bg-blue-500 text-white py-1 px-4 rounded-lg hover:bg-blue-600 transition duration-200"
+                    >
+                      Edit
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
-      {showModal && (
-        <div style={{ position: 'fixed', inset: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.5)', zIndex: 50 }}>
-          <div style={{ backgroundColor: '#fff', padding: '2rem', borderRadius: '0.5rem', width: '100%', maxWidth: '50rem', height: '100%', maxHeight: '100vh', overflowY: 'auto' }}>
-            <h2 style={{ fontSize: '1.875rem', fontWeight: 'bold', textAlign: 'center', marginBottom: '2rem' }}>Create New Student</h2>
-            <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Name <span style={{ color: 'red' }}>*</span></label>
-                <input
-                  type="text"
-                  name="name"
-                  value={newStudent.name}
-                  onChange={handleChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                  required
-                />
-              </div>
-
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Email <span style={{ color: 'red' }}>*</span></label>
-                <input
-                  type="email"
-                  name="email"
-                  value={newStudent.email}
-                  onChange={handleChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                  required
-                />
-              </div>
-
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Phone Number <span style={{ color: 'red' }}>*</span></label>
-                <input
-                  type="text"
-                  name="phone_number"
-                  value={newStudent.phone_number}
-                  onChange={handleChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                  required
-                />
-              </div>
-
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Password <span style={{ color: 'red' }}>*</span></label>
-                <input
-                  type="password"
-                  name="password"
-                  value={newStudent.password}
-                  onChange={handleChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                  required
-                />
-              </div>
-
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Status <span style={{ color: 'red' }}>*</span></label>
-                <select
-                  name="status"
-                  value={newStudent.status}
-                  onChange={handleChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                  required
-                >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-              </div>
-
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Date of Admission</label>
-                <input
-                  type="date"
-                  name="date_of_admission"
-                  value={newStudent.date_of_admission}
-                  onChange={handleChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                />
-              </div>
-
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Present Class</label>
-                <input
-                  type="text"
-                  name="present_class"
-                  value={newStudent.present_class}
-                  onChange={handleChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                />
-              </div>
-
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Date of Birth</label>
-                <input
-                  type="date"
-                  name="date_of_birth"
-                  value={newStudent.date_of_birth}
-                  onChange={handleChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                />
-              </div>
-
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Total Course Fees</label>
-                <input
-                  type="number"
-                  name="total_course_fees"
-                  value={newStudent.total_course_fees}
-                  onChange={handleChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                />
-              </div>
-
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Gender</label>
-                <select
-                  name="gender"
-                  value={newStudent.gender}
-                  onChange={handleChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                >
-                  <option value="">Select Gender</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>State</label>
-                <input
-                  type="text"
-                  name="state"
-                  value={newStudent.state}
-                  onChange={handleChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                />
-              </div>
-
-              <div style={{ marginBottom: '1rem' }}>
-  <label
-    htmlFor="batch"
-    style={{
-      display: 'block',
-      fontSize: '1.125rem',
-      fontWeight: '500',
-      color: '#333',
-      marginBottom: '0.5rem',
-    }}
-  >
-    Batch
-  </label>
-
-  <select
-    id="batch"
-    name="batch_id"
-    value={newStudent?.batch_id || ""}
-    onChange={handleChange}
-    style={{
-      width: '100%',
-      padding: '0.75rem',
-      border: '1px solid #ccc',
-      borderRadius: '0.5rem',
-      outline: 'none',
-      transition: 'border-color 0.3s ease',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-      cursor: 'pointer',
-    }}
-  >
-    <option value="">Select Batch</option>
-
-    {batches.length > 0 ? (
-      batches.map((batch) => (
-        <option key={batch.batch_id} value={batch.batch_id}>
-          {batch.batch_name}
-        </option>
-      ))
-    ) : (
-      <option disabled>Loading Batches...</option>
-    )}
-  </select>
-</div>
-
-
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Father's Name</label>
-                <input
-                  type="text"
-                  name="father_name"
-                  value={newStudent.father_name}
-                  onChange={handleChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                />
-              </div>
-
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Mother's Name</label>
-                <input
-                  type="text"
-                  name="mother_name"
-                  value={newStudent.mother_name}
-                  onChange={handleChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                />
-              </div>
-
-              <div style={{ marginBottom: '1rem', gridColumn: 'span 2' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Full Address</label>
-                <textarea
-                  name="full_address"
-                  value={newStudent.full_address}
-                  onChange={handleChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                ></textarea>
-              </div>
-
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Child Aadhar Number</label>
-                <input
-                  type="text"
-                  name="child_aadhar_number"
-                  value={newStudent.child_aadhar_number}
-                  onChange={handleChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                />
-              </div>
-
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Mother Aadhar Number</label>
-                <input
-                  type="text"
-                  name="mother_aadhar_number"
-                  value={newStudent.mother_aadhar_number}
-                  onChange={handleChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                />
-              </div>
-
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Father Aadhar Number</label>
-                <input
-                  type="text"
-                  name="father_aadhar_number"
-                  value={newStudent.father_aadhar_number}
-                  onChange={handleChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                />
-              </div>
-
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Permanent Education Number</label>
-                <input
-                  type="text"
-                  name="permanent_education_number"
-                  value={newStudent.permanent_education_number}
-                  onChange={handleChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                />
-              </div>
-
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Student Registration Number</label>
-                <input
-                  type="text"
-                  name="student_registration_number"
-                  value={newStudent.student_registration_number}
-                  onChange={handleChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                />
-              </div>
-
-              <div style={{ marginBottom: '1rem', gridColumn: 'span 2' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Previous School Info</label>
-                <textarea
-                  name="previous_school_info"
-                  value={newStudent.previous_school_info}
-                  onChange={handleChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                ></textarea>
-              </div>
-
-              <div style={{ gridColumn: 'span 2', textAlign: 'center' }}>
-              
-              
-
-                <button
-                  type="submit"
-                  style={{
-                    backgroundColor: '#4a90e2',
-                    color: '#fff',
-                    fontWeight: 'bold',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '0.5rem',
-                    cursor: 'pointer',
-                    transition: 'background-color 0.3s ease',
-                    border: 'none',
-                  }}
-                >
-                  Create
-                </button>
-                <br></br>
-                <br></br>
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="bg-gray-400 hover:bg-gray-500 text-white py-2 px-4 rounded-md"
-                >
-                  Cancel   
-                </button>
-              </div>
-            </form>
+        <div className="flex items-center justify-between mt-4 px-4 py-3 bg-white border-t border-gray-200 sm:px-6">
+          <div className="flex items-center">
+            <p className="text-sm text-gray-700">
+              Showing{' '}
+              <span className="font-medium">{indexOfFirstStudent + 1}</span>
+              {' '}-{' '}
+              <span className="font-medium">
+                {Math.min(indexOfLastStudent, students.length)}
+              </span>
+              {' '}of{' '}
+              <span className="font-medium">{students.length}</span>
+              {' '}results
+            </p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => paginate(currentPage - 1)}
+              disabled={currentPage === 1}
+              className={`px-3 py-1 rounded-md ${
+                currentPage === 1
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+              }`}
+            >
+              Previous
+            </button>
+            {[...Array(totalPages)].map((_, idx) => (
+              <button
+                key={idx + 1}
+                onClick={() => paginate(idx + 1)}
+                className={`px-3 py-1 rounded-md ${
+                  currentPage === idx + 1
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                }`}
+              >
+                {idx + 1}
+              </button>
+            ))}
+            <button
+              onClick={() => paginate(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className={`px-3 py-1 rounded-md ${
+                currentPage === totalPages
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+              }`}
+            >
+              Next
+            </button>
           </div>
         </div>
-      )}
 
-      {showEditModal && editingStudent && (
-        <div style={{ position: 'fixed', inset: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.5)', zIndex: 50 }}>
-          <div style={{ backgroundColor: '#fff', padding: '2rem', borderRadius: '0.5rem', width: '100%', maxWidth: '50rem', height: '100%', maxHeight: '100vh', overflowY: 'auto' }}>
-            <h2 style={{ fontSize: '1.875rem', fontWeight: 'bold', textAlign: 'center', marginBottom: '2rem' }}>Edit Student</h2>
-            <form onSubmit={handleEditSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Name <span style={{ color: 'red' }}>*</span></label>
-                <input
-                  type="text"
-                  name="name"
-                  value={editingStudent.name}
-                  onChange={handleEditChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                  required
-                />
-              </div>
+        {showModal && (
+          <div style={{ position: 'fixed', inset: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.5)', zIndex: 50 }}>
+            <div style={{ backgroundColor: '#fff', padding: '2rem', borderRadius: '0.5rem', width: '100%', maxWidth: '50rem', height: '100%', maxHeight: '100vh', overflowY: 'auto' }}>
+              <h2 style={{ fontSize: '1.875rem', fontWeight: 'bold', textAlign: 'center', marginBottom: '2rem' }}>Create New Student</h2>
+              <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Name <span style={{ color: 'red' }}>*</span></label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={newStudent.name}
+                    onChange={handleChange}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+                    required
+                  />
+                </div>
 
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Email <span style={{ color: 'red' }}>*</span></label>
-                <input
-                  type="email"
-                  name="email"
-                  value={editingStudent.email}
-                  onChange={handleEditChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                  required
-                />
-              </div>
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Email <span style={{ color: 'red' }}>*</span></label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={newStudent.email}
+                    onChange={handleChange}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+                    required
+                  />
+                </div>
 
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Phone Number <span style={{ color: 'red' }}>*</span></label>
-                <input
-                  type="text"
-                  name="phone_number"
-                  value={editingStudent.phone_number}
-                  onChange={handleEditChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                  required
-                />
-              </div>
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Phone Number <span style={{ color: 'red' }}>*</span></label>
+                  <input
+                    type="text"
+                    name="phone_number"
+                    value={newStudent.phone_number}
+                    onChange={handleChange}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+                    required
+                  />
+                </div>
 
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Status <span style={{ color: 'red' }}>*</span></label>
-                <select
-                  name="status"
-                  value={editingStudent.status}
-                  onChange={handleEditChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                  required
-                >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-              </div>
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Password <span style={{ color: 'red' }}>*</span></label>
+                  <input
+                    type="password"
+                    name="password"
+                    value={newStudent.password}
+                    onChange={handleChange}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+                    required
+                  />
+                </div>
 
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Date of Admission</label>
-                <input
-                  type="date"
-                  name="date_of_admission"
-                  value={editingStudent.date_of_admission}
-                  onChange={handleEditChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                />
-              </div>
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Status <span style={{ color: 'red' }}>*</span></label>
+                  <select
+                    name="status"
+                    value={newStudent.status}
+                    onChange={handleChange}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+                    required
+                  >
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                </div>
 
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Present Class</label>
-                <input
-                  type="text"
-                  name="present_class"
-                  value={editingStudent.present_class}
-                  onChange={handleEditChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                />
-              </div>
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Date of Admission</label>
+                  <input
+                    type="date"
+                    name="date_of_admission"
+                    value={newStudent.date_of_admission}
+                    onChange={handleChange}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+                  />
+                </div>
 
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Date of Birth</label>
-                <input
-                  type="date"
-                  name="date_of_birth"
-                  value={editingStudent.date_of_birth}
-                  onChange={handleEditChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                />
-              </div>
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Present Class</label>
+                  <input
+                    type="text"
+                    name="present_class"
+                    value={newStudent.present_class}
+                    onChange={handleChange}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+                  />
+                </div>
 
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Total Course Fees</label>
-                <input
-                  type="number"
-                  name="total_course_fees"
-                  value={editingStudent.total_course_fees}
-                  onChange={handleEditChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                />
-              </div>
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Date of Birth</label>
+                  <input
+                    type="date"
+                    name="date_of_birth"
+                    value={newStudent.date_of_birth}
+                    onChange={handleChange}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+                  />
+                </div>
 
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Gender</label>
-                <select
-                  name="gender"
-                  value={editingStudent.gender}
-                  onChange={handleEditChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                >
-                  <option value="">Select Gender</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Total Course Fees</label>
+                  <input
+                    type="number"
+                    name="total_course_fees"
+                    value={newStudent.total_course_fees}
+                    onChange={handleChange}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+                  />
+                </div>
 
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>State</label>
-                <input
-                  type="text"
-                  name="state"
-                  value={editingStudent.state}
-                  onChange={handleEditChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                />
-              </div>
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Gender</label>
+                  <select
+                    name="gender"
+                    value={newStudent.gender}
+                    onChange={handleChange}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+                  >
+                    <option value="">Select Gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
 
-              <div style={{ marginBottom: '1rem' }}>
-  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>
-    Batch
-  </label>
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>State</label>
+                  <input
+                    type="text"
+                    name="state"
+                    value={newStudent.state}
+                    onChange={handleChange}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+                  />
+                </div>
 
-  <select
-    name="batch_id"
-    value={editingStudent.batch_id || ""}
-    onChange={handleEditChange}
-    style={{
-      width: '100%',
-      padding: '0.75rem',
-      border: '1px solid #ccc',
-      borderRadius: '0.5rem',
-      outline: 'none',
-      transition: 'border-color 0.3s ease',
-    }}
-  >
-    <option value="">Select Batch</option>
-    {batches.map((batch) => (
-      <option key={batch.batch_id} value={batch.batch_id}>
-        {batch.batch_name}
-      </option>
-    ))}
-  </select>
-</div>
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>
+                    Batch
+                  </label>
 
+                  <select
+                    id="batch"
+                    name="batch_id"
+                    value={newStudent?.batch_id || ""}
+                    onChange={handleChange}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      border: '1px solid #ccc',
+                      borderRadius: '0.5rem',
+                      outline: 'none',
+                      transition: 'border-color 0.3s ease',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <option value="">Select Batch</option>
 
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Father's Name</label>
-                <input
-                  type="text"
-                  name="father_name"
-                  value={editingStudent.father_name}
-                  onChange={handleEditChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                />
-              </div>
+                    {batches.length > 0 ? (
+                      batches.map((batch) => (
+                        <option key={batch.batch_id} value={batch.batch_id}>
+                          {batch.batch_name}
+                        </option>
+                      ))
+                    ) : (
+                      <option disabled>Loading Batches...</option>
+                    )}
+                  </select>
+                </div>
 
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Mother's Name</label>
-                <input
-                  type="text"
-                  name="mother_name"
-                  value={editingStudent.mother_name}
-                  onChange={handleEditChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                />
-              </div>
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Father's Name</label>
+                  <input
+                    type="text"
+                    name="father_name"
+                    value={newStudent.father_name}
+                    onChange={handleChange}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+                  />
+                </div>
 
-              <div style={{ marginBottom: '1rem', gridColumn: 'span 2' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Full Address</label>
-                <textarea
-                  name="full_address"
-                  value={editingStudent.full_address}
-                  onChange={handleEditChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                ></textarea>
-              </div>
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Mother's Name</label>
+                  <input
+                    type="text"
+                    name="mother_name"
+                    value={newStudent.mother_name}
+                    onChange={handleChange}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+                  />
+                </div>
 
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Child Aadhar Number</label>
-                <input
-                  type="text"
-                  name="child_aadhar_number"
-                  value={editingStudent.child_aadhar_number}
-                  onChange={handleEditChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                />
-              </div>
+                <div style={{ marginBottom: '1rem', gridColumn: 'span 2' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Full Address</label>
+                  <textarea
+                    name="full_address"
+                    value={newStudent.full_address}
+                    onChange={handleChange}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+                  ></textarea>
+                </div>
 
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Mother Aadhar Number</label>
-                <input
-                  type="text"
-                  name="mother_aadhar_number"
-                  value={editingStudent.mother_aadhar_number}
-                  onChange={handleEditChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                />
-              </div>
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Child Aadhar Number</label>
+                  <input
+                    type="text"
+                    name="child_aadhar_number"
+                    value={newStudent.child_aadhar_number}
+                    onChange={handleChange}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+                  />
+                </div>
 
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Father Aadhar Number</label>
-                <input
-                  type="text"
-                  name="father_aadhar_number"
-                  value={editingStudent.father_aadhar_number}
-                  onChange={handleEditChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                />
-              </div>
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Mother Aadhar Number</label>
+                  <input
+                    type="text"
+                    name="mother_aadhar_number"
+                    value={newStudent.mother_aadhar_number}
+                    onChange={handleChange}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+                  />
+                </div>
 
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Permanent Education Number</label>
-                <input
-                  type="text"
-                  name="permanent_education_number"
-                  value={editingStudent.permanent_education_number}
-                  onChange={handleEditChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                />
-              </div>
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Father Aadhar Number</label>
+                  <input
+                    type="text"
+                    name="father_aadhar_number"
+                    value={newStudent.father_aadhar_number}
+                    onChange={handleChange}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+                  />
+                </div>
 
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Student Registration Number</label>
-                <input
-                  type="text"
-                  name="student_registration_number"
-                  value={editingStudent.student_registration_number}
-                  onChange={handleEditChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                />
-              </div>
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Permanent Education Number</label>
+                  <input
+                    type="text"
+                    name="permanent_education_number"
+                    value={newStudent.permanent_education_number}
+                    onChange={handleChange}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+                  />
+                </div>
 
-              <div style={{ marginBottom: '1rem', gridColumn: 'span 2' }}>
-                <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Previous School Info</label>
-                <textarea
-                  name="previous_school_info"
-                  value={editingStudent.previous_school_info}
-                  onChange={handleEditChange}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
-                ></textarea>
-              </div>
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Student Registration Number</label>
+                  <input
+                    type="text"
+                    name="student_registration_number"
+                    value={newStudent.student_registration_number}
+                    onChange={handleChange}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+                  />
+                </div>
 
-              <div style={{ gridColumn: 'span 2', textAlign: 'center' }}>
-             
+                <div style={{ marginBottom: '1rem', gridColumn: 'span 2' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Previous School Info</label>
+                  <textarea
+                    name="previous_school_info"
+                    value={newStudent.previous_school_info}
+                    onChange={handleChange}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+                  ></textarea>
+                </div>
 
-                
-                <button
-                  type="submit"
-                  style={{
-                    backgroundColor: '#4a90e2',
-                    color: '#fff',
-                    fontWeight: 'bold',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '0.5rem',
-                    cursor: 'pointer',
-                    transition: 'background-color 0.3s ease',
-                    border: 'none',
-                  }}
-                >
-                  Update
-                </button>
-                <br></br>
-                <br></br>
-                <button
-                  type="button"
-                  onClick={() => setShowEditModal(false)}
-                  className="bg-gray-400 hover:bg-gray-500 text-white py-2 px-4 rounded-md"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
+                <div style={{ gridColumn: 'span 2', textAlign: 'center' }}>
+                  <button
+                    type="submit"
+                    style={{
+                      backgroundColor: '#4a90e2',
+                      color: '#fff',
+                      fontWeight: 'bold',
+                      padding: '0.5rem 1rem',
+                      borderRadius: '0.5rem',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.3s ease',
+                      border: 'none',
+                    }}
+                  >
+                    Create
+                  </button>
+                  <br></br>
+                  <br></br>
+                  <button
+                    type="button"
+                    onClick={() => setShowModal(false)}
+                    className="bg-gray-400 hover:bg-gray-500 text-white py-2 px-4 rounded-md"
+                  >
+                    Cancel   
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {showEditModal && editingStudent && (
+          <div style={{ position: 'fixed', inset: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.5)', zIndex: 50 }}>
+            <div style={{ backgroundColor: '#fff', padding: '2rem', borderRadius: '0.5rem', width: '100%', maxWidth: '50rem', height: '100%', maxHeight: '100vh', overflowY: 'auto' }}>
+              <h2 style={{ fontSize: '1.875rem', fontWeight: 'bold', textAlign: 'center', marginBottom: '2rem' }}>Edit Student</h2>
+              <form onSubmit={handleEditSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Name <span style={{ color: 'red' }}>*</span></label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={editingStudent.name}
+                    onChange={handleEditChange}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+                    required
+                  />
+                </div>
+
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Email <span style={{ color: 'red' }}>*</span></label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={editingStudent.email}
+                    onChange={handleEditChange}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+                    required
+                  />
+                </div>
+
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Phone Number <span style={{ color: 'red' }}>*</span></label>
+                  <input
+                    type="text"
+                    name="phone_number"
+                    value={editingStudent.phone_number}
+                    onChange={handleEditChange}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+                    required
+                  />
+                </div>
+
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Status <span style={{ color: 'red' }}>*</span></label>
+                  <select
+                    name="status"
+                    value={editingStudent.status}
+                    onChange={handleEditChange}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+                    required
+                  >
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                </div>
+
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Date of Admission</label>
+                  <input
+                    type="date"
+                    name="date_of_admission"
+                    value={editingStudent.date_of_admission}
+                    onChange={handleEditChange}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Present Class</label>
+                  <input
+                    type="text"
+                    name="present_class"
+                    value={editingStudent.present_class}
+                    onChange={handleEditChange}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Date of Birth</label>
+                  <input
+                    type="date"
+                    name="date_of_birth"
+                    value={editingStudent.date_of_birth}
+                    onChange={handleEditChange}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Total Course Fees</label>
+                  <input
+                    type="number"
+                    name="total_course_fees"
+                    value={editingStudent.total_course_fees}
+                    onChange={handleEditChange}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Gender</label>
+                  <select
+                    name="gender"
+                    value={editingStudent.gender}
+                    onChange={handleEditChange}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+                  >
+                    <option value="">Select Gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>State</label>
+                  <input
+                    type="text"
+                    name="state"
+                    value={editingStudent.state}
+                    onChange={handleEditChange}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>
+                    Batch
+                  </label>
+
+                  <select
+                    name="batch_id"
+                    value={editingStudent.batch_id || ""}
+                    onChange={handleEditChange}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      border: '1px solid #ccc',
+                      borderRadius: '0.5rem',
+                      outline: 'none',
+                      transition: 'border-color 0.3s ease',
+                    }}
+                  >
+                    <option value="">Select Batch</option>
+                    {batches.map((batch) => (
+                      <option key={batch.batch_id} value={batch.batch_id}>
+                        {batch.batch_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Father's Name</label>
+                  <input
+                    type="text"
+                    name="father_name"
+                    value={editingStudent.father_name}
+                    onChange={handleEditChange}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Mother's Name</label>
+                  <input
+                    type="text"
+                    name="mother_name"
+                    value={editingStudent.mother_name}
+                    onChange={handleEditChange}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '1rem', gridColumn: 'span 2' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Full Address</label>
+                  <textarea
+                    name="full_address"
+                    value={editingStudent.full_address}
+                    onChange={handleEditChange}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+                  ></textarea>
+                </div>
+
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Child Aadhar Number</label>
+                  <input
+                    type="text"
+                    name="child_aadhar_number"
+                    value={editingStudent.child_aadhar_number}
+                    onChange={handleEditChange}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Mother Aadhar Number</label>
+                  <input
+                    type="text"
+                    name="mother_aadhar_number"
+                    value={editingStudent.mother_aadhar_number}
+                    onChange={handleEditChange}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Father Aadhar Number</label>
+                  <input
+                    type="text"
+                    name="father_aadhar_number"
+                    value={editingStudent.father_aadhar_number}
+                    onChange={handleEditChange}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Permanent Education Number</label>
+                  <input
+                    type="text"
+                    name="permanent_education_number"
+                    value={editingStudent.permanent_education_number}
+                    onChange={handleEditChange}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Student Registration Number</label>
+                  <input
+                    type="text"
+                    name="student_registration_number"
+                    value={editingStudent.student_registration_number}
+                    onChange={handleEditChange}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '1rem', gridColumn: 'span 2' }}>
+                  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Previous School Info</label>
+                  <textarea
+                    name="previous_school_info"
+                    value={editingStudent.previous_school_info}
+                    onChange={handleEditChange}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+                  ></textarea>
+                </div>
+
+                <div style={{ gridColumn: 'span 2', textAlign: 'center' }}>
+                  <button
+                    type="submit"
+                    style={{
+                      backgroundColor: '#4a90e2',
+                      color: '#fff',
+                      fontWeight: 'bold',
+                      padding: '0.5rem 1rem',
+                      borderRadius: '0.5rem',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.3s ease',
+                      border: 'none',
+                    }}
+                  >
+                    Update
+                  </button>
+                  <br></br>
+                  <br></br>
+                  <button
+                    type="button"
+                    onClick={() => setShowEditModal(false)}
+                    className="bg-gray-400 hover:bg-gray-500 text-white py-2 px-4 rounded-md"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

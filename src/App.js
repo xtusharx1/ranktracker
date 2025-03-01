@@ -21,6 +21,7 @@ import Attendance from './pages/Attendance';
 import ViewAttendance from './pages/ViewAttendance';
 import SchoolMap from './pages/SchoolMap';
 import ClassRecords from './pages/ClassRecord';
+import TeacherReports from './pages/TeacherReports';
 import path from 'path-browserify';
 const App = () => {
   const {
@@ -56,6 +57,7 @@ const App = () => {
       { path: '/user-roles', element: <UserRoles /> },
       { path: '/attendance', element: <Attendance /> },
       { path: '/view-attendance', element: <ViewAttendance /> },
+      { path: '/teacher-reports', element:<TeacherReports/>},
       //{ path: '/notice', element: <Notice /> }, 
       //{ path: '/attendance', element: <Attendance /> },  
       { path: '/class-performance', element: <ClassPerformance /> },
@@ -105,18 +107,7 @@ const App = () => {
       <BrowserRouter>
         {isLoggedIn ? (
           <div className="flex relative dark:bg-main-dark-bg">
-            <div className="fixed right-4 bottom-4" style={{ zIndex: '1000' }}>
-              <TooltipComponent content="Settings" position="Top">
-                <button
-                  type="button"
-                  className="text-3xl p-3 hover:drop-shadow-xl hover:bg-light-gray text-white"
-                  style={{ background: currentColor, borderRadius: '50%' }}
-                  onClick={() => setThemeSettings(true)}
-                >
-                  <FiSettings />
-                </button>
-              </TooltipComponent>
-            </div>
+            
             {activeMenu ? (
               <div className="w-72 fixed sidebar dark:bg-secondary-dark-bg bg-white">
                 <Sidebar role={userRole} />

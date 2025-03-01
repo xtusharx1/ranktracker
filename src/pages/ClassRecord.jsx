@@ -127,11 +127,12 @@ const ClassRecord = () => {
   };
 
   return (
-    <Container sx={{ paddingLeft: 3, paddingRight: 3 }}>
+    <Container maxWidth={false} sx={{ padding: 0 }}>
       <div style={{ padding: "20px" }}></div>
-      <Typography variant="h4" fontWeight="bold" gutterBottom color="primary">
-        📝 Daily Classwork Entry
+      <Typography variant="h4" fontWeight="bold">
+        Daily Classwork Entry
       </Typography>
+      <br></br>
 
       <Card elevation={3} sx={{ padding: 3, borderRadius: 2 }}>
         <CardContent>
@@ -309,42 +310,59 @@ const ClassRecord = () => {
       </Dialog>
 
       <Typography variant="h5" fontWeight="bold" gutterBottom style={{ marginTop: "30px" }}>
-        📋 Submission Reports
+        Submission Reports
       </Typography>
 
       <TableContainer component={Paper} sx={{ mt: 2, borderRadius: 2, overflow: "hidden" }}>
-        <Table>
-          <TableHead sx={{ backgroundColor: "#f5f5f5" }}>
-            <TableRow>
-              <TableCell><b>Date</b></TableCell>
-              <TableCell><b>Chapter Name</b></TableCell>
-              <TableCell><b>Classwork</b></TableCell>
-              <TableCell><b>Homework</b></TableCell>
-              <TableCell><b>Teacher's Attendance</b></TableCell>
-              <TableCell><b>Actions</b></TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {entries.map(entry => (
-              <TableRow key={entry.id} sx={{ "&:nth-of-type(odd)": { backgroundColor: "#fafafa" } }}>
-                <TableCell>{entry.date}</TableCell>
-                <TableCell>{entry.chapter_name}</TableCell>
-                <TableCell>{entry.detailed_description}</TableCell>
-                <TableCell>{entry.homework_assigned}</TableCell>
-                <TableCell>
-                  <Typography color={entry.is_teacher_absent ? "red" : "green"}>
-                    {entry.is_teacher_absent ? "Absent" : "Present"}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Button color="secondary" size="small" startIcon={<Visibility />} onClick={() => handleView(entry)}>
-                    View
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+      <div className="overflow-x-auto">
+  <table className="min-w-full table-auto bg-white border-collapse border border-gray-300 mb-8">
+    <thead>
+      <tr className="bg-gray-200 text-black">
+        <th className="border border-gray-300 px-2 py-2 text-left" style={{ width: '50px' }}>S.No</th>
+        <th className="border border-gray-300 px-4 py-2 text-left"style={{ width: '200px' }}>Date</th>
+        <th className="border border-gray-300 px-4 py-2 text-left">Chapter Name</th>
+        <th className="border border-gray-300 px-4 py-2 text-left">Classwork</th>
+        <th className="border border-gray-300 px-4 py-2 text-left">Homework</th>
+        <th className="border border-gray-300 px-4 py-2 text-left">Teacher's Attendance</th>
+        <th className="border border-gray-300 px-4 py-2 text-left">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {entries.map((entry, index) => (
+        <tr key={entry.id} className="hover:bg-gray-100">
+          <td className="border border-gray-300 px-2 py-2">{index + 1}</td>
+          <td className="border border-gray-300 px-4 py-2">
+            {`${new Date(entry.date).toLocaleDateString('en-GB', { 
+              day: 'numeric', 
+              month: 'short', 
+              year: 'numeric'
+            })}, ${new Date(entry.date).toLocaleDateString('en-GB', { 
+              weekday: 'long'
+            })}`}
+          </td>
+         
+          <td className="border border-gray-300 px-4 py-2">{entry.chapter_name}</td>
+          <td className="border border-gray-300 px-4 py-2">{entry.detailed_description}</td>
+          <td className="border border-gray-300 px-4 py-2">{entry.homework_assigned}</td>
+          <td className="border border-gray-300 px-4 py-2">
+            <span className={entry.is_teacher_absent ? "text-red-600" : "text-green-600"}>
+              {entry.is_teacher_absent ? "Absent" : "Present"}
+            </span>
+          </td>
+          <td className="border border-gray-300 px-4 py-2">
+            <button
+              className="bg-purple-500 text-white py-1 px-3 rounded hover:bg-purple-600 transition duration-200"
+              onClick={() => handleView(entry)}
+            >
+              View
+            </button>
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+
       </TableContainer>
     </Container>
   );

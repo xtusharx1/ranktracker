@@ -83,9 +83,31 @@ const ViewAttendance = () => {
     const days = getDaysInMonth(year, monthNum);
     return (
       <tr>
-        <th style={{ textAlign: 'left', paddingLeft: '15px', fontWeight: 'bold', backgroundColor: '#f0f0f0' }}>Student Name</th>
+        <th style={{ 
+          textAlign: 'center', 
+          padding: '12px 15px', 
+          fontWeight: 'bold', 
+          backgroundColor: '#f8f9fa',
+          border: '1px solid #dee2e6',
+          minWidth: '60px'
+        }}>S.No</th>
+        <th style={{ 
+          textAlign: 'left', 
+          padding: '12px 15px', 
+          fontWeight: 'bold', 
+          backgroundColor: '#f8f9fa',
+          border: '1px solid #dee2e6',
+          minWidth: '200px'
+        }}>Student Name</th>
         {[...Array(days)].map((_, i) => (
-          <th key={i} style={{ backgroundColor: '#f0f0f0', fontWeight: 'bold' }}>{i + 1}</th>
+          <th key={i} style={{ 
+            backgroundColor: '#f8f9fa', 
+            fontWeight: 'bold',
+            padding: '12px 8px',
+            border: '1px solid #dee2e6',
+            minWidth: '40px',
+            textAlign: 'center'
+          }}>{i + 1}</th>
         ))}
       </tr>
     );
@@ -95,15 +117,32 @@ const ViewAttendance = () => {
     const [year, monthNum] = month.split('-');
     const days = getDaysInMonth(year, monthNum);
 
-    return students.map(student => (
+    return students.map((student, index) => (
       <tr key={student.user_id}>
-        <td style={{ fontWeight: 'bold', textAlign: 'left', paddingLeft: '15px' }}>{student.name}</td>
+        <td style={{ 
+          textAlign: 'center', 
+          padding: '12px 15px',
+          border: '1px solid #dee2e6',
+          backgroundColor: '#fff'
+        }}>{index + 1}</td>
+        <td style={{ 
+          textAlign: 'left', 
+          padding: '12px 15px',
+          border: '1px solid #dee2e6',
+          backgroundColor: '#fff'
+        }}>{student.name}</td>
         {[...Array(days)].map((_, i) => {
           const date = `${month}-${String(i + 1).padStart(2, '0')}`;
           const record = attendanceData.find(r => r.user_id === student.user_id && r.attendance_date.startsWith(date));
 
           return (
-            <td key={i} style={{ backgroundColor: getStatusColor(record?.status), textAlign: 'center' }}>
+            <td key={i} style={{ 
+              backgroundColor: getStatusColor(record?.status), 
+              textAlign: 'center',
+              padding: '12px 8px',
+              border: '1px solid #dee2e6',
+              fontWeight: 'bold'
+            }}>
               {record ? (record.status?.charAt(0) || '') : '-'}
             </td>
           );
@@ -114,51 +153,59 @@ const ViewAttendance = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Present': return '#e0f7e0';
-      case 'Late': return '#fff9c4';
-      case 'Absent': return '#ffccbc';
-      default: return '#f9f9f9';
-    }
+      case 'Present': return '#dcffe4';  // Lighter green
+      case 'Late': return '#fff3cd';     // Lighter yellow
+      case 'Absent': return '#ffe7e6';   // Lighter red
+      default: return '#ffffff';         // White
+    };
   };
 
   return (
-    <div style={{ padding: '30px', fontFamily: 'Arial, sans-serif', maxWidth: '1200px', margin: '0 auto' }}>
-      <h1 style={{ textAlign: 'center', color: '#333', fontSize: '32px', marginBottom: '20px' }}>Monthly Attendance</h1>
+    <div style={{ fontFamily: 'Arial, sans-serif', padding: '20px', backgroundColor: '#f9f9f9' }}>
+      <div style={{ margin: '0 auto', border: '1px solid #e0e0e0', borderRadius: '8px', backgroundColor: '#fff', padding: '20px', boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)' }}>
+        <h1 style={{ textAlign: 'center', color: '#333', fontSize: '32px', marginBottom: '20px' }}>Monthly Attendance</h1>
 
-      {/* Error Message */}
-      {errorMessage && (
-        <div style={{ backgroundColor: '#f8d7da', color: '#721c24', padding: '10px', borderRadius: '5px', marginBottom: '20px' }}>
-          {errorMessage}
+        {/* Error Message */}
+        {errorMessage && (
+          <div style={{ backgroundColor: '#f8d7da', color: '#721c24', padding: '10px', borderRadius: '5px', marginBottom: '20px' }}>
+            {errorMessage}
+          </div>
+        )}
+
+        {/* Selection Filters */}
+        <div style={{ display: 'flex', gap: '15px', marginBottom: '30px', justifyContent: 'center' }}>
+          <select
+            style={selectStyle}
+            onChange={e => setSelectedBatch(e.target.value)}
+            value={selectedBatch}
+          >
+            <option value="">Select Batch</option>
+            {batches.map(batch => (
+              <option key={batch.batch_id} value={batch.batch_id}>{batch.batch_name}</option>
+            ))}
+          </select>
+
+          <input
+            type="month"
+            style={monthInputStyle}
+            value={month}
+            onChange={e => setMonth(e.target.value)}
+          />
         </div>
-      )}
 
-      {/* Selection Filters */}
-      <div style={{ display: 'flex', gap: '15px', marginBottom: '30px', justifyContent: 'center' }}>
-        <select
-          style={selectStyle}
-          onChange={e => setSelectedBatch(e.target.value)}
-          value={selectedBatch}
-        >
-          <option value="">Select Batch</option>
-          {batches.map(batch => (
-            <option key={batch.batch_id} value={batch.batch_id}>{batch.batch_name}</option>
-          ))}
-        </select>
-
-        <input
-          type="month"
-          style={monthInputStyle}
-          value={month}
-          onChange={e => setMonth(e.target.value)}
-        />
-      </div>
-
-      {/* Table */}
-      <div style={{ overflowX: 'auto', borderRadius: '8px', border: '1px solid #ddd', padding: '5px' }}>
-        <table style={tableStyle}>
-          <thead>{renderTableHeader()}</thead>
-          <tbody>{renderTableBody()}</tbody>
-        </table>
+        {/* Table */}
+        <div style={{ 
+          overflowX: 'auto', 
+          borderRadius: '8px', 
+          backgroundColor: '#fff',
+          padding: '5px',
+          boxShadow: '0 0 10px rgba(0,0,0,0.1)'
+        }}>
+          <table style={tableStyle}>
+            <thead>{renderTableHeader()}</thead>
+            <tbody>{renderTableBody()}</tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
@@ -184,7 +231,9 @@ const monthInputStyle = {
 const tableStyle = {
   width: '100%',
   borderCollapse: 'collapse',
-  fontSize: '14px'
+  fontSize: '14px',
+  border: '1px solid #e0e0e0',
+  backgroundColor: '#fff'
 };
 
 export default ViewAttendance;

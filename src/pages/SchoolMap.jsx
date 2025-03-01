@@ -112,236 +112,246 @@ const handleAssignVisit = async () => {
   });
 
   return (
-    <div>
-      <Typography variant="h4" sx={{ textAlign: "center", marginY: 2 }}>
-          
-      </Typography>
+    <div style={{ fontFamily: 'Arial, sans-serif', backgroundColor: '#f9f9f9' }}>
+      <div style={{ margin: '0 auto', border: '1px solid #e0e0e0', borderRadius: '8px', backgroundColor: '#fff', padding: '20px', boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)' }}>
+        <Typography variant="h4" sx={{ textAlign: "center", marginY: 2 }}>
+          School Map
+        </Typography>
 
-      {/* Loading State */}
-      {loading && <CircularProgress sx={{ display: "block", margin: "20px auto" }} />}
-      <center>
-      <FormControl
-  sx={{
-    width: "200px", // Slightly increased for better readability
-    backgroundColor: "#fff",
-    borderRadius: "8px", // Smoother rounded corners
-    boxShadow: "0px 3px 8px rgba(0, 0, 0, 0.15)", // Softer shadow for depth
-    transition: "all 0.3s ease",
-    "&:hover": {
-      boxShadow: "0px 5px 12px rgba(0, 0, 0, 0.2)",
-    },
-    "& .MuiInputLabel-root": {
-      backgroundColor: "#fff",
-      paddingX: "6px",
-      transform: "translate(14px, -6px) scale(0.85)", // Better alignment
-      fontSize: "13px",
-      fontWeight: "500",
-      color: "#007BFF",
-    },
-    "& .MuiOutlinedInput-root": {
-      borderRadius: "8px",
-      "& fieldset": {
-        borderColor: "#007BFF",
-      },
-      "&:hover fieldset": {
-        borderColor: "#0056b3",
-      },
-      "&.Mui-focused fieldset": {
-        borderColor: "#00A4CC",
-        boxShadow: "0px 0px 6px rgba(0, 123, 255, 0.4)",
-      },
-    },
-    "& .MuiSelect-select": {
-      padding: "8px 14px", // Balanced padding
-      fontSize: "14px",
-      fontWeight: "500",
-    },
-  }}
->
-  <InputLabel>Filter By</InputLabel> {/* More descriptive label */}
-  <Select value={filter} onChange={(e) => setFilter(e.target.value)}>
-    <MenuItem value="All">🌍 All</MenuItem>
-    <MenuItem value="Unassigned">🚨 Unassigned</MenuItem>
-    <MenuItem value="Pending">⏳ Pending</MenuItem>
-    <MenuItem value="Active">🏁 Active</MenuItem>
-    <MenuItem value="Completed">✅ Completed</MenuItem>
-  </Select>
-</FormControl>
+        {/* Loading State */}
+        {loading && <CircularProgress sx={{ display: "block", margin: "20px auto" }} />}
+        
+        {/* Filter Control */}
+        <center>
+          <FormControl
+            sx={{
+              width: "200px", // Slightly increased for better readability
+              backgroundColor: "#fff",
+              borderRadius: "8px", // Smoother rounded corners
+              boxShadow: "0px 3px 8px rgba(0, 0, 0, 0.15)", // Softer shadow for depth
+              transition: "all 0.3s ease",
+              "&:hover": {
+                boxShadow: "0px 5px 12px rgba(0, 0, 0, 0.2)",
+              },
+              "& .MuiInputLabel-root": {
+                backgroundColor: "#fff",
+                paddingX: "6px",
+                transform: "translate(14px, -6px) scale(0.85)", // Better alignment
+                fontSize: "13px",
+                fontWeight: "500",
+                color: "#007BFF",
+              },
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "8px",
+                "& fieldset": {
+                  borderColor: "#007BFF",
+                },
+                "&:hover fieldset": {
+                  borderColor: "#0056b3",
+                },
+                "&.Mui-focused fieldset": {
+                  borderColor: "#00A4CC",
+                  boxShadow: "0px 0px 6px rgba(0, 123, 255, 0.4)",
+                },
+              },
+              "& .MuiSelect-select": {
+                padding: "8px 14px", // Balanced padding
+                fontSize: "14px",
+                fontWeight: "500",
+              },
+            }}
+          >
+            <InputLabel>Filter By</InputLabel> {/* More descriptive label */}
+            <Select value={filter} onChange={(e) => setFilter(e.target.value)}>
+              <MenuItem value="All">🌍 All</MenuItem>
+              <MenuItem value="Unassigned">🚨 Unassigned</MenuItem>
+              <MenuItem value="Pending">⏳ Pending</MenuItem>
+              <MenuItem value="Active">🏁 Active</MenuItem>
+              <MenuItem value="Completed">✅ Completed</MenuItem>
+            </Select>
+          </FormControl>
+        </center>
+        <br />
 
+        {/* Map Container */}
+        <Box sx={{ height: "60vh", width: "100%", marginBottom: 4 }}>
+          <MapContainer center={[28.45, 77.05]} zoom={12} style={{ height: "100%", width: "100%", borderRadius: '8px' }}>
+            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+            {filteredSchools.map((school, index) => (
+              <Marker key={index} position={[parseFloat(school.lat), parseFloat(school.lng)]} icon={schoolIcon}>
+                <Popup>
+                  <strong>{school.school_name}</strong> <br />📍 {school.lat}, {school.lng}
+                </Popup>
+              </Marker>
+            ))}
+          </MapContainer>
+        </Box>
 
-</center>
-<br></br>
+        {/* Assign Visit Button */}
+        <Button
+          variant="contained"
+          onClick={() => setOpen(true)}
+          sx={{
+            width: "250px", // Decreased width
+            padding: "12px 20px",
+            fontSize: "16px",
+            fontWeight: "bold",
+            borderRadius: "30px",
+            background: "linear-gradient(135deg, #007BFF 30%, #00D4FF 100%)",
+            color: "white",
+            boxShadow: "0px 4px 10px rgba(0, 123, 255, 0.4)",
+            transition: "all 0.3s ease",
+            display: "block",
+            margin: "20px auto", // Centered position
+            "&:hover": {
+              background: "linear-gradient(135deg, #0056b3 30%, #00A4CC 100%)",
+              boxShadow: "0px 6px 12px rgba(0, 123, 255, 0.6)",
+              transform: "translateY(-2px)",
+            },
+          }}
+        >
+          🚀 Assign a Visit
+        </Button>
 
-      {/* Map Container */}
-      <Box sx={{ height: "60vh", width: "100%", marginBottom: 4 }}>
-        <MapContainer center={[28.45, 77.05]} zoom={12} style={{ height: "100%", width: "100%" }}>
-          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-          {filteredSchools.map((school, index) => (
-            <Marker key={index} position={[parseFloat(school.lat), parseFloat(school.lng)]} icon={schoolIcon}>
-              <Popup>
-                <strong>{school.school_name}</strong> <br />📍 {school.lat}, {school.lng}
-              </Popup>
-            </Marker>
-          ))}
-        </MapContainer>
-      </Box>
-{/* Assign Visit Button */}
-<Button
-  variant="contained"
-  onClick={() => setOpen(true)}
-  sx={{
-    width: "250px", // Decreased width
-    padding: "12px 20px",
-    fontSize: "16px",
-    fontWeight: "bold",
-    borderRadius: "30px",
-    background: "linear-gradient(135deg, #007BFF 30%, #00D4FF 100%)",
-    color: "white",
-    boxShadow: "0px 4px 10px rgba(0, 123, 255, 0.4)",
-    transition: "all 0.3s ease",
-    display: "block",
-    margin: "20px auto", // Centered position
-    "&:hover": {
-      background: "linear-gradient(135deg, #0056b3 30%, #00A4CC 100%)",
-      boxShadow: "0px 6px 12px rgba(0, 123, 255, 0.6)",
-      transform: "translateY(-2px)",
-    },
-  }}
->
-  🚀 Assign a Visit
-</Button>
-
-
-{/* Visit Assignment Form */}
-<Dialog open={open} onClose={() => setOpen(false)}>
-  <DialogTitle>Assign a Visit</DialogTitle>
-  <DialogContent>
-    {/* School Selection */}
-    <FormControl fullWidth sx={{ marginY: 1 }}>
-      <InputLabel>School</InputLabel>
-      <Select name="school_id" value={newVisit.school_id} onChange={handleInputChange}>
-        {schools.map((school) => (
-          <MenuItem key={school.school_id} value={school.school_id}>
-            {school.school_name}
-          </MenuItem>
-        ))}
-      </Select>
-    </FormControl>
-
-    {/* Marketing Personnel Selection */}
-    <FormControl fullWidth sx={{ marginY: 1 }}>
-      <InputLabel>Marketing Personnel</InputLabel>
-      <Select name="personnel_id" value={newVisit.personnel_id} onChange={handleInputChange}>
-        {personnel.map((p) => (
-          <MenuItem key={p.personnel_id} value={p.personnel_id}>
-            {p.name}
-          </MenuItem>
-        ))}
-      </Select>
-    </FormControl>
-
-    {/* Visit Date Input */}
-    <TextField
-      label="Visit Date"
-      type="date"
-      name="visit_date"
-      value={newVisit.visit_date}
-      onChange={handleInputChange}
-      fullWidth
-      sx={{ marginY: 1 }}
-      InputLabelProps={{ shrink: true }}
-    />
-
-    {/* Status Selection */}
-    <FormControl fullWidth sx={{ marginY: 1 }}>
-      <InputLabel>Status</InputLabel>
-      <Select name="status" value={newVisit.status} onChange={handleInputChange}>
-        <MenuItem value="Pending">Pending</MenuItem>
-        <MenuItem value="Active">Active</MenuItem>
-        <MenuItem value="Completed">Completed</MenuItem>
-      </Select>
-    </FormControl>
-  </DialogContent>
-
-  {/* Form Actions */}
-  <DialogActions>
-    <Button onClick={() => setOpen(false)}>Cancel</Button>
-    <Button variant="contained" color="primary" onClick={handleAssignVisit}>
-      Assign
-    </Button>
-  </DialogActions>
-</Dialog>
-
-      {/* School Visits Table */}
-      <Box sx={{ overflowX: "auto" }}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>S. No.</TableCell>
-              <TableCell>School</TableCell>
-              <TableCell>Marketing Personnel</TableCell>
-              <TableCell>Visit Date</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {visits
-              .sort((a, b) => {
-                // Custom order for statuses
-                const statusOrder = { Pending: 1, Active: 2, Completed: 3 };
-                if (statusOrder[a.status] !== statusOrder[b.status]) {
-                  return statusOrder[a.status] - statusOrder[b.status];
-                }
-                // Sort by date (latest first)
-                return new Date(b.visit_date) - new Date(a.visit_date);
-              })
-              .map((visit, index) => {
-                const school = schools.find((s) => s.school_id === visit.school_id);
-                const person = personnel.find((p) => p.personnel_id === visit.personnel_id);
-                return (
-                  <TableRow key={index}>
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell>{school ? school.school_name : "Unknown"}</TableCell>
-                    <TableCell>{person ? person.name : "Unknown"}</TableCell>
-                    <TableCell>{visit.visit_date}</TableCell>
-                    <TableCell>
-                      <Chip label={visit.status} color={statusColors[visit.status]} />
-                    </TableCell>
-                    <TableCell>
-                      <IconButton onClick={() => { setEditVisit(visit); setEditDialogOpen(true); }}>
-                        <EditIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-          </TableBody>
-        </Table>
-      </Box>
-
-      {/* Edit Visit Dialog */}
-      {editVisit && (
-        <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)}>
-          <DialogTitle>Edit Visit</DialogTitle>
+        {/* Visit Assignment Form */}
+        <Dialog open={open} onClose={() => setOpen(false)}>
+          <DialogTitle>Assign a Visit</DialogTitle>
           <DialogContent>
+            {/* School Selection */}
+            <FormControl fullWidth sx={{ marginY: 1 }}>
+              <InputLabel>School</InputLabel>
+              <Select name="school_id" value={newVisit.school_id} onChange={handleInputChange}>
+                {schools.map((school) => (
+                  <MenuItem key={school.school_id} value={school.school_id}>
+                    {school.school_name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {/* Marketing Personnel Selection */}
+            <FormControl fullWidth sx={{ marginY: 1 }}>
+              <InputLabel>Marketing Personnel</InputLabel>
+              <Select name="personnel_id" value={newVisit.personnel_id} onChange={handleInputChange}>
+                {personnel.map((p) => (
+                  <MenuItem key={p.personnel_id} value={p.personnel_id}>
+                    {p.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {/* Visit Date Input */}
+            <TextField
+              label="Visit Date"
+              type="date"
+              name="visit_date"
+              value={newVisit.visit_date}
+              onChange={handleInputChange}
+              fullWidth
+              sx={{ marginY: 1 }}
+              InputLabelProps={{ shrink: true }}
+            />
+
+            {/* Status Selection */}
             <FormControl fullWidth sx={{ marginY: 1 }}>
               <InputLabel>Status</InputLabel>
-              <Select name="status" value={editVisit.status} onChange={handleEditChange}>
+              <Select name="status" value={newVisit.status} onChange={handleInputChange}>
                 <MenuItem value="Pending">Pending</MenuItem>
                 <MenuItem value="Active">Active</MenuItem>
                 <MenuItem value="Completed">Completed</MenuItem>
               </Select>
             </FormControl>
           </DialogContent>
+
+          {/* Form Actions */}
           <DialogActions>
-            <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
-            <Button variant="contained" color="primary" onClick={handleEditVisit}>
-              Save Changes
+            <Button onClick={() => setOpen(false)}>Cancel</Button>
+            <Button variant="contained" color="primary" onClick={handleAssignVisit}>
+              Assign
             </Button>
           </DialogActions>
         </Dialog>
-      )}
+
+        {/* School Visits Table */}
+        <Box sx={{ 
+          overflowX: "auto",
+          backgroundColor: '#fff',
+          borderRadius: '8px',
+          border: '1px solid #e0e0e0',
+          boxShadow: '0 0 10px rgba(0,0,0,0.1)',
+          padding: '10px',
+          marginTop: '20px'
+        }}>
+          <Table>
+            <TableHead>
+              <TableRow sx={{ backgroundColor: '#f8f9fa' }}>
+                <TableCell sx={{ borderBottom: '2px solid #dee2e6', fontWeight: 'bold' }}>S. No.</TableCell>
+                <TableCell sx={{ borderBottom: '2px solid #dee2e6', fontWeight: 'bold' }}>School</TableCell>
+                <TableCell sx={{ borderBottom: '2px solid #dee2e6', fontWeight: 'bold' }}>Marketing Personnel</TableCell>
+                <TableCell sx={{ borderBottom: '2px solid #dee2e6', fontWeight: 'bold' }}>Visit Date</TableCell>
+                <TableCell sx={{ borderBottom: '2px solid #dee2e6', fontWeight: 'bold' }}>Status</TableCell>
+                <TableCell sx={{ borderBottom: '2px solid #dee2e6', fontWeight: 'bold' }}>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {visits
+                .sort((a, b) => {
+                  // Custom order for statuses
+                  const statusOrder = { Pending: 1, Active: 2, Completed: 3 };
+                  if (statusOrder[a.status] !== statusOrder[b.status]) {
+                    return statusOrder[a.status] - statusOrder[b.status];
+                  }
+                  // Sort by date (latest first)
+                  return new Date(b.visit_date) - new Date(a.visit_date);
+                })
+                .map((visit, index) => {
+                  const school = schools.find((s) => s.school_id === visit.school_id);
+                  const person = personnel.find((p) => p.personnel_id === visit.personnel_id);
+                  return (
+                    <TableRow key={index}>
+                      <TableCell>{index + 1}</TableCell>
+                      <TableCell>{school ? school.school_name : "Unknown"}</TableCell>
+                      <TableCell>{person ? person.name : "Unknown"}</TableCell>
+                      <TableCell>{visit.visit_date}</TableCell>
+                      <TableCell>
+                        <Chip label={visit.status} color={statusColors[visit.status]} />
+                      </TableCell>
+                      <TableCell>
+                        <IconButton onClick={() => { setEditVisit(visit); setEditDialogOpen(true); }}>
+                          <EditIcon />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+            </TableBody>
+          </Table>
+        </Box>
+
+        {/* Edit Visit Dialog */}
+        {editVisit && (
+          <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)}>
+            <DialogTitle>Edit Visit</DialogTitle>
+            <DialogContent>
+              <FormControl fullWidth sx={{ marginY: 1 }}>
+                <InputLabel>Status</InputLabel>
+                <Select name="status" value={editVisit.status} onChange={handleEditChange}>
+                  <MenuItem value="Pending">Pending</MenuItem>
+                  <MenuItem value="Active">Active</MenuItem>
+                  <MenuItem value="Completed">Completed</MenuItem>
+                </Select>
+              </FormControl>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+              <Button variant="contained" color="primary" onClick={handleEditVisit}>
+                Save Changes
+              </Button>
+            </DialogActions>
+          </Dialog>
+        )}
+      </div>
     </div>
   );
 };

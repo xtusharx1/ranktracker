@@ -147,127 +147,131 @@ const Attendance = () => {
   };
   
   return (
-    <div style={{ padding: '30px', fontFamily: 'Arial, sans-serif', maxWidth: '1200px', margin: '0 auto' }}>
-      <h1 style={{ textAlign: 'center', color: '#333', fontSize: '32px', marginBottom: '20px' }}>Attendance</h1>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
-        <span style={{ fontSize: '20px', fontWeight: 'bold' }}>Teacher: {teacherName}</span>
-        <div style={{ display: 'flex', gap: '15px' }}>
-          <select
-            onChange={e => setSelectedBatch(e.target.value)}
-            style={{ padding: '12px', fontSize: '16px', borderRadius: '5px', border: '1px solid #ddd' }}
-          >
-            <option value="">Select Batch</option>
-            {batches.map(batch => (
-              <option key={batch.batch_id} value={batch.batch_id}>{batch.batch_name}</option>
-            ))}
-          </select>
-          {role === "teacher" ? (
-            // Teachers have a locked subject input field showing their assigned subject name
-            <input
-              type="text"
-              value={subjects[0]?.subject_name || "Loading..."}
-              readOnly
-              style={{ padding: '12px', fontSize: '16px', borderRadius: '5px', border: '1px solid #ddd' }}
-            />
-          ) : (
-            // Admins and other roles get a dropdown for selecting a subject
+    <div style={{ fontFamily: 'Arial, sans-serif', padding: '20px', backgroundColor: '#f9f9f9' }}>
+      <div style={{ margin: '0 auto', border: '1px solid #e0e0e0', borderRadius: '8px', backgroundColor: '#fff', padding: '20px', boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)' }}>
+        <h1 style={{ textAlign: 'center', color: '#333', fontSize: '32px', marginBottom: '20px' }}>Attendance</h1>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
+          <span style={{ fontSize: '20px', fontWeight: 'bold' }}>Teacher: {teacherName}</span>
+          <div style={{ display: 'flex', gap: '15px' }}>
             <select
-              onChange={e => setSelectedSubject(e.target.value)}
+              onChange={e => setSelectedBatch(e.target.value)}
               style={{ padding: '12px', fontSize: '16px', borderRadius: '5px', border: '1px solid #ddd' }}
             >
-              <option value="">Select Subject</option>
-              {subjects.map(subject => (
-                <option key={subject.subject_id} value={subject.subject_id}>{subject.subject_name}</option>
+              <option value="">Select Batch</option>
+              {batches.map(batch => (
+                <option key={batch.batch_id} value={batch.batch_id}>{batch.batch_name}</option>
               ))}
             </select>
-          )}
-          <input
-            type="date"
-            value={attendanceDate}
-            onChange={e => setAttendanceDate(e.target.value)}
-            style={{ padding: '12px', fontSize: '16px', borderRadius: '5px', border: '1px solid #ddd' }}
-          />
+            {role === "teacher" ? (
+              // Teachers have a locked subject input field showing their assigned subject name
+              <input
+                type="text"
+                value={subjects[0]?.subject_name || "Loading..."}
+                readOnly
+                style={{ padding: '12px', fontSize: '16px', borderRadius: '5px', border: '1px solid #ddd' }}
+              />
+            ) : (
+              // Admins and other roles get a dropdown for selecting a subject
+              <select
+                onChange={e => setSelectedSubject(e.target.value)}
+                style={{ padding: '12px', fontSize: '16px', borderRadius: '5px', border: '1px solid #ddd' }}
+              >
+                <option value="">Select Subject</option>
+                {subjects.map(subject => (
+                  <option key={subject.subject_id} value={subject.subject_id}>{subject.subject_name}</option>
+                ))}
+              </select>
+            )}
+            <input
+              type="date"
+              value={attendanceDate}
+              onChange={e => setAttendanceDate(e.target.value)}
+              style={{ padding: '12px', fontSize: '16px', borderRadius: '5px', border: '1px solid #ddd' }}
+            />
+          </div>
         </div>
-      </div>
-      <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '30px' }}>
-          <thead>
-            <tr style={{ background: '#007bff', color: 'white' }}>
-              <th style={{ padding: '12px', border: '1px solid #ddd' }}>Name</th>
-              <th style={{ padding: '12px', border: '1px solid #ddd' }}>Status</th>
-              <th style={{ padding: '12px', border: '1px solid #ddd' }}>Reason (if absent/late)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {students.map(student => (
-              <tr key={student.user_id} style={{ background: '#f9f9f9' }}>
-                <td style={{ padding: '12px', border: '1px solid #ddd' }}>{student.name}</td>
-                <td style={{ padding: '12px', border: '1px solid #ddd' }}>
-                  <div style={{ display: 'flex', gap: '15px' }}>
-                    <label>
-                      <input
-                        type="radio"
-                        name={`attendance-${student.user_id}`}
-                        value="Present"
-                        checked={attendance[student.user_id] === 'Present'}
-                        onChange={() => handleAttendanceChange(student.user_id, 'Present')}
-                      />
-                      Present
-                    </label>
-                    <label>
-                      <input
-                        type="radio"
-                        name={`attendance-${student.user_id}`}
-                        value="Absent"
-                        checked={attendance[student.user_id] === 'Absent'}
-                        onChange={() => handleAttendanceChange(student.user_id, 'Absent')}
-                      />
-                      Absent
-                    </label>
-                    <label>
-                      <input
-                        type="radio"
-                        name={`attendance-${student.user_id}`}
-                        value="Late"
-                        checked={attendance[student.user_id] === 'Late'}
-                        onChange={() => handleAttendanceChange(student.user_id, 'Late')}
-                      />
-                      Late
-                    </label>
-                  </div>
-                </td>
-                <td style={{ padding: '12px', border: '1px solid #ddd' }}>
-                  {(attendance[student.user_id] === 'Absent' || attendance[student.user_id] === 'Late') && (
-                    <input
-                      type="text"
-                      value={reasons[student.user_id] || ''}
-                      onChange={e => handleReasonChange(student.user_id, e.target.value)}
-                      placeholder="Enter reason (optional)"
-                      style={{ padding: '8px', fontSize: '14px', width: '100%', borderRadius: '5px', border: '1px solid #ddd' }}
-                    />
-                  )}
-                </td>
+        <div style={{ 
+          overflowX: 'auto', 
+          borderRadius: '8px', 
+          backgroundColor: '#fff',
+          padding: '5px',
+          boxShadow: '0 0 10px rgba(0,0,0,0.1)'
+        }}>
+          <table className="min-w-full table-auto bg-white border-collapse border border-gray-300 mb-8">
+            <thead>
+              <tr className="bg-gray-200 text-black">
+                <th className="border border-gray-300 px-4 py-3 text-center" style={{ minWidth: '40px', width: '40px' }}>S.No</th>
+                <th className="border border-gray-300 px-4 py-3 text-left" style={{ minWidth: '200px' }}>Name</th>
+                <th className="border border-gray-300 px-4 py-3 text-left" style={{ minWidth: '120px' }}>Status</th>
+                <th className="border border-gray-300 px-4 py-3 text-left" style={{ minWidth: '200px' }}>Reason (if absent/late)</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div style={{ textAlign: 'center' }}>
-        <button
-          onClick={submitAttendance}
-          style={{
-            padding: '12px 30px',
-            background: '#28a745',
-            color: 'white',
-            border: 'none',
-            fontSize: '18px',
-            cursor: 'pointer',
-            borderRadius: '5px',
-            transition: 'background 0.3s ease',
-          }}
-        >
-          Submit Attendance
-        </button>
+            </thead>
+            <tbody>
+              {students.map((student, index) => (
+                <tr key={student.user_id} className="hover:bg-gray-50">
+                  <td className="border border-gray-300 px-2 py-3 text-center" style={{ width: '40px' }}>{index + 1}</td>
+                  <td className="border border-gray-300 px-4 py-3">{student.name}</td>
+                  <td className="border border-gray-300 px-4 py-3">
+                    <div className="flex gap-4">
+                      <label className="inline-flex items-center">
+                        <input
+                          type="radio"
+                          name={`attendance-${student.user_id}`}
+                          value="Present"
+                          checked={attendance[student.user_id] === 'Present'}
+                          onChange={() => handleAttendanceChange(student.user_id, 'Present')}
+                          className="mr-2"
+                        />
+                        <span>Present</span>
+                      </label>
+                      <label className="inline-flex items-center">
+                        <input
+                          type="radio"
+                          name={`attendance-${student.user_id}`}
+                          value="Absent"
+                          checked={attendance[student.user_id] === 'Absent'}
+                          onChange={() => handleAttendanceChange(student.user_id, 'Absent')}
+                          className="mr-2"
+                        />
+                        <span>Absent</span>
+                      </label>
+                      <label className="inline-flex items-center">
+                        <input
+                          type="radio"
+                          name={`attendance-${student.user_id}`}
+                          value="Late"
+                          checked={attendance[student.user_id] === 'Late'}
+                          onChange={() => handleAttendanceChange(student.user_id, 'Late')}
+                          className="mr-2"
+                        />
+                        <span>Late</span>
+                      </label>
+                    </div>
+                  </td>
+                  <td className="border border-gray-300 px-4 py-3">
+                    {(attendance[student.user_id] === 'Absent' || attendance[student.user_id] === 'Late') && (
+                      <input
+                        type="text"
+                        value={reasons[student.user_id] || ''}
+                        onChange={e => handleReasonChange(student.user_id, e.target.value)}
+                        placeholder="Enter reason (optional)"
+                        className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                      />
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div style={{ textAlign: 'center', marginTop: '20px' }}>
+          <button
+            onClick={submitAttendance}
+            className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200 ease-in-out"
+          >
+            Submit Attendance
+          </button>
+        </div>
       </div>
     </div>
   );

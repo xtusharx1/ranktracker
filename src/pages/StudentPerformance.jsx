@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Line } from 'react-chartjs-2';
 import 'chart.js/auto';
-import { Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, CircularProgress, Button, Grid } from '@mui/material';
+import { Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, CircularProgress, Card, MenuItem, FormControl, Select, InputLabel, AppBar, Toolbar, Container, Box, Chip, Grid, Divider } from '@mui/material';
+import SchoolIcon from '@mui/icons-material/School';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import PersonIcon from '@mui/icons-material/Person';
 
 const StudentPerformance = () => {
   const [batches, setBatches] = useState([]);
@@ -11,6 +14,7 @@ const StudentPerformance = () => {
   const [studentDetails, setStudentDetails] = useState(null);
   const [testRecords, setTestRecords] = useState([]);
   const [testStatistics, setTestStatistics] = useState({});
+  const [testDetails, setTestDetails] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -34,6 +38,7 @@ const StudentPerformance = () => {
     setTestRecords([]);
     setStudentDetails(null);
     setTestStatistics({});
+    setTestDetails({});
 
     if (batchId) {
       await fetchStudentsByBatchId(batchId);
@@ -45,12 +50,12 @@ const StudentPerformance = () => {
     const response = await fetch(`https://apistudents.sainikschoolcadet.com/api/studentBatches/students/batch/${batchId}`);
     if (response.ok) {
       const data = await response.json();
-      // Fetch details for each student in the batch
       const studentsWithDetails = await Promise.all(data.map(async (student) => {
         const studentDetails = await fetchStudentDetails(student.user_id);
         return { ...student, ...studentDetails };
       }));
-      setStudents(studentsWithDetails);
+      const sortedStudents = studentsWithDetails.sort((a, b) => a.name.localeCompare(b.name));
+      setStudents(sortedStudents);
       setLoading(false);
     }
   };
@@ -77,6 +82,7 @@ const StudentPerformance = () => {
       const recordsWithRank = await Promise.all(
         data.map(async (record) => {
           const rank = await fetchRank(record.test_id, userId);
+          await fetchTestDetails(record.test_id); // Fetch test details for each test record
           return { ...record, rank };
         })
       );
@@ -96,6 +102,14 @@ const StudentPerformance = () => {
     }
   };
 
+  const fetchTestDetails = async (testId) => {
+    const response = await fetch(`https://apistudents.sainikschoolcadet.com/api/test/${testId}`);
+    if (response.ok) {
+      const data = await response.json();
+      setTestDetails(prevDetails => ({ ...prevDetails, [testId]: data }));
+    }
+  };
+
   const fetchRank = async (testId, userId) => {
     try {
       const response = await fetch(`https://apistudents.sainikschoolcadet.com/api/studenttestrecords/rank/${testId}/${userId}`);
@@ -109,133 +123,267 @@ const StudentPerformance = () => {
     return null;
   };
 
-  const calculateCumulativeMetrics = () => {
-    if (testRecords.length === 0) return {};
-
-    const totalTests = testRecords.length;
-    const averageMarks = (testRecords.reduce((sum, record) => sum + record.marks_obtained, 0) / totalTests).toFixed(2);
-    const firstTestMarks = testRecords[0].marks_obtained;
-    const lastTestMarks = testRecords[testRecords.length - 1].marks_obtained;
-    const percentageImprovement = (((lastTestMarks - firstTestMarks) / firstTestMarks) * 100).toFixed(2);
-
-    return {
-      totalTests,
-      averageMarks,
-      percentageImprovement
-    };
+  const getPerformanceColor = (marks, totalMarks) => {
+    const percentage = (marks / totalMarks) * 100;
+    if (percentage >= 80) return '#4caf50'; // Green for excellent
+    if (percentage >= 60) return '#2196f3'; // Blue for good
+    if (percentage >= 40) return '#ff9800'; // Orange for average
+    return '#f44336'; // Red for below average
   };
 
-  const cumulativeMetrics = calculateCumulativeMetrics();
+  // Function to safely format numbers with toFixed
+  const formatNumber = (value, decimalPlaces = 1) => {
+    if (value === null || value === undefined || isNaN(value)) {
+      return 'N/A';
+    }
+    return typeof value === 'number' ? value.toFixed(decimalPlaces) : value;
+  };
 
   if (loading) {
-    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}><CircularProgress /></div>;
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <CircularProgress />
+      </Box>
+    );
   }
 
   const lineChartData = {
-    labels: testRecords.map(record => new Date(record.created_at).toLocaleDateString()), // Convert created_at to locale date string
+    labels: testRecords.map(record => {
+      const testDate = testDetails[record.test_id]?.date || new Date(record.created_at).toLocaleDateString();
+      const testName = testDetails[record.test_id]?.test_name || `Test ${record.test_id}`;
+      return `${testName} (${testDate})`;
+    }),
     datasets: [
       {
-        label: 'Marks Obtained',
-        data: testRecords.map(record => record.marks_obtained),
+        label: 'Marks Obtained (%)',
+        data: testRecords.map(record => {
+          const totalMarks = testDetails[record.test_id]?.total_marks || 100;
+          return (record.marks_obtained / totalMarks) * 100;
+        }),
         fill: false,
-        backgroundColor: 'blue',
-        borderColor: 'blue',
+        backgroundColor: '#3f51b5',
+        borderColor: '#3f51b5',
+        tension: 0.1
+      },
+      {
+        label: 'Class Average (%)',
+        data: testRecords.map(record => {
+          const totalMarks = testDetails[record.test_id]?.total_marks || 100;
+          const avgMarks = testStatistics[record.test_id]?.average_marks || 0;
+          return (avgMarks / totalMarks) * 100;
+        }),
+        fill: false,
+        backgroundColor: '#f44336',
+        borderColor: '#f44336',
+        tension: 0.1,
+        borderDash: [5, 5]
       }
     ],
   };
 
+  const lineChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      y: {
+        beginAtZero: true,
+        max: 100,
+        title: {
+          display: true,
+          text: 'Percentage (%)'
+        }
+      },
+      x: {
+        title: {
+          display: true,
+          text: 'Tests'
+        }
+      }
+    },
+    plugins: {
+      legend: {
+        display: true,
+        position: 'top'
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            return `${context.dataset.label}: ${context.raw.toFixed(2)}%`;
+          }
+        }
+      }
+    }
+  };
+
   return (
-    <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif', color: '#333' }}>
-      <Typography variant="h4" align="center" gutterBottom>Student Performance</Typography>
+    <Box sx={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
+      
+      <Container maxWidth={false} sx={{ py: 3 }}>
+        <Typography variant="h4" align="center" gutterBottom sx={{ fontWeight: 'bold', mb: 4 }}>
+          <TrendingUpIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+          Academic Performance Analysis
+        </Typography>
 
-      <div style={{ marginBottom: '20px', textAlign: 'center' }}>
-        <Typography variant="h5">Select Batch:</Typography>
-        <Grid container spacing={2} justifyContent="center">
-          {batches.map(batch => (
-            <Grid item key={batch.batch_id}>
-              <Button variant="contained" color={selectedBatch === batch.batch_id ? 'primary' : 'default'} onClick={() => handleBatchChange(batch.batch_id)}>
-                {batch.batch_name}
-              </Button>
-            </Grid>
-          ))}
-        </Grid>
-      </div>
+        <Card sx={{ mb: 3, p: 3, boxShadow: 3, borderRadius: 2 }}>
+          <Typography variant="h5" gutterBottom sx={{  fontWeight: 'bold'}}>
+            Select Batch:
+          </Typography>
+          <FormControl fullWidth variant="outlined">
+            <InputLabel id="batch-select-label">Batch</InputLabel>
+            <Select
+              labelId="batch-select-label"
+              value={selectedBatch}
+              onChange={(e) => handleBatchChange(e.target.value)}
+              label="Batch"
+            >
+              {batches.map(batch => (
+                <MenuItem key={batch.batch_id} value={batch.batch_id}>
+                  {batch.batch_name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Card>
 
-      {selectedBatch && (
-        <div style={{ marginBottom: '20px' }}>
-          <Typography variant="h5">Students in Batch:</Typography>
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Phone Number</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
+        {selectedBatch && (
+          <Card sx={{ mb: 3, p: 3, boxShadow: 3, borderRadius: 2 }}>
+            <Typography variant="h5" gutterBottom sx={{  fontWeight: 'bold'}}>
+              Select Student:
+            </Typography>
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="student-select-label">Student</InputLabel>
+              <Select
+                labelId="student-select-label"
+                value={selectedStudent}
+                onChange={(e) => handleStudentSelect(e.target.value)}
+                label="Student"
+              >
                 {students.map(student => (
-                  <TableRow key={student.user_id} onClick={() => handleStudentSelect(student.user_id)} style={{ cursor: 'pointer' }}>
-                    <TableCell>{student.name}</TableCell>
-                    <TableCell>{student.phone_number}</TableCell>
-                  </TableRow>
+                  <MenuItem key={student.user_id} value={student.user_id}>
+                    {student.name}
+                  </MenuItem>
                 ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </div>
-      )}
+              </Select>
+            </FormControl>
+          </Card>
+        )}
 
-      {studentDetails && (
-        <div>
-          <Typography variant="h5" gutterBottom>Student Details</Typography>
-          <p><strong>Name:</strong> {studentDetails.name}</p>
-          <p><strong>Phone Number:</strong> {studentDetails.phone_number}</p>
-          <p><strong>Email:</strong> {studentDetails.email}</p>
-        </div>
-      )}
+        {studentDetails && (
+          <Card sx={{ mb: 3, p: 3, boxShadow: 3, borderRadius: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <PersonIcon sx={{ fontSize: 40, mr: 2 }} />
+              <Typography variant="h5" sx={{  fontWeight: 'bold'}}>
+                Student Details
+              </Typography>
+            </Box>
+            <Divider sx={{ mb: 2 }} />
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={4}>
+                <Box sx={{ p: 2, borderLeft: '4px solid #1a237e', backgroundColor: '#f0f0f0', borderRadius: '0 4px 4px 0' }}>
+                  <Typography variant="subtitle2" color="textSecondary">Name</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{studentDetails.name}</Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <Box sx={{ p: 2, borderLeft: '4px solid #1a237e', backgroundColor: '#f0f0f0', borderRadius: '0 4px 4px 0' }}>
+                  <Typography variant="subtitle2" color="textSecondary">Phone Number</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{studentDetails.phone_number}</Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <Box sx={{ p: 2, borderLeft: '4px solid #1a237e', backgroundColor: '#f0f0f0', borderRadius: '0 4px 4px 0' }}>
+                  <Typography variant="subtitle2" color="textSecondary">Email</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{studentDetails.email}</Typography>
+                </Box>
+              </Grid>
+            </Grid>
+          </Card>
+        )}
 
-      {testRecords.length > 0 && (
-        <div>
-          <Typography variant="h5" gutterBottom>Test Records for Student ID: {selectedStudent}</Typography>
-          <Line data={lineChartData} />
-          <TableContainer component={Paper} style={{ marginTop: '20px' }}>
-            <Table>
+        {testRecords.length > 0 && (
+          <Card sx={{ mb: 3, p: 3, boxShadow: 3, borderRadius: 2 }}>
+            <Typography variant="h5" gutterBottom sx={{  fontWeight: 'bold'}}>
+              Performance Analysis for {studentDetails?.name}
+            </Typography>
+            <Divider sx={{ mb: 3 }} />
+            <Box sx={{ height: '400px', mb: 4 }}>
+              <Line data={lineChartData} options={lineChartOptions} />
+            </Box>
+            <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', mt: 4 }}>
+              Detailed Test Records
+            </Typography>
+            <TableContainer component={Paper} sx={{ boxShadow: 2, borderRadius: 2, overflow: 'hidden' }}>
+              <Table>
               <TableHead>
-                <TableRow style={{ backgroundColor: '#f0f0f0' }}>
-                  <TableCell>Test ID</TableCell>
-                  <TableCell>Marks Obtained</TableCell>
-                  <TableCell>Highest Marks</TableCell>
-                  <TableCell>Lowest Marks</TableCell>
-                  <TableCell>Average Marks</TableCell>
-                  <TableCell>Rank</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {testRecords.map(record => (
-                  <TableRow key={record.record_id}>
-                    <TableCell>{record.test_id}</TableCell>
-                    <TableCell>{record.marks_obtained}</TableCell>
-                    <TableCell>{testStatistics[record.test_id]?.highest_marks}</TableCell>
-                    <TableCell>{testStatistics[record.test_id]?.lowest_marks}</TableCell>
-                    <TableCell>{testStatistics[record.test_id]?.average_marks}</TableCell>
-                    <TableCell>{record.rank || 'N/A'}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </div>
-      )}
+              <TableRow className="bg-gray-200 dark:bg-gray-700">
 
-      {cumulativeMetrics.totalTests && (
-        <div style={{ marginTop: '20px', textAlign: 'center' }}>
-          <Typography variant="h5" gutterBottom>Cumulative Metrics</Typography>
-          <p>Total tests participated in: {cumulativeMetrics.totalTests}</p>
-          <p>Average marks across all tests: {cumulativeMetrics.averageMarks}</p>
-          <p>Percentage improvement over time: {cumulativeMetrics.percentageImprovement}%</p>
-        </div>
-      )}
-    </div>
+    <TableCell className="px-4 py-3 text-left text-white font-bold border border-gray-300">S.No</TableCell>
+    <TableCell className="px-4 py-3 text-left text-white font-bold border border-gray-300">Test ID</TableCell>
+    <TableCell className="px-4 py-3 text-left text-white font-bold border border-gray-300">Test Name</TableCell>
+    <TableCell className="px-4 py-3 text-left text-white font-bold border border-gray-300">Subject</TableCell>
+    <TableCell className="px-4 py-3 text-left text-white font-bold border border-gray-300">Date</TableCell>
+    <TableCell className="px-4 py-3 text-left text-white font-bold border border-gray-300">Marks Obtained</TableCell>
+    <TableCell className="px-4 py-3 text-left text-white font-bold border border-gray-300">Total Marks</TableCell>
+    <TableCell className="px-4 py-3 text-left text-white font-bold border border-gray-300">Percentage</TableCell>
+    <TableCell className="px-4 py-3 text-left text-white font-bold border border-gray-300">Highest</TableCell>
+    <TableCell className="px-4 py-3 text-left text-white font-bold border border-gray-300">Rank</TableCell>
+  </TableRow>
+</TableHead>
+
+                <TableBody>
+                  {testRecords.map((record, index) => {
+                    const totalMarks = testDetails[record.test_id]?.total_marks || 100;
+                    const percentage = (record.marks_obtained / totalMarks) * 100;
+                    const averageMarks = testStatistics[record.test_id]?.average_marks;
+                    
+                    return (
+                      <TableRow 
+                        key={record.record_id} 
+                        sx={{ 
+                          '&:nth-of-type(odd)': { backgroundColor: '#f9f9f9' },
+                          '&:hover': { backgroundColor: '#f0f0f0' }
+                        }}
+                      >
+                        <TableCell>{index + 1}</TableCell>
+                        <TableCell>{record.test_id}</TableCell>
+                        <TableCell sx={{ fontWeight: 'medium' }}>{testDetails[record.test_id]?.test_name}</TableCell>
+                        <TableCell>{testDetails[record.test_id]?.subject}</TableCell>
+                        <TableCell>{testDetails[record.test_id]?.date}</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>{record.marks_obtained}</TableCell>
+                        <TableCell>{totalMarks}</TableCell>
+                        <TableCell>
+                          <Chip 
+                            label={`${formatNumber(percentage)}%`} 
+                            sx={{ 
+                              backgroundColor: getPerformanceColor(record.marks_obtained, totalMarks),
+                              color: 'white',
+                              fontWeight: 'bold'
+                            }} 
+                          />
+                        </TableCell>
+                        <TableCell>{testStatistics[record.test_id]?.highest_marks || 'N/A'}</TableCell>
+                        <TableCell>
+                          {record.rank ? 
+                            <Chip 
+                              label={`#${record.rank}`} 
+                              sx={{ 
+                                backgroundColor: record.rank <= 3 ? '#4caf50' : '#1a237e',
+                                color: 'white',
+                                fontWeight: 'bold'
+                              }} 
+                            /> : 'N/A'
+                          }
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Card>
+        )}
+      </Container>
+    </Box>
   );
 };
 

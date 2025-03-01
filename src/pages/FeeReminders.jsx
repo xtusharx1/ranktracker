@@ -121,44 +121,50 @@ const FeeReminders = () => {
   }
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif', color: '#333' }}>
-      <h2 style={{ textAlign: 'center', marginTop: '20px' }}>Upcoming Dues</h2>
-      {upcomingDues.length > 0 ? (
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px' }}>
-          <thead>
-            <tr style={{ backgroundColor: '#f0f0f0', borderBottom: '2px solid #ddd' }}>
-              <th style={{ padding: '12px 15px', textAlign: 'left' }}>S.No</th>
-              <th style={{ padding: '12px 15px', textAlign: 'left' }}>Student Name</th>
-              <th style={{ padding: '12px 15px', textAlign: 'left' }}>Email</th>
-              <th style={{ padding: '12px 15px', textAlign: 'left' }}>Batch</th>
-              <th style={{ padding: '12px 15px', textAlign: 'left' }}>Admission Date</th>
-              <th style={{ padding: '12px 15px', textAlign: 'left' }}>Total Fees</th>
-              <th style={{ padding: '12px 15px', textAlign: 'left' }}>Fees Submitted</th>
-              <th style={{ padding: '12px 15px', textAlign: 'left' }}>Remaining Fees</th>
-              <th style={{ padding: '12px 15px', textAlign: 'left' }}>Next Due Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            {upcomingDues.map((due, index) => (
-              <tr key={due.id} style={{ borderBottom: '1px solid #ddd', backgroundColor: getDueDateColor(due.nextDueDate) }}>
-                <td style={{ padding: '12px 15px' }}>{index + 1}</td>
-                <td style={{ padding: '12px 15px' }}>{due.userDetails ? due.userDetails.name : 'N/A'}</td>
-                <td style={{ padding: '12px 15px' }}>{due.userDetails ? due.userDetails.email : 'N/A'}</td>
-                <td style={{ padding: '12px 15px' }}>
-                  {due.batch_id ? (batches[due.batch_id] ? batches[due.batch_id].batch_name : 'N/A') : 'N/A'}
-                </td>
-                <td style={{ padding: '12px 15px' }}>{due.admissionDate}</td>
-                <td style={{ padding: '12px 15px' }}>₹{due.totalFees}</td>
-                <td style={{ padding: '12px 15px' }}>₹{due.feesSubmitted}</td>
-                <td style={{ padding: '12px 15px' }}>₹{due.remainingFees}</td>
-                <td style={{ padding: '12px 15px' }}>{due.nextDueDate}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : (
-        <p style={{ textAlign: 'center', marginTop: '20px' }}>No upcoming dues.</p>
-      )}
+    <div style={{ fontFamily: 'Arial, sans-serif', padding: '20px', backgroundColor: '#f9f9f9' }}>
+      <div style={{ margin: '0 auto', border: '1px solid #e0e0e0', borderRadius: '8px', backgroundColor: '#fff', padding: '20px', boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)' }}>
+        <h2 style={{ textAlign: 'center', marginTop: '20px' }}>Upcoming Dues</h2>
+        {upcomingDues.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-base mt-5 bg-white dark:bg-gray-800 border border-gray-300">
+              <thead>
+                <tr className="bg-gray-200 dark:bg-gray-700 border-b-2 border-gray-300">
+                  <th className="px-4 py-3 text-left text-gray-600 dark:text-gray-300 border border-gray-300">S.No</th>
+                  <th className="px-4 py-3 text-left text-gray-600 dark:text-gray-300 border border-gray-300">Student Name</th>
+                  <th className="px-4 py-3 text-left text-gray-600 dark:text-gray-300 border border-gray-300">Email</th>
+                  <th className="px-4 py-3 text-left text-gray-600 dark:text-gray-300 border border-gray-300">Batch</th>
+                  <th className="px-4 py-3 text-left text-gray-600 dark:text-gray-300 border border-gray-300">Admission Date</th>
+                  <th className="px-4 py-3 text-left text-gray-600 dark:text-gray-300 border border-gray-300">Total Fees</th>
+                  <th className="px-4 py-3 text-left text-gray-600 dark:text-gray-300 border border-gray-300">Fees Submitted</th>
+                  <th className="px-4 py-3 text-left text-gray-600 dark:text-gray-300 border border-gray-300">Remaining Fees</th>
+                  <th className="px-4 py-3 text-left text-gray-600 dark:text-gray-300 border border-gray-300">Next Due Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {upcomingDues.map((due, index) => (
+                  <tr
+                    key={due.id}
+                    className={index % 2 === 0 ? "bg-gray-50 dark:bg-gray-900" : "bg-white dark:bg-gray-800"}
+                    style={{ backgroundColor: getDueDateColor(due.nextDueDate) }}
+                  >
+                    <td className="px-4 py-3 border border-gray-300">{index + 1}</td>
+                    <td className="px-4 py-3 border border-gray-300">{due.userDetails ? due.userDetails.name : 'N/A'}</td>
+                    <td className="px-4 py-3 border border-gray-300">{due.userDetails ? due.userDetails.email : 'N/A'}</td>
+                    <td className="px-4 py-3 border border-gray-300">{due.batch_id ? (batches[due.batch_id] ? batches[due.batch_id].batch_name : 'N/A') : 'N/A'}</td>
+                    <td className="px-4 py-3 border border-gray-300">{due.admissionDate}</td>
+                    <td className="px-4 py-3 border border-gray-300">₹{due.totalFees}</td>
+                    <td className="px-4 py-3 border border-gray-300">₹{due.feesSubmitted}</td>
+                    <td className="px-4 py-3 border border-gray-300">₹{due.remainingFees}</td>
+                    <td className="px-4 py-3 border border-gray-300">{due.nextDueDate}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p style={{ textAlign: 'center', marginTop: '20px' }}>No upcoming dues.</p>
+        )}
+      </div>
     </div>
   );
 };
