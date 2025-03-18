@@ -58,28 +58,85 @@ const Students = () => {
         setBatches(batchesData);
         setBatchMapping(batchMapping);
   
-        // Fetch Batch Info for Each Student
-        const studentBatchPromises = studentsData.map(async (student) => {
+        // Fetch Batch Info and Counselor Info for Each Student
+        const studentDetailsPromises = studentsData.map(async (student) => {
           try {
-            const response = await fetch(
+            // Fetch batch info
+            const batchResponse = await fetch(
               `https://apistudents.sainikschoolcadet.com/api/studentBatches/students/search/${student.user_id}`
             );
-            const data = await response.json();
-  
+            const batchData = await batchResponse.json();
+            
+            // Initialize student data with batch info
+            let studentWithDetails = { ...student };
+            
             // Map batch_id and batch_name if available
-            if (data.length > 0) {
-              const batchId = data[0].batch_id;
-              return { ...student, batch_id: batchId, batch_name: batchMapping[batchId] || "Unknown Batch" };
+            if (batchData.length > 0) {
+              const batchId = batchData[0].batch_id;
+              studentWithDetails.batch_id = batchId;
+              studentWithDetails.batch_name = batchMapping[batchId] || "Unknown Batch";
+            } else {
+              studentWithDetails.batch_id = null;
+              studentWithDetails.batch_name = "No Batch Assigned";
             }
-  
-            return { ...student, batch_id: null, batch_name: "No Batch Assigned" };
+            
+            // Fetch counselor info
+            try {
+              const counselorResponse = await fetch(
+                `https://apistudents.sainikschoolcadet.com/api/student-counselor/student/${student.user_id}`
+              );
+              
+              if (counselorResponse.ok) {
+                const counselorData = await counselorResponse.json();
+                
+                if (counselorData && counselorData.c_id) {
+                  studentWithDetails.counselor_id = counselorData.c_id;
+                  
+                  // Fetch counselor's name using their user_id
+                  try {
+                    const counselorDetailsResponse = await fetch(
+                      `https://apistudents.sainikschoolcadet.com/api/users/user/${counselorData.c_id}`
+                    );
+                    
+                    if (counselorDetailsResponse.ok) {
+                      const counselorDetails = await counselorDetailsResponse.json();
+                      // Fixed: Access name through the user object in the response
+                      studentWithDetails.counselor_name = counselorDetails.user?.name || "Unknown Counselor";
+                    } else {
+                      studentWithDetails.counselor_name = "Unknown Counselor";
+                    }
+                  } catch (error) {
+                    console.error(`Error fetching counselor details for counselor ${counselorData.c_id}:`, error);
+                    studentWithDetails.counselor_name = "Error Fetching Counselor";
+                  }
+                } else {
+                  studentWithDetails.counselor_id = null;
+                  studentWithDetails.counselor_name = "Not Available";
+                }
+              } else {
+                studentWithDetails.counselor_id = null;
+                studentWithDetails.counselor_name = "Not Available";
+              }
+            } catch (error) {
+              console.error(`Error fetching counselor for user ${student.user_id}:`, error);
+              studentWithDetails.counselor_id = null;
+              studentWithDetails.counselor_name = "Error Fetching Counselor";
+            }
+            
+            return studentWithDetails;
           } catch (error) {
-            console.error(`Error fetching batch for user ${student.user_id}:`, error);
-            return { ...student, batch_id: null, batch_name: "Batch Fetch Error" };
+            console.error(`Error fetching details for user ${student.user_id}:`, error);
+            return { 
+              ...student, 
+              batch_id: null, 
+              batch_name: "Batch Fetch Error",
+              counselor_id: null,
+              counselor_name: "Data Fetch Error"
+            };
           }
         });
   
-        const updatedStudents = await Promise.all(studentBatchPromises);
+        const updatedStudents = await Promise.all(studentDetailsPromises);
         setStudents(updatedStudents);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -88,7 +145,6 @@ const Students = () => {
   
     fetchData();
   }, []);
-  
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -178,6 +234,27 @@ const Students = () => {
         });
 
         console.log("Student added to batch:", addStudentToBatchResponse.data);
+        
+        // Get the counselor ID from localStorage
+        const counselor_id = localStorage.getItem('user_id');
+        
+        if (counselor_id) {
+          try {
+            // Assign the counselor to the student
+            const assignCounselorResponse = await axios.post('https://apistudents.sainikschoolcadet.com/api/student-counselor', {
+              c_id: parseInt(counselor_id),
+              s_id: user_id
+            });
+            
+            console.log("Counselor assigned to student:", assignCounselorResponse.data);
+          } catch (error) {
+            console.error("Error assigning counselor to student:", error);
+            // Continue with the flow even if counselor assignment fails
+          }
+        } else {
+          console.log("No counselor ID found in localStorage, skipping counselor assignment");
+        }
+        
         setShowModal(false);
       } else {
         console.error("User registration failed:", data);
@@ -353,48 +430,50 @@ const paginate = (pageNumber) => setCurrentPage(pageNumber);
           boxShadow: '0 0 10px rgba(0,0,0,0.1)'
         }}>
           <table className="min-w-full table-auto bg-white border-collapse border border-gray-300">
-            <thead>
-              <tr className="bg-gray-200">
-                <th className="border border-gray-300 px-2 py-3 text-center" style={{ width: '40px' }}>S.No</th>
-                <th className="border border-gray-300 px-4 py-3 text-left">Name</th>
-                <th className="border border-gray-300 px-4 py-3 text-left">Email</th>
-                <th className="border border-gray-300 px-4 py-3 text-left">Phone Number</th>
-                <th className="border border-gray-300 px-4 py-3 text-left">Batch Name</th>
-                <th className="border border-gray-300 px-4 py-3 text-left">Date of Admission</th>
-                <th className="border border-gray-300 px-4 py-3 text-left">Status</th>
-                <th className="border border-gray-300 px-4 py-3 text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {currentStudents.map((student, index) => (
-                <tr key={student.user_id} className="hover:bg-gray-50">
-                  <td className="border border-gray-300 px-2 py-3 text-center">{indexOfFirstStudent + index + 1}</td>
-                  <td className="border border-gray-300 px-4 py-3">{student.name}</td>
-                  <td className="border border-gray-300 px-4 py-3">{student.email}</td>
-                  <td className="border border-gray-300 px-4 py-3">{student.phone_number}</td>
-                  <td className="border border-gray-300 px-4 py-3">{student.batch_name}</td>
-                  <td className="border border-gray-300 px-4 py-3">{student.date_of_admission}</td>
-                  <td className="border border-gray-300 px-4 py-3">
-                    <span className={`px-2 py-1 rounded-full ${
-                      student.status === 'active' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {student.status.charAt(0).toUpperCase() + student.status.slice(1)}
-                    </span>
-                  </td>
-                  <td className="border border-gray-300 px-4 py-3 text-center">
-                    <button
-                      onClick={() => handleEditClick(student.user_id)}
-                      className="bg-blue-500 text-white py-1 px-4 rounded-lg hover:bg-blue-600 transition duration-200"
-                    >
-                      Edit
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+  <thead>
+    <tr className="bg-gray-200">
+      <th className="border border-gray-300 px-2 py-3 text-center" style={{ width: '40px' }}>S.No</th>
+      <th className="border border-gray-300 px-4 py-3 text-left">Name</th>
+      <th className="border border-gray-300 px-4 py-3 text-left">Email</th>
+      <th className="border border-gray-300 px-4 py-3 text-left">Phone Number</th>
+      <th className="border border-gray-300 px-4 py-3 text-left">Batch Name</th>
+      <th className="border border-gray-300 px-4 py-3 text-left">Added by</th>
+      <th className="border border-gray-300 px-4 py-3 text-left">Date of Admission</th>
+      <th className="border border-gray-300 px-4 py-3 text-left">Status</th>
+      <th className="border border-gray-300 px-4 py-3 text-center">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {currentStudents.map((student, index) => (
+      <tr key={student.user_id} className="hover:bg-gray-50">
+        <td className="border border-gray-300 px-2 py-3 text-center">{indexOfFirstStudent + index + 1}</td>
+        <td className="border border-gray-300 px-4 py-3">{student.name}</td>
+        <td className="border border-gray-300 px-4 py-3">{student.email}</td>
+        <td className="border border-gray-300 px-4 py-3">{student.phone_number}</td>
+        <td className="border border-gray-300 px-4 py-3">{student.batch_name}</td>
+        <td className="border border-gray-300 px-4 py-3">{student.counselor_name || "No Counselor"}</td>
+        <td className="border border-gray-300 px-4 py-3">{student.date_of_admission}</td>
+        <td className="border border-gray-300 px-4 py-3">
+          <span className={`px-2 py-1 rounded-full ${
+            student.status === 'active' 
+              ? 'bg-green-100 text-green-800' 
+              : 'bg-red-100 text-red-800'
+          }`}>
+            {student.status.charAt(0).toUpperCase() + student.status.slice(1)}
+          </span>
+        </td>
+        <td className="border border-gray-300 px-4 py-3 text-center">
+          <button
+            onClick={() => handleEditClick(student.user_id)}
+            className="bg-blue-500 text-white py-1 px-4 rounded-lg hover:bg-blue-600 transition duration-200"
+          >
+            Edit
+          </button>
+        </td>
+      </tr>
+    ))}
+  </tbody>
+</table>
         </div>
 
         <div className="flex items-center justify-between mt-4 px-4 py-3 bg-white border-t border-gray-200 sm:px-6">
