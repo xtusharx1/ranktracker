@@ -1,641 +1,716 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import ReactDOM from 'react-dom';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 
+// Constants
+const BASE_URL = 'https://apistudents.sainikschoolcadet.com';
+
+// Utility functions
+const formatDate = (dateString) => {
+  return dateString ? new Date(dateString).toLocaleDateString('en-US', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }) : 'No Date';
+};
+
+// Modal Component
+const Modal = ({ isOpen, onClose, title, children }) => {
+  if (!isOpen) return null;
+  
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 1000,
+    }}>
+      <div style={{
+        backgroundColor: '#fff',
+        padding: '20px',
+        borderRadius: '10px',
+        width: '400px',
+        position: 'relative',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+      }}>
+        <button onClick={onClose} style={{
+          position: 'absolute',
+          top: '15px',
+          right: '15px',
+          background: 'none',
+          border: 'none',
+          fontSize: '18px',
+          cursor: 'pointer',
+          color: '#555',
+        }}>✖</button>
+        <h2 style={{ 
+          marginBottom: '20px', 
+          color: '#1D72B8', 
+          textAlign: 'center',
+          fontSize: '20px',
+          borderBottom: '1px solid #eee',
+          paddingBottom: '10px'
+        }}>{title}</h2>
+        {children}
+      </div>
+    </div>
+  );
+};
+
+// Student List Component
+const StudentList = ({ students, searchTerm, onStudentClick, selectedStudent }) => {
+  const filteredStudents = useMemo(() => {
+    return students.filter(student => 
+      student.name?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [students, searchTerm]);
+
+  return (
+    <ul style={{ listStyleType: 'none', padding: '0', margin: '0' }}>
+      {filteredStudents.length > 0 ? (
+        filteredStudents.map((student) => (
+          <li 
+            key={student.user_id} 
+            style={{
+              padding: '15px',
+              borderBottom: '1px solid #ddd',
+              cursor: 'pointer',
+              backgroundColor: selectedStudent?.user_id === student.user_id ? '#E3F2FD' : '#ffffff',
+              marginBottom: '10px',
+              transition: 'all 0.2s ease',
+              borderRadius: '8px',
+              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+            }} 
+            onClick={() => onStudentClick(student)}
+          >
+            <div style={{
+              fontWeight: 'bold',
+              color: '#333',
+              fontSize: '16px',
+              marginBottom: '5px',
+            }}>
+              {student.name || 'Unnamed Student'}
+            </div>
+            <div style={{
+              fontSize: '14px',
+              color: student.remainingFees > 0 ? '#D32F2F' : '#388E3C',
+              fontWeight: '500',
+            }}>
+              Balance: {student.remainingFees || 'No Fees Due'}
+            </div>
+          </li>
+        ))
+      ) : (
+        <li style={{
+          padding: '15px',
+          color: '#888',
+          textAlign: 'center',
+          backgroundColor: '#f9f9f9',
+          borderRadius: '8px',
+        }}>
+          No students found.
+        </li>
+      )}
+    </ul>
+  );
+};
+
+// Fee Summary Cards Component
+const FeeSummaryCards = ({ studentFees, nextDueDate, paymentCompleted }) => {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-around', marginTop: '20px' }}>
+      <div style={{ 
+        border: '1px solid #ccc', 
+        padding: '20px', 
+        borderRadius: '10px', 
+        flex: '1', 
+        margin: '10px', 
+        textAlign: 'center', 
+        backgroundColor: '#E0F7FA', 
+        color: '#00796B',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
+      }}>
+        <h3>Total Fees</h3>
+        <p style={{ fontSize: '24px', fontWeight: 'bold' }}>₹{studentFees.totalFees || 0}</p>
+      </div>
+      <div style={{ 
+        border: '1px solid #ccc', 
+        padding: '20px', 
+        borderRadius: '10px', 
+        flex: '1', 
+        margin: '10px', 
+        textAlign: 'center', 
+        backgroundColor: '#E8F5E9', 
+        color: '#388E3C',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
+      }}>
+        <h3>Fees Submitted</h3>
+        <p style={{ fontSize: '24px', fontWeight: 'bold' }}>₹{studentFees.feesSubmitted || 0}</p>
+      </div>
+      <div style={{ 
+        border: '1px solid #ccc', 
+        padding: '20px', 
+        borderRadius: '10px', 
+        flex: '1', 
+        margin: '10px', 
+        textAlign: 'center', 
+        backgroundColor: '#FFEBEE', 
+        color: '#D32F2F',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)' 
+      }}>
+        <h3>Remaining Fees</h3>
+        <p style={{ fontSize: '24px', fontWeight: 'bold' }}>₹{studentFees.remainingFees || 0}</p>
+      </div>
+      <div style={{ 
+        border: '1px solid #ccc', 
+        padding: '20px', 
+        borderRadius: '10px', 
+        flex: '1', 
+        margin: '10px', 
+        textAlign: 'center', 
+        backgroundColor: '#FFF3E0', 
+        color: '#E65100',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
+      }}>
+        <h3>Next Due Date</h3>
+        <p style={{ fontSize: '24px', fontWeight: 'bold' }}>
+          {nextDueDate ? formatDate(nextDueDate) : 
+           paymentCompleted ? 'Payment Completed' : 'No Due Date'}
+        </p>
+      </div>
+    </div>
+  );
+};
+
+// Records Table Component
+const RecordsTable = ({ records }) => {
+  if (records.length === 0) {
+    return (
+      <div style={{ 
+        textAlign: 'center', 
+        color: '#555',
+        padding: '30px',
+        backgroundColor: '#f9f9f9',
+        borderRadius: '8px',
+        marginTop: '20px'
+      }}>
+        <p>No transaction records found.</p>
+      </div>
+    );
+  }
+
+  return (
+    <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px', marginTop: '20px' }}>
+      <thead>
+        <tr>
+          <th style={{ border: '1px solid #ddd', padding: '12px', backgroundColor: '#f2f2f2', borderTopLeftRadius: '8px' }}>Title</th>
+          <th style={{ border: '1px solid #ddd', padding: '12px', backgroundColor: '#f2f2f2' }}>Date</th>
+          <th style={{ border: '1px solid #ddd', padding: '12px', backgroundColor: '#f2f2f2' }}>You Gave</th>
+          <th style={{ border: '1px solid #ddd', padding: '12px', backgroundColor: '#f2f2f2', borderTopRightRadius: '8px' }}>You Got</th>
+        </tr>
+      </thead>
+      <tbody>
+        {records.map(record => (
+          <tr
+            key={record.id}
+            style={{
+              backgroundColor: record.type === 'charge' ? '#FFEBEE' : record.type === 'payment' ? '#E8F5E9' : '#fff',
+              transition: 'background-color 0.2s'
+            }}
+          >
+            <td style={{ border: '1px solid #ddd', padding: '12px' }}>{record.title}</td>
+            <td style={{ border: '1px solid #ddd', padding: '12px' }}>{formatDate(record.date)}</td>
+            <td style={{ 
+              border: '1px solid #ddd', 
+              padding: '12px',
+              color: record.type === 'charge' ? '#D32F2F' : 'inherit',
+              fontWeight: record.type === 'charge' ? '600' : 'normal'
+            }}>
+              {record.type === 'charge' ? `₹${record.amount}` : '-'}
+            </td>
+            <td style={{ 
+              border: '1px solid #ddd', 
+              padding: '12px',
+              color: record.type === 'payment' ? '#388E3C' : 'inherit',
+              fontWeight: record.type === 'payment' ? '600' : 'normal'
+            }}>
+              {record.type === 'payment' ? `₹${record.amount}` : '-'}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+};
+
+// Main Component
 const FeeRecords = () => {
+  // State declarations
   const [feeSummary, setFeeSummary] = useState(null);
-  const [upcomingDues, setUpcomingDues] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [batches, setBatches] = useState([]);
   const [students, setStudents] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState(null);
-  const [selectedStudentFees, setSelectedStudentFees] = useState(null);
-  const [activeTab, setActiveTab] = useState('payments');
+  const [selectedStudentFees, setSelectedStudentFees] = useState({
+    totalFees: 0,
+    feesSubmitted: 0,
+    remainingFees: 0
+  });
   const [feePaymentRecords, setFeePaymentRecords] = useState([]);
   const [otherChargesRecords, setOtherChargesRecords] = useState([]);
   const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
   const [isChargeModalOpen, setChargeModalOpen] = useState(false);
-  const [paymentData, setPaymentData] = useState({ title: '', date: '', amount: '', feeStatusId: '' });
-  const [chargeData, setChargeData] = useState({ title: '', date: '', amount: '', feeStatusId: '' });
+  const [showFeeStatusForm, setShowFeeStatusForm] = useState(false);
+  const [feeStatusExists, setFeeStatusExists] = useState(false);
+  const [selectedBatch, setSelectedBatch] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true);
+  
+  // Form state
+  const [paymentData, setPaymentData] = useState({ 
+    title: '', 
+    date: '', 
+    amount: '', 
+    paymentCompleted: false, 
+    nextDueDate: '' 
+  });
+  
+  const [chargeData, setChargeData] = useState({ 
+    title: '', 
+    date: '', 
+    amount: '' 
+  });
+  
   const [newFeeStatus, setNewFeeStatus] = useState({
     admissionDate: '',
     totalFees: '',
-    feesSubmitted: '',
+    feesSubmitted: '0',
     remainingFees: '',
     nextDueDate: '',
     user_id: null,
   });
-  const [showFeeStatusForm, setShowFeeStatusForm] = useState(false);
-  const [feeStatusExists, setFeeStatusExists] = useState(false);
-  const [userDetails, setUserDetails] = useState(null);
-  const [totalFees, setTotalFees] = useState(123123.00);
-  const [feesSubmitted, setFeesSubmitted] = useState(0);
-  const [remainingFees, setRemainingFees] = useState(totalFees - feesSubmitted);
-  const [selectedBatch, setSelectedBatch] = useState(null);
-  const [sortOrder, setSortOrder] = useState('asc');
-  const [searchTerm, setSearchTerm] = useState('');
 
-  const BASE_URL = 'https://apistudents.sainikschoolcadet.com';
-
-  // Define fetchUserDetails function here
-  const fetchUserDetails = async (userId) => {
+  // API Functions
+  const fetchData = useCallback(async () => {
     try {
-        const response = await axios.get(`${BASE_URL}/api/users/admissions/${userId}`);
-        setUserDetails(response.data);
-        setNewFeeStatus({
-            admissionDate: response.data.date_of_admission,
-            totalFees: response.data.total_course_fees,
-            user_id: response.data.user_id,
-            remainingFees: response.data.total_course_fees,
-        });
+      setLoading(true);
+      
+      // Parallel API requests for better performance
+      const [batchesRes, feeSummaryRes] = await Promise.all([
+        fetch(`${BASE_URL}/api/batches/`),
+        fetch(`${BASE_URL}/api/feestatus/summary`)
+      ]);
+      
+      if (batchesRes.ok) {
+        const batchesData = await batchesRes.json();
+        setBatches(batchesData);
+      }
+      
+      if (feeSummaryRes.ok) {
+        const summaryData = await feeSummaryRes.json();
+        setFeeSummary(summaryData);
+      }
     } catch (error) {
-        console.error('Error fetching user details:', error);
+      console.error('Error fetching initial data:', error);
+    } finally {
+      setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    const fetchFeeSummary = async () => {
-      try {
-        const response = await fetch(`${BASE_URL}/api/feestatus/summary`);
-        if (response.ok) {
-          const data = await response.json();
-          setFeeSummary(data);
-        } else {
-          console.error('Failed to fetch fee summary');
-        }
-      } catch (error) {
-        console.error('Error fetching fee summary:', error);
-      }
-    };
-
-    const fetchUpcomingDues = async () => {
-      try {
-        const response = await fetch(`${BASE_URL}/api/feestatus/upcoming-dues`);
-        if (response.ok) {
-          const data = await response.json();
-          const enrichedData = await Promise.all(data.map(async (due) => {
-            const userDetails = await fetchUserDetails(due.user_id);
-            const batchId = await fetchBatchId(due.user_id);
-            return { ...due, userDetails, batch_id: batchId };
-          }));
-          const sortedData = enrichedData.sort((a, b) => new Date(a.nextDueDate) - new Date(b.nextDueDate));
-          setUpcomingDues(sortedData);
-        } else {
-          console.error('Failed to fetch upcoming dues');
-        }
-      } catch (error) {
-        console.error('Error fetching upcoming dues:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const fetchBatchId = async (userId) => {
-      try {
-        const response = await fetch(`${BASE_URL}/api/studentBatches/students/search/${userId}`);
-        if (response.ok) {
-          const data = await response.json();
-          return data[0]?.batch_id;
-        } else {
-          console.error('Failed to fetch batch ID');
-          return null;
-        }
-      } catch (error) {
-        console.error('Error fetching batch ID:', error);
-        return null;
-      }
-    };
-
-    const fetchAllBatches = async () => {
-      try {
-        const response = await fetch(`${BASE_URL}/api/batches/`);
-        if (response.ok) {
-          const data = await response.json();
-          setBatches(data);
-        } else {
-          console.error('Failed to fetch batches');
-        }
-      } catch (error) {
-        console.error('Error fetching batches:', error);
-      }
-    };
-
-    const fetchAllStudents = async () => {
-      try {
-        const response = await fetch(`${BASE_URL}/api/users/active/role/2`);
-        if (response.ok) {
-          const data = await response.json();
-          const studentsWithFees = await Promise.all(data.map(async (student) => {
-            if (!student.user_id) {
-              console.error('Student user_id is undefined:', student);
-              return student;
-            }
-            const feeResponse = await fetch(`${BASE_URL}/api/feestatus/user/${student.user_id}`);
-            let remainingFees = 'No fee record found';
-            let nextDueDate = null;
-            let totalFees = 0;
-            let feesSubmitted = 0;
-            let feeStatusId = null;
-            let paymentCompleted = false;  // Default value
-    
-            if (feeResponse.ok) {
-              const feeData = await feeResponse.json();
-              if (feeData.message && feeData.message.includes("No fee statuses found")) {
-                console.warn(`No fee statuses found for user_id ${student.user_id}`);
-              } else if (Array.isArray(feeData) && feeData.length > 0) {
-                const fee = feeData[0];
-                remainingFees = `${fee.remainingFees}`;
-                nextDueDate = fee.nextDueDate;
-                totalFees = fee.totalFees;
-                feesSubmitted = fee.feesSubmitted;
-                feeStatusId = fee.id;
-                paymentCompleted = fee.remainingFees === "0" || fee.paymentCompleted;
-              }
-            } else {
-              console.error('Failed to fetch fee data for user_id:', student.user_id);
-            }
-            return { ...student, remainingFees, nextDueDate, totalFees, feesSubmitted, feeStatusId, paymentCompleted };
-          }));
-    
-          // Separate students with and without due dates
-          const studentsWithDueDates = studentsWithFees.filter(student => student.nextDueDate);
-          const studentsWithoutDueDates = studentsWithFees.filter(student => !student.nextDueDate);
-    
-          // Sort students with due dates by nearest due date
-          const sortedStudentsWithDueDates = studentsWithDueDates.sort((a, b) => new Date(a.nextDueDate) - new Date(b.nextDueDate));
-    
-          // Combine sorted students with due dates and students without due dates
-          const sortedStudents = [...sortedStudentsWithDueDates, ...studentsWithoutDueDates];
-          setStudents(sortedStudents);
-        } else {
-          console.error('Failed to fetch students');
-        }
-      } catch (error) {
-        console.error('Error fetching students:', error);
-      }
-    };
-    
-
-    fetchFeeSummary();
-    fetchAllBatches();
-    fetchUpcomingDues();
-    fetchAllStudents();
   }, []);
 
-  const fetchFeePaymentRecords = async (feeStatusId) => {
+  const fetchStudentsByBatch = useCallback(async (batchId) => {
+    if (!batchId) {
+      setStudents([]);
+      return;
+    }
+    
     try {
-        const response = await axios.get(`${BASE_URL}/api/feepaymentrecords/payments/${feeStatusId}`);
-        const recordsWithType = response.data.map(record => ({ ...record, type: 'payment' }));
-        setFeePaymentRecords(recordsWithType);
+      setLoading(true);
+      const response = await fetch(`${BASE_URL}/api/studentBatches/students/batch/${batchId}`);
+      
+      if (response.ok) {
+        const studentsData = await response.json();
+        
+        // Process all students in parallel for better performance
+        const enrichedStudents = await Promise.all(studentsData.map(async (student) => {
+          try {
+            // Parallel requests for each student
+            const [feeResponse, userResponse] = await Promise.all([
+              fetch(`${BASE_URL}/api/feestatus/user/${student.user_id}`),
+              fetch(`${BASE_URL}/api/users/user/${student.user_id}`)
+            ]);
+            
+            let feeData = {};
+            let userName = 'Unnamed Student';
+            
+            if (feeResponse.ok) {
+              const feeResult = await feeResponse.json();
+              if (Array.isArray(feeResult) && feeResult.length > 0) {
+                feeData = feeResult[0];
+              }
+            }
+            
+            if (userResponse.ok) {
+              const userData = await userResponse.json();
+              userName = userData.user?.name || 'Unnamed Student';
+            }
+            
+            return {
+              ...student,
+              name: userName,
+              feeStatusId: feeData.id || null,
+              totalFees: feeData.totalFees || 0,
+              feesSubmitted: feeData.feesSubmitted || 0,
+              remainingFees: feeData.remainingFees || 0,
+              nextDueDate: feeData.nextDueDate || null,
+              paymentCompleted: feeData.paymentCompleted || false
+            };
+          } catch (error) {
+            console.error(`Error enriching student data for ID: ${student.user_id}`, error);
+            return student;
+          }
+        }));
+        
+        // Sort by next due date, null dates at the end
+        const sortedStudents = enrichedStudents.sort((a, b) => {
+          if (a.nextDueDate && b.nextDueDate) {
+            return new Date(a.nextDueDate) - new Date(b.nextDueDate);
+          }
+          return a.nextDueDate ? -1 : 1;
+        });
+        
+        setStudents(sortedStudents);
+      }
     } catch (error) {
-        console.error('Error fetching fee payment records:', error);
+      console.error('Error fetching students:', error);
+      setStudents([]);
+    } finally {
+      setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchOtherChargesRecords = async (feeStatusId) => {
+  const fetchStudentRecords = useCallback(async (student) => {
+    if (!student || !student.feeStatusId) return;
+    
     try {
-        const response = await axios.get(`${BASE_URL}/api/otherchargesrecords/charges/${feeStatusId}`);
-        const recordsWithType = response.data.map(record => ({ ...record, type: 'charge' }));
-        setOtherChargesRecords(recordsWithType);
+      const [paymentsRes, chargesRes] = await Promise.all([
+        fetch(`${BASE_URL}/api/feepaymentrecords/payments/${student.feeStatusId}`),
+        fetch(`${BASE_URL}/api/otherchargesrecords/charges/${student.feeStatusId}`)
+      ]);
+      
+      if (paymentsRes.ok) {
+        const payments = await paymentsRes.json();
+        setFeePaymentRecords(payments.map(record => ({ ...record, type: 'payment' })));
+      }
+      
+      if (chargesRes.ok) {
+        const charges = await chargesRes.json();
+        setOtherChargesRecords(charges.map(record => ({ ...record, type: 'charge' })));
+      }
     } catch (error) {
-        console.error('Error fetching other charges records:', error);
+      console.error('Error fetching student records:', error);
     }
-  };
+  }, []);
 
-  const handleStudentClick = async (student) => {
-    console.log('Selected student:', student); // Log the selected student
-
-    // Check if feeStatusId and user_id are defined
-    if (!student.feeStatusId || !student.user_id) {
-        console.warn('Selected student does not have valid fee status or user ID:', student);
-        // Optionally, you can prompt the user to create a fee status
-        const createFeeStatus = window.confirm('Selected student does not have a fee status. Would you like to create one?');
-        if (createFeeStatus) {
-            setSelectedStudent(student);
-            setShowFeeStatusForm(true); // Show the form to create a fee status
-            return; // Exit the function
-        } else {
-            return; // Exit if the user does not want to create a fee status
-        }
-    }
-
+  // Handlers
+  const handleStudentClick = useCallback(async (student) => {
     setSelectedStudent(student);
-    setSelectedStudentFees({
-        totalFees: student.totalFees || 0,
-        feesSubmitted: student.feesSubmitted || 0,
-        remainingFees: student.remainingFees || 'No fee record found'
-    });
-
-    // Reset the records for the new student
-    setFeePaymentRecords([]);
-    setOtherChargesRecords([]);
-
-    try {
-        // Fetch fee payment records for the selected student's fee status ID
-        await fetchFeePaymentRecords(student.feeStatusId);
-
-        // Fetch other charges records for the selected student's fee status ID
-        await fetchOtherChargesRecords(student.feeStatusId);
-    } catch (error) {
-        console.error('Error fetching records for selected student:', error);
+    
+    if (!student.feeStatusId) {
+      setFeeStatusExists(false);
+      setShowFeeStatusForm(true);
+      return;
     }
+    
+    setFeeStatusExists(true);
+    setSelectedStudentFees({
+      totalFees: student.totalFees || 0,
+      feesSubmitted: student.feesSubmitted || 0,
+      remainingFees: student.remainingFees || 0
+    });
+    
+    await fetchStudentRecords(student);
+    
+    // Reset forms
+    setNewFeeStatus({
+      admissionDate: '',
+      totalFees: student.totalFees || '',
+      feesSubmitted: '0',
+      remainingFees: student.remainingFees || '',
+      nextDueDate: '',
+      user_id: student.user_id,
+    });
+  }, [fetchStudentRecords]);
 
-    // Fetch user details and fee status for the selected student
-    await fetchUserDetails(student.user_id); // Ensure user details are fetched
-  };
+  const handleBatchChange = useCallback((event) => {
+    const batchId = event.target.value;
+    setSelectedBatch(batchId);
+    fetchStudentsByBatch(batchId);
+    setSelectedStudent(null);
+  }, [fetchStudentsByBatch]);
 
-  const handleTabChange = (tab) => {
-    setActiveTab(tab);
-  };
-
-  const handleAddPayment = async (e) => {
+  const handleAddPayment = useCallback(async (e) => {
     e.preventDefault();
-
-    // Create the payment data to send to the API
-    const paymentDataToSend = {
+    
+    if (!selectedStudent?.feeStatusId) return;
+    
+    try {
+      const paymentDataToSend = {
         title: paymentData.title,
         date: paymentData.date,
         amount: paymentData.amount,
         isPaid: true,
         feeStatusId: selectedStudent.feeStatusId,
-    };
-
-    // Only add nextDueDate if payment is not complete
-    if (!paymentData.paymentCompleted) {
+      };
+      
+      if (!paymentData.paymentCompleted) {
         paymentDataToSend.nextDueDate = paymentData.nextDueDate;
-    }
-
-    try {
-        const response = await axios.post(`${BASE_URL}/api/feepaymentrecords/add-payment`, paymentDataToSend);
-
-        if (response.status === 201) {
-            // Add type to the new record
-            const newRecord = { ...response.data, type: 'payment' };
-            setFeePaymentRecords([...feePaymentRecords, newRecord]);
-
-            // Update the fee status
-            const updatedFeesSubmitted = parseFloat(selectedStudentFees.feesSubmitted) + parseFloat(paymentData.amount);
-            const updatedRemainingFees = parseFloat(selectedStudentFees.totalFees) - updatedFeesSubmitted;
-
-            // If payment is completed, mark paymentCompleted as true
-            const paymentCompleted = updatedRemainingFees <= 0;
-
-            // Update fee status on the server
-            await axios.put(`${BASE_URL}/api/feestatus/${selectedStudent.feeStatusId}`, {
-                // If payment is complete, don't update nextDueDate
-                nextDueDate: paymentCompleted ? null : paymentData.nextDueDate,
-                feesSubmitted: updatedFeesSubmitted,
-                remainingFees: updatedRemainingFees,
-                paymentCompleted: paymentCompleted, // Mark payment as complete
-            });
-
-            
-            console.log('Updated Fee Status Response:', response.data); 
-            // Close the modal
-            
-            setPaymentModalOpen(false);
-            handleStudentClick(selectedStudent);
-            setSelectedStudentFees({
-              ...selectedStudentFees,
-              feesSubmitted: updatedFeesSubmitted,
-              remainingFees: updatedRemainingFees,
-              paymentCompleted: paymentCompleted,
-          });
-        }
+      }
+      
+      const response = await fetch(`${BASE_URL}/api/feepaymentrecords/add-payment`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(paymentDataToSend),
+      });
+      
+      if (response.ok) {
+        const newRecord = await response.json();
+        
+        // Calculate new values
+        const updatedFeesSubmitted = parseFloat(selectedStudentFees.feesSubmitted) + parseFloat(paymentData.amount);
+        const updatedRemainingFees = parseFloat(selectedStudentFees.totalFees) - updatedFeesSubmitted;
+        const paymentCompleted = updatedRemainingFees <= 0;
+        
+        // Update fee status on server
+        await fetch(`${BASE_URL}/api/feestatus/${selectedStudent.feeStatusId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            nextDueDate: paymentCompleted ? null : paymentData.nextDueDate,
+            feesSubmitted: updatedFeesSubmitted,
+            remainingFees: updatedRemainingFees,
+            paymentCompleted: paymentCompleted,
+          }),
+        });
+        
+        // Update local state
+        setFeePaymentRecords(prev => [...prev, { ...newRecord, type: 'payment' }]);
+        setSelectedStudentFees({
+          ...selectedStudentFees,
+          feesSubmitted: updatedFeesSubmitted,
+          remainingFees: updatedRemainingFees,
+        });
+        
+        // Reset form and close modal
+        setPaymentData({ title: '', date: '', amount: '', paymentCompleted: false, nextDueDate: '' });
+        setPaymentModalOpen(false);
+        
+        // Update the selected student
+        setSelectedStudent({
+          ...selectedStudent,
+          feesSubmitted: updatedFeesSubmitted,
+          remainingFees: updatedRemainingFees,
+          nextDueDate: paymentCompleted ? null : paymentData.nextDueDate,
+          paymentCompleted
+        });
+      }
     } catch (error) {
-        console.error('Error adding payment:', error);
+      console.error('Error adding payment:', error);
     }
-};
+  }, [selectedStudent, paymentData, selectedStudentFees]);
 
-const handleAddCharge = async (e) => {
-  e.preventDefault();
-  try {
-      const response = await axios.post(`${BASE_URL}/api/otherchargesrecords/add-other-charges`, {
+  const handleAddCharge = useCallback(async (e) => {
+    e.preventDefault();
+    
+    if (!selectedStudent?.feeStatusId) return;
+    
+    try {
+      const response = await fetch(`${BASE_URL}/api/otherchargesrecords/add-other-charges`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           title: chargeData.title,
           date: chargeData.date,
           amount: chargeData.amount,
           feeStatusId: selectedStudent.feeStatusId
+        }),
       });
-
-      if (response.status === 201) {
-          // Update the state with the new charge record
-          setOtherChargesRecords([...otherChargesRecords, response.data]);
-
-          // Optionally, you can also fetch the updated fee status
-          fetchUserDetails(selectedStudent.user_id);
-
-          // Ensure remainingFees is a number by removing any currency symbols and converting to float
-          const currentRemainingFees = parseFloat(selectedStudentFees.remainingFees.replace(/[^0-9.-]+/g, "")); // Remove currency symbol
-
-          console.log('Current Remaining Fees:', currentRemainingFees);
-          console.log('Charge Amount:', chargeData.amount);
-
-          // Update selected student fees after adding the charge
-          const updatedTotalFees = parseFloat(selectedStudentFees.totalFees) + parseFloat(chargeData.amount);
-
-          // Ensure remainingFees is updated correctly
-          const updatedRemainingFees = currentRemainingFees + parseFloat(chargeData.amount);
-
-          console.log('Updated Remaining Fees after Charge:', updatedRemainingFees);
-
-          // If payment is completed, mark paymentCompleted as true
-          const paymentCompleted = updatedRemainingFees <= 0;
-
-          handleStudentClick(selectedStudent);
-          // Update the selectedStudentFees state
-          setSelectedStudentFees({
-            ...selectedStudentFees,
+      
+      if (response.ok) {
+        const newCharge = await response.json();
+        
+        // Calculate new values
+        const updatedTotalFees = parseFloat(selectedStudentFees.totalFees) + parseFloat(chargeData.amount);
+        const updatedRemainingFees = parseFloat(selectedStudentFees.remainingFees) + parseFloat(chargeData.amount);
+        
+        // Update fee status on server
+        await fetch(`${BASE_URL}/api/feestatus/${selectedStudent.feeStatusId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
             totalFees: updatedTotalFees,
             remainingFees: updatedRemainingFees,
-            paymentCompleted: paymentCompleted,
-          });
-
-          // Close the charge modal
-          setChargeModalOpen(false);
-
-          // Reload student data after adding charge
-      }
-  } catch (error) {
-      console.error('Error adding charge:', error);
-  }
-};
-
-
-
-
-  const handleCreateFeeStatus = () => {
-    setShowFeeStatusForm(true);
-  };
-
-  const handleSubmitFeeStatus = async (e) => {
-    e.preventDefault();
-    try {
-        const response = await axios.post(`${BASE_URL}/api/feestatus/`, {
-            admissionDate: newFeeStatus.admissionDate,
-            totalFees: newFeeStatus.totalFees,
-            feesSubmitted: newFeeStatus.feesSubmitted,
-            remainingFees: newFeeStatus.remainingFees,
-            nextDueDate: newFeeStatus.nextDueDate,
-            user_id: newFeeStatus.user_id,
+            paymentCompleted: updatedRemainingFees <= 0,
+          }),
         });
-
-        if (response.status === 201) {
-            console.log('Fee status created:', response.data);
-            setShowFeeStatusForm(false);
-            // Re-fetch students after adding fee status
-            await fetchStudentsByBatch(selectedBatch); // Ensure you have the selected batch available
-            // Optionally, you can also set the selected student to the one you just updated
-            const updatedStudent = {
-                ...selectedStudent,
-                feeStatusId: response.data.id, // Assuming the response contains the new fee status ID
-                totalFees: response.data.totalFees,
-                feesSubmitted: response.data.feesSubmitted,
-                remainingFees: response.data.remainingFees,
-            };
-            setSelectedStudent(updatedStudent); // Update the selected student state
-        }
+        
+        // Update local state
+        setOtherChargesRecords(prev => [...prev, { ...newCharge, type: 'charge' }]);
+        setSelectedStudentFees({
+          ...selectedStudentFees,
+          totalFees: updatedTotalFees,
+          remainingFees: updatedRemainingFees,
+        });
+        
+        // Update the selected student
+        setSelectedStudent({
+          ...selectedStudent,
+          totalFees: updatedTotalFees,
+          remainingFees: updatedRemainingFees,
+        });
+        
+        // Reset form and close modal
+        setChargeData({ title: '', date: '', amount: '' });
+        setChargeModalOpen(false);
+      }
     } catch (error) {
-        console.error('Error creating fee status:', error);
+      console.error('Error adding charge:', error);
     }
-  };
+  }, [selectedStudent, chargeData, selectedStudentFees]);
 
-  useEffect(() => {
-    const checkFeeStatus = async () => {
-      if (selectedStudent) {
-        // Clear stale fee status data
-        setFeeStatusExists(false);
-        setShowFeeStatusForm(false);
-
-        try {
-          const response = await axios.get(`${BASE_URL}/api/feestatus/${selectedStudent.feeStatusId}`);
-          if (response.data.length === 0) {
-            setFeeStatusExists(false);
-          } else {
-            setFeeStatusExists(true);
-          }
-        } catch (error) {
-          console.error('Error fetching fee status:', error);
-        }
-      }
-    };
-
-    const fetchUserDetails = async () => {
-      if (selectedStudent) {
-        try {
-          const response = await axios.get(`${BASE_URL}/api/users/admissions/${selectedStudent.user_id}`);
-          setUserDetails(response.data);
-          setNewFeeStatus({
-            ...newFeeStatus,
-            admissionDate: response.data.date_of_admission,
-            totalFees: response.data.total_course_fees,
-            user_id: response.data.user_id,
-            remainingFees: response.data.total_course_fees,
-          });
-        } catch (error) {
-          console.error('Error fetching user details:', error);
-        }
-      }
-    };
-
-    checkFeeStatus();
-    fetchUserDetails();
-  }, [selectedStudent]);
-
-  // Reset sidebar when changing the selected student
-  useEffect(() => {
-    if (selectedStudent) {
-      // Reset fee payment records and other charges records
-      setFeePaymentRecords([]);
-      setOtherChargesRecords([]);
-      // Reset new fee status
-      setNewFeeStatus({
-        admissionDate: '',
-        totalFees: '',
-        feesSubmitted: '0',
-        remainingFees: '',
-        nextDueDate: '',
-        user_id: null,
+  const handleSubmitFeeStatus = useCallback(async (e) => {
+    e.preventDefault();
+    
+    if (!selectedStudent?.user_id) return;
+    
+    try {
+      const response = await fetch(`${BASE_URL}/api/feestatus/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          admissionDate: newFeeStatus.admissionDate,
+          totalFees: newFeeStatus.totalFees,
+          feesSubmitted: newFeeStatus.feesSubmitted,
+          remainingFees: newFeeStatus.remainingFees,
+          nextDueDate: newFeeStatus.nextDueDate,
+          user_id: selectedStudent.user_id,
+        }),
       });
-      setShowFeeStatusForm(false); // Hide the form
+      
+      if (response.ok) {
+        const newFeeStatusData = await response.json();
+        
+        // Update the selected student with new fee status
+        setSelectedStudent({
+          ...selectedStudent,
+          feeStatusId: newFeeStatusData.id,
+          totalFees: newFeeStatusData.totalFees,
+          feesSubmitted: newFeeStatusData.feesSubmitted,
+          remainingFees: newFeeStatusData.remainingFees,
+          nextDueDate: newFeeStatusData.nextDueDate,
+        });
+        
+        setSelectedStudentFees({
+          totalFees: newFeeStatusData.totalFees,
+          feesSubmitted: newFeeStatusData.feesSubmitted,
+          remainingFees: newFeeStatusData.remainingFees,
+        });
+        
+        setFeeStatusExists(true);
+        setShowFeeStatusForm(false);
+        
+        // Refresh student list to reflect changes
+        if (selectedBatch) {
+          fetchStudentsByBatch(selectedBatch);
+        }
+      }
+    } catch (error) {
+      console.error('Error creating fee status:', error);
     }
-  }, [selectedStudent]);
+  }, [selectedStudent, newFeeStatus, selectedBatch, fetchStudentsByBatch]);
 
-  const handleUserSelection = (student) => {
-    setSelectedStudent(student);
-    window.location.reload(); // Reload the page with the selected user
-  };
+  // Calculate derived values
+  const combinedRecords = useMemo(() => {
+    const allRecords = [...feePaymentRecords, ...otherChargesRecords];
+    return allRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
+  }, [feePaymentRecords, otherChargesRecords]);
 
+  // Initial data fetch
   useEffect(() => {
-    setRemainingFees(totalFees - feesSubmitted);
-  }, [totalFees, feesSubmitted]);
+    fetchData();
+  }, [fetchData]);
 
-  // Add this useEffect to calculate remaining fees
+  // Update remaining fees when total fees or fees submitted change
   useEffect(() => {
     const totalFees = parseFloat(newFeeStatus.totalFees) || 0;
     const feesSubmitted = parseFloat(newFeeStatus.feesSubmitted) || 0;
     const remainingFees = totalFees - feesSubmitted;
-    setNewFeeStatus((prev) => ({ ...prev, remainingFees }));
+    setNewFeeStatus(prev => ({ ...prev, remainingFees: remainingFees.toString() }));
   }, [newFeeStatus.totalFees, newFeeStatus.feesSubmitted]);
 
-  // Modal Component
-  const Modal = ({ children, onClose }) => {
-    return ReactDOM.createPortal(
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 1000,
+  if (loading && !batches.length) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        backgroundColor: '#f9f9f9'
       }}>
-        <div style={{
+        <div style={{ 
+          textAlign: 'center', 
+          padding: '30px', 
           backgroundColor: '#fff',
-          padding: '20px',
-          borderRadius: '5px',
-          width: '400px',
-          position: 'relative',
+          borderRadius: '10px',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
         }}>
-          <button onClick={onClose} style={{
-            position: 'absolute',
-            top: '10px',
-            right: '10px',
-            background: 'none',
-            border: 'none',
-            fontSize: '16px',
-            cursor: 'pointer',
-          }}>✖</button>
-          {children}
+          <h2 style={{ color: '#1D72B8' }}>Loading...</h2>
+          <p>Please wait while we fetch your data</p>
         </div>
-      </div>,
-      document.body
+      </div>
     );
-  };
-
-  const fetchStudentsByBatch = async (batchId) => {
-    try {
-        const response = await fetch(`${BASE_URL}/api/studentBatches/students/batch/${batchId}`);
-        if (response.ok) {
-            const studentsData = await response.json();
-            console.log('Fetched students:', studentsData); // Log the fetched data
-
-            // Fetch fee status and user details for each student
-            const enrichedStudents = await Promise.all(studentsData.map(async (student) => {
-                try {
-                    // Fetch fee status
-                    const feeResponse = await fetch(`${BASE_URL}/api/feestatus/user/${student.user_id}`);
-                    let feeData = {};
-                    if (feeResponse.ok) {
-                        feeData = await feeResponse.json();
-                    }
-
-                    // Fetch user details
-                    const userResponse = await fetch(`${BASE_URL}/api/users/user/${student.user_id}`);
-                    let userName = 'Unnamed Student';
-                    if (userResponse.ok) {
-                        const userData = await userResponse.json();
-                        userName = userData.user.name; // Access the name from the user object
-                    }
-
-                    // Enrich student data
-                    return {
-                        ...student,
-                        feeStatusId: feeData[0]?.id || null, // Assuming the fee status ID is in the first item
-                        totalFees: feeData[0]?.totalFees || 0,
-                        feesSubmitted: feeData[0]?.feesSubmitted || 0,
-                        remainingFees: feeData[0]?.remainingFees || 0,
-                        nextDueDate: feeData[0]?.nextDueDate || null,
-                        name: userName // Add the user's name to the student object
-                    };
-                } catch (error) {
-                    console.error('Error fetching fee status or user details:', error);
-                }
-                return student; // Return the student even if fetch fails
-            }));
-
-            setStudents(enrichedStudents); // Set enriched students with fee statuses and names
-        } else {
-            console.error('Failed to fetch students for the selected batch');
-            setStudents([]); // Clear students if fetch fails
-        }
-    } catch (error) {
-        console.error('Error fetching students for the selected batch:', error);
-        setStudents([]); // Clear students if an error occurs
-    }
-  };
-
-  const handleBatchChange = (event) => {
-    const batchId = event.target.value;
-    setSelectedBatch(batchId);
-    if (batchId) {
-        fetchStudentsByBatch(batchId);
-    } else {
-        setStudents([]);
-    }
-  };
-
-  const handleSortChange = (event) => {
-    setSortOrder(event.target.value);
-  };
-
-  useEffect(() => {
-    if (sortOrder === 'asc') {
-      setStudents((prevStudents) => [...prevStudents].sort((a, b) => a.remainingFees - b.remainingFees));
-    } else {
-      setStudents((prevStudents) => [...prevStudents].sort((a, b) => b.remainingFees - a.remainingFees));
-    }
-  }, [sortOrder]);
-
-  const mergeSortRecords = (records) => {
-    if (records.length <= 1) return records;
-
-    const mid = Math.floor(records.length / 2);
-    const left = mergeSortRecords(records.slice(0, mid));
-    const right = mergeSortRecords(records.slice(mid));
-
-    return mergeRecords(left, right);
-  };
-
-  const mergeRecords = (left, right) => {
-    const result = [];
-    let leftIndex = 0;
-    let rightIndex = 0;
-
-    while (leftIndex < left.length && rightIndex < right.length) {
-        if (new Date(left[leftIndex].date) > new Date(right[rightIndex].date)) {
-            result.push(left[leftIndex]);
-            leftIndex++;
-        } else {
-            result.push(right[rightIndex]);
-            rightIndex++;
-        }
-    }
-
-    return result.concat(left.slice(leftIndex)).concat(right.slice(rightIndex));
-  };
-
-  // Update the rendering of records to merge payment and charge records by date in descending order
-  const combinedRecords = mergeSortRecords([...feePaymentRecords, ...otherChargesRecords]);
-
-  if (loading) {
-    return <div style={{ textAlign: 'center', fontSize: '18px' }}>Loading fee summary...</div>;
   }
 
   return (
-    <div style={{ fontFamily: 'Arial, sans-serif', padding: '20px', backgroundColor: '#f9f9f9' }}>
-      <div style={{ margin: '0 auto', border: '1px solid #e0e0e0', borderRadius: '8px', backgroundColor: '#fff', padding: '20px', boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)' }}>
-        <div style={{ display: 'flex', fontFamily: 'Arial, sans-serif', color: '#333', height: '100vh' }}>
+    <div style={{ 
+      fontFamily: 'Roboto, Arial, sans-serif', 
+      backgroundColor: '#f9f9f9',
+      minHeight: '100vh',
+      padding: '20px'
+    }}>
+      <div style={{ 
+        margin: '0 auto', 
+        borderRadius: '12px', 
+        backgroundColor: '#fff', 
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+        overflow: 'hidden'
+      }}>
+        <div style={{ 
+          display: 'flex', 
+          color: '#333', 
+          height: 'calc(100vh - 40px)'
+        }}>
+          {/* Sidebar */}
           <div style={{
             width: '300px',
-            borderRight: '1px solid #ddd',
+            borderRight: '1px solid #eaeaea',
             padding: '20px',
             backgroundColor: '#f9fafb',
             overflowY: 'auto',
-            boxShadow: '2px 0px 8px rgba(0, 0, 0, 0.1)',
-            height: '100vh',
+            display: 'flex',
+            flexDirection: 'column'
           }}>
             <h2 style={{
               textAlign: 'center',
@@ -644,20 +719,24 @@ const handleAddCharge = async (e) => {
               marginBottom: '20px',
               fontWeight: '500',
             }}>
-              Search For Course
+              Select Course
             </h2>
-            <select onChange={handleBatchChange} style={{
-              width: '100%',
-              padding: '12px',
-              borderRadius: '8px',
-              border: '1px solid #ccc',
-              marginBottom: '20px',
-              fontSize: '14px',
-              color: '#555',
-              backgroundColor: '#fff',
-              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-              transition: 'border-color 0.3s',
-            }}>
+            
+            <select 
+              onChange={handleBatchChange} 
+              value={selectedBatch || ''}
+              style={{
+                width: '100%',
+                padding: '12px',
+                borderRadius: '8px',
+                border: '1px solid #ddd',
+                marginBottom: '20px',
+                fontSize: '14px',
+                color: '#555',
+                backgroundColor: '#fff',
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
+              }}
+            >
               <option value="">Select Course</option>
               {batches.map(batch => (
                 <option key={batch.batch_id} value={batch.batch_id}>{batch.batch_name}</option>
@@ -668,479 +747,579 @@ const handleAddCharge = async (e) => {
               textAlign: 'center',
               color: '#1D72B8',
               fontSize: '18px',
-              marginBottom: '20px',
+              marginBottom: '15px',
               fontWeight: '500',
             }}>
               Students
             </h2>
-            <div style={{
-              marginBottom: '20px',
-              textAlign: 'center',
-            }}>
+            
+            <div style={{ marginBottom: '15px' }}>
               <input
                 type="text"
                 placeholder="Search by name"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 style={{
-                  width: '80%',
+                  width: '100%',
                   padding: '12px',
                   borderRadius: '8px',
-                  border: '1px solid #ccc',
+                  border: '1px solid #ddd',
                   fontSize: '14px',
                   color: '#555',
                   backgroundColor: '#fff',
-                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-                  transition: 'border-color 0.3s',
+                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
                 }}
               />
             </div>
-
-            <ul style={{
-              listStyleType: 'none',
-              padding: '0',
-              margin: '0',
-            }}>
-              {students.filter(student =>
-                student.name?.toLowerCase().includes(searchTerm.toLowerCase())
-              ).length > 0 ? (
-                students.filter(student =>
-                  student.name?.toLowerCase().includes(searchTerm.toLowerCase())
-                ).map((student) => (
-                  <li key={student.user_id} style={{
-                    padding: '15px',
-                    borderBottom: '1px solid #ddd',
-                    cursor: 'pointer',
-                    backgroundColor: '#ffffff',
-                    marginBottom: '10px',
-                    transition: 'background-color 0.3s, box-shadow 0.3s',
-                    borderRadius: '8px',
-                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-                  }} onClick={() => handleStudentClick(student)}>
-                    <div style={{
-                      fontWeight: 'bold',
-                      color: '#333',
-                      fontSize: '16px',
-                      marginBottom: '5px',
-                    }}>
-                      {student.name || 'Unnamed Student'}
-                    </div>
-                    <div style={{
-                      fontSize: '14px',
-                      color: '#888',
-                    }}>
-                      Balance : {student.remainingFees ? `${student.remainingFees}` : 'No Fees Due'}
-                    </div>
-                  </li>
-                ))
-              ) : (
-                <li style={{
-                  padding: '10px',
-                  color: '#888',
-                  textAlign: 'center',
-                }}>
-                  No students found for this batch.
-                </li>
-              )}
-            </ul>
+            
+            <StudentList 
+              students={students}
+              searchTerm={searchTerm}
+              onStudentClick={handleStudentClick}
+              selectedStudent={selectedStudent}
+            />
           </div>
 
-          <div style={{ flex: '1', padding: '20px', overflowY: 'auto', backgroundColor: '#fff' }}>
+          {/* Main Content */}
+          <div style={{ 
+            flex: '1', 
+            padding: '25px', 
+            overflowY: 'auto', 
+            backgroundColor: '#fff' 
+          }}>
             {selectedStudent ? (
               <div>
-                <h2 style={{ textAlign: 'center', marginBottom: '20px', color: '#4A90E2' }}>{selectedStudent.name}'s Fee Details</h2>
+                <h2 style={{ 
+                  textAlign: 'center', 
+                  marginBottom: '25px', 
+                  color: '#1D72B8',
+                  fontSize: '24px',
+                  fontWeight: '500'
+                }}>
+                  {selectedStudent.name}'s Fee Details
+                </h2>
 
                 {!feeStatusExists ? (
-                  <div style={{ textAlign: 'center' }}>
-                    <button onClick={handleCreateFeeStatus} style={{ padding: '10px 20px', backgroundColor: '#4A90E2', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
+                  <div style={{ 
+                    textAlign: 'center',
+                    padding: '40px 20px',
+                    backgroundColor: '#f9f9f9',
+                    borderRadius: '10px',
+                    marginTop: '30px'
+                  }}>
+                   <p style={{ marginBottom: '20px', fontSize: '16px', color: '#555' }}>
+                      No fee status record found for this student. Create one to start tracking fees.
+                    </p>
+                    <button 
+                      onClick={() => setShowFeeStatusForm(true)} 
+                      style={{ 
+                        padding: '12px 24px', 
+                        backgroundColor: '#1D72B8', 
+                        color: '#fff', 
+                        border: 'none', 
+                        borderRadius: '6px', 
+                        cursor: 'pointer',
+                        fontSize: '15px',
+                        fontWeight: '500',
+                        boxShadow: '0 2px 8px rgba(29, 114, 184, 0.3)',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
                       Create Fee Status
                     </button>
                   </div>
                 ) : (
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-around', marginTop: '20px' }}>
-                      <div style={{ border: '1px solid #ccc', padding: '20px', borderRadius: '5px', flex: '1', margin: '10px', textAlign: 'center', backgroundColor: '#E0F7FA', color: '#00796B' }}>
-                        <h3>Total Fees</h3>
-                        <p style={{ fontSize: '24px', fontWeight: 'bold' }}>{selectedStudentFees.totalFees}</p>
-                      </div>
-                      <div style={{ border: '1px solid #ccc', padding: '20px', borderRadius: '5px', flex: '1', margin: '10px', textAlign: 'center', backgroundColor: '#E8F5E9', color: '#388E3C' }}>
-                        <h3>Fees Submitted</h3>
-                        <p style={{ fontSize: '24px', fontWeight: 'bold' }}>{selectedStudentFees.feesSubmitted}</p>
-                      </div>
-                      <div style={{ border: '1px solid #ccc', padding: '20px', borderRadius: '5px', flex: '1', margin: '10px', textAlign: 'center', backgroundColor: '#FFEBEE', color: '#D32F2F' }}>
-                        <h3>Remaining Fees</h3>
-                        <p style={{ fontSize: '24px', fontWeight: 'bold' }}>{selectedStudentFees.remainingFees}</p>
-                      </div>
-                      <div
-                        style={{
-                          border: '1px solid #ccc',
-                          padding: '20px',
-                          borderRadius: '5px',
-                          flex: '1',
-                          margin: '10px',
-                          textAlign: 'center',
-                          backgroundColor: '#FFF3E0',
-                          color: '#E65100',
+                    <FeeSummaryCards 
+                      studentFees={selectedStudentFees}
+                      nextDueDate={selectedStudent.nextDueDate}
+                      paymentCompleted={selectedStudent.paymentCompleted}
+                    />
+
+                    <RecordsTable records={combinedRecords} />
+
+                    <div style={{ 
+                      marginTop: '30px', 
+                      display: 'flex', 
+                      justifyContent: 'center',
+                      gap: '15px' 
+                    }}>
+                      <button 
+                        onClick={() => setPaymentModalOpen(true)} 
+                        style={{ 
+                          padding: '12px 35px', 
+                          backgroundColor: '#388E3C', 
+                          color: '#fff', 
+                          border: 'none', 
+                          borderRadius: '6px', 
+                          cursor: 'pointer',
+                          fontSize: '15px',
+                          fontWeight: '500',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          boxShadow: '0 2px 8px rgba(56, 142, 60, 0.25)',
+                          transition: 'all 0.2s ease'
                         }}
                       >
-                        <h3>Next Due Date</h3>
-                        <p style={{ fontSize: '24px', fontWeight: 'bold' }}>
-                          {selectedStudent.nextDueDate
-                            ? new Date(selectedStudent.nextDueDate).toLocaleDateString('en-US', {
-                                day: '2-digit',
-                                month: 'short',
-                                year: 'numeric',
-                              })
-                            : selectedStudent.paymentCompleted
-                            ? 'Payment Completed'
-                            : 'No Due Date'}
-                        </p>
-
-                      </div>
-
-                    </div>
-
-                    <div style={{ marginTop: '20px' }}>
-                      {combinedRecords.length === 0 ? (
-                        <div style={{ textAlign: 'center', color: 'red' }}>
-                            <p>No records found for this student.</p>
-                        </div>
-                      ) : (
-                        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
-                          <thead>
-                            <tr>
-                              <th style={{ border: '1px solid #ddd', padding: '8px', backgroundColor: '#f2f2f2' }}>Title</th>
-                              <th style={{ border: '1px solid #ddd', padding: '8px', backgroundColor: '#f2f2f2' }}>Date</th>
-                              <th style={{ border: '1px solid #ddd', padding: '8px', backgroundColor: '#f2f2f2' }}>You Gave</th>
-                              <th style={{ border: '1px solid #ddd', padding: '8px', backgroundColor: '#f2f2f2' }}>You Got</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {combinedRecords.map(record => (
-                              <tr
-                                key={record.id}
-                                style={{
-                                  backgroundColor: record.type === 'charge' ? '#FFEBEE' : record.type === 'payment' ? '#E8F5E9' : '#fff'
-                                }}
-                              >
-                                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.title}</td>
-                                <td style={{ border: '1px solid #ddd', padding: '8px' }}>
-                                {new Date(record.date).toLocaleDateString('en-US', {
-                                  day: '2-digit',
-                                  month: 'short',
-                                  year: 'numeric',
-                                })}
-                              </td>
-
-                                {/* "You Gave" Column */}
-                                <td
-                                  style={{
-                                    border: '1px solid #ddd',
-                                    padding: '8px',
-                                    color: record.type === 'charge' ? 'red' : 'inherit',
-                                    backgroundColor: record.type === 'charge' ? '#FFEBEE' : '#fff',
-                                  }}
-                                >
-                                  {record.type === 'charge' ? record.amount : '-'}
-                                </td>
-
-                                {/* "You Got" Column */}
-                                <td
-                                  style={{
-                                    border: '1px solid #ddd',
-                                    padding: '8px',
-                                    color: record.type === 'payment' ? 'green' : 'inherit',
-                                    backgroundColor: record.type === 'payment' ? '#E8F5E9' : '#fff',
-                                  }}
-                                >
-                                  {record.type === 'payment' ? record.amount : '-'}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-
-                      )}
-                    </div>
-
-                    <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center' }}>
-                      <button onClick={() => setPaymentModalOpen(true)} style={{ marginRight: '10px', padding: '10px 20px', backgroundColor: '#388E3C', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer', transition: 'background-color 0.3s' }}>
-                        You Got
+                        <span style={{ fontSize: '18px' }}>+</span> You Got
                       </button>
-                      <button onClick={() => setChargeModalOpen(true)} style={{ padding: '10px 20px', backgroundColor: '#D32F2F', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer', transition: 'background-color 0.3s' }}>
-                        You Gave
+                      <button 
+                        onClick={() => setChargeModalOpen(true)} 
+                        style={{ 
+                          padding: '12px 35px', 
+                          backgroundColor: '#D32F2F', 
+                          color: '#fff', 
+                          border: 'none', 
+                          borderRadius: '6px', 
+                          cursor: 'pointer',
+                          fontSize: '15px',
+                          fontWeight: '500',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          boxShadow: '0 2px 8px rgba(211, 47, 47, 0.25)',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        <span style={{ fontSize: '18px' }}>+</span> You Gave
                       </button>
                     </div>
                   </div>
                 )}
               </div>
             ) : (
-              <p style={{ textAlign: 'center', marginTop: '20px', color: '#888' }}>Select a student to view their fee details.</p>
+              <div style={{ 
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '80%',
+                padding: '40px',
+                textAlign: 'center',
+                color: '#666'
+              }}>
+                <div style={{
+                  width: '80px',
+                  height: '80px',
+                  borderRadius: '50%',
+                  backgroundColor: '#f0f4f9',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '20px'
+                }}>
+                  <span style={{ fontSize: '36px', color: '#1D72B8' }}>👤</span>
+                </div>
+                <h3 style={{ marginBottom: '10px', color: '#1D72B8', fontWeight: '500' }}>No Student Selected</h3>
+                <p>Select a course and then a student from the sidebar to view their fee details.</p>
+              </div>
             )}
           </div>
         </div>
-
-        {/* Payment Modal */}
-        {isPaymentModalOpen && (
-          <div style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)',
-            display: 'flex', justifyContent: 'center', alignItems: 'center'
-          }}>
-            <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '5px', width: '400px' }}>
-              <h2 style={{ marginBottom: '20px', color: '#4A90E2' }}>You Get</h2>
-              <form onSubmit={handleAddPayment}>
-                <div style={{ marginBottom: '10px' }}>
-                  <label style={{ display: 'block', marginBottom: '5px' }}>Installment</label>
-                  <select
-                    value={paymentData.title}
-                    onChange={(e) => setPaymentData({ ...paymentData, title: e.target.value })}
-                    required
-                    style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
-                  >
-                    <option value="">Select Installment</option>
-                    <option value="1st Installment">1st Installment</option>
-                    <option value="2nd Installment">2nd Installment</option>
-                    <option value="3rd Installment">3rd Installment</option>
-                    <option value="4th Installment">4th Installment</option>
-                    <option value="5th Installment">5th Installment</option>
-                    <option value="6th Installment">6th Installment</option>
-                  </select>
-                </div>
-                <div style={{ marginBottom: '10px' }}>
-                  <label style={{ display: 'block', marginBottom: '5px' }}>Payment Date</label>
-                  <input
-                    type="date"
-                    value={paymentData.date}
-                    onChange={(e) => setPaymentData({ ...paymentData, date: e.target.value })}
-                    required
-                    style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
-                  />
-                </div>
-                <div style={{ marginBottom: '10px' }}>
-                  <label style={{ display: 'block', marginBottom: '5px' }}>Amount</label>
-                  <input
-                    type="number"
-                    value={paymentData.amount}
-                    onChange={(e) => setPaymentData({ ...paymentData, amount: e.target.value })}
-                    required
-                    style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
-                  />
-                </div>
-                
-                {/* New field to mark if payment is complete */}
-                <div style={{ marginBottom: '10px' }}>
-                  <label style={{ display: 'block', marginBottom: '5px' }}>
-                    <input
-                      type="checkbox"
-                      checked={paymentData.paymentCompleted}
-                      onChange={(e) => setPaymentData({ ...paymentData, paymentCompleted: e.target.checked })}
-                    />
-                    Payment Completed
-                  </label>
-                </div>
-
-                {/* Conditionally render the 'Next Due Date' field */}
-                {!paymentData.paymentCompleted && (
-                  <div style={{ marginBottom: '10px' }}>
-                    <label style={{ display: 'block', marginBottom: '5px' }}>Next Due Date</label>
-                    <input
-                      type="date"
-                      value={paymentData.nextDueDate}
-                      onChange={(e) => setPaymentData({ ...paymentData, nextDueDate: e.target.value })}
-                      required
-                      style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
-                    />
-                  </div>
-                )}
-
-                <div style={{ textAlign: 'right' }}>
-                  <button
-                    type="button"
-                    onClick={() => setPaymentModalOpen(false)}
-                    style={{ marginRight: '10px', padding: '10px 20px', backgroundColor: '#f0f0f0', color: '#333', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    style={{ padding: '10px 20px', backgroundColor: '#4A90E2', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
-                  >
-                    Add Payment
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Charge Modal */}
-        {isChargeModalOpen && (
-          <div style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)',
-            display: 'flex', justifyContent: 'center', alignItems: 'center'
-          }}>
-            <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '5px', width: '400px' }}>
-              <h2 style={{ marginBottom: '20px', color: '#4A90E2' }}>You Gave</h2>
-              <form onSubmit={handleAddCharge}>
-                <div style={{ marginBottom: '10px' }}>
-                  <label style={{ display: 'block', marginBottom: '5px' }}>Title</label>
-                  <input
-                    type="text"
-                    value={chargeData.title}
-                    onChange={(e) => setChargeData({ ...chargeData, title: e.target.value })}
-                    required
-                    style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
-                  />
-                </div>
-                <div style={{ marginBottom: '10px' }}>
-                  <label style={{ display: 'block', marginBottom: '5px' }}>Date</label>
-                  <input
-                    type="date"
-                    value={chargeData.date}
-                    onChange={(e) => setChargeData({ ...chargeData, date: e.target.value })}
-                    required
-                    style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
-                  />
-                </div>
-                <div style={{ marginBottom: '10px' }}>
-                  <label style={{ display: 'block', marginBottom: '5px' }}>Amount</label>
-                  <input
-                    type="number"
-                    value={chargeData.amount}
-                    onChange={(e) => setChargeData({ ...chargeData, amount: e.target.value })}
-                    required
-                    style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
-                  />
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <button
-                    type="button"
-                    onClick={() => setChargeModalOpen(false)}
-                    style={{ marginRight: '10px', padding: '10px 20px', backgroundColor: '#f0f0f0', color: '#333', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    style={{ padding: '10px 20px', backgroundColor: '#4A90E2', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
-                  >
-                    Add Charge
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {showFeeStatusForm && (
-          <div style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(0, 0, 0, 0.5)',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              zIndex: 1000,
-          }}>
-              <div style={{
-                  backgroundColor: '#fff',
-                  padding: '20px',
-                  borderRadius: '5px',
-                  width: '400px',
-                  position: 'relative',
-              }}>
-                  <button onClick={() => setShowFeeStatusForm(false)} style={{
-                      position: 'absolute',
-                      top: '10px',
-                      right: '10px',
-                      background: 'none',
-                      border: 'none',
-                      fontSize: '16px',
-                      cursor: 'pointer',
-                  }}>✖</button>
-                  <h2 style={{ marginBottom: '20px', color: '#4A90E2', textAlign: 'center' }}>Create Fee Status</h2>
-                  <form onSubmit={handleSubmitFeeStatus}>
-                      <div style={{ marginBottom: '10px' }}>
-                          <label style={{ display: 'block', marginBottom: '5px' }}>Admission Date</label>
-                          <input
-                              type="date"
-                              value={newFeeStatus.admissionDate}
-                              onChange={(e) => setNewFeeStatus({ ...newFeeStatus, admissionDate: e.target.value })}
-                              required
-                              style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
-                          />
-                      </div>
-                      <div style={{ marginBottom: '10px' }}>
-                          <label style={{ display: 'block', marginBottom: '5px' }}>Total Fees</label>
-                          <input
-                              type="number"
-                              value={newFeeStatus.totalFees}
-                              onChange={(e) => setNewFeeStatus({ ...newFeeStatus, totalFees: e.target.value })}
-                              required
-                              style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
-                          />
-                      </div>
-                      <div style={{ marginBottom: '10px' }}>
-                          <label style={{ display: 'block', marginBottom: '5px' }}>Fees Submitted</label>
-                          <input
-                              type="number"
-                              value={newFeeStatus.feesSubmitted}
-                              onChange={(e) => setNewFeeStatus({ ...newFeeStatus, feesSubmitted: e.target.value })}
-                              required
-                              style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
-                          />
-                      </div>
-                      <div style={{ marginBottom: '10px' }}>
-                          <label style={{ display: 'block', marginBottom: '5px' }}>Remaining Fees</label>
-                          <input
-                              type="number"
-                              value={newFeeStatus.remainingFees}
-                              onChange={(e) => setNewFeeStatus({ ...newFeeStatus, remainingFees: e.target.value })}
-                              required
-                              style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
-                          />
-                      </div>
-                      <div style={{ marginBottom: '10px' }}>
-                          <label style={{ display: 'block', marginBottom: '5px' }}>Next Due Date</label>
-                          <input
-                              type="date"
-                              value={newFeeStatus.nextDueDate}
-                              onChange={(e) => setNewFeeStatus({ ...newFeeStatus, nextDueDate: e.target.value })}
-                              required
-                              style={{ width: '100%', padding: '8px', borderRadius: '3px', border: '1px solid #ccc' }}
-                          />
-                      </div>
-                      <div style={{ textAlign: 'right' }}>
-                          <button type="button" onClick={() => setShowFeeStatusForm(false)} style={{
-                              marginRight: '10px',
-                              padding: '10px 20px',
-                              backgroundColor: '#f0f0f0',
-                              color: '#333',
-                              border: 'none',
-                              borderRadius: '5px',
-                              cursor: 'pointer',
-                          }}>
-                              Cancel
-                          </button>
-                          <button type="submit" style={{
-                              padding: '10px 20px',
-                              backgroundColor: '#4A90E2',
-                              color: '#fff',
-                              border: 'none',
-                              borderRadius: '5px',
-                              cursor: 'pointer',
-                          }}>
-                              Submit
-                          </button>
-                      </div>
-                  </form>
-              </div>
-          </div>
-        )}
       </div>
+
+      {/* Payment Modal */}
+      <Modal 
+        isOpen={isPaymentModalOpen} 
+        onClose={() => setPaymentModalOpen(false)}
+        title="Add Payment"
+      >
+        <form onSubmit={handleAddPayment}>
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+              Installment
+            </label>
+            <select
+              value={paymentData.title}
+              onChange={(e) => setPaymentData({ ...paymentData, title: e.target.value })}
+              required
+              style={{ 
+                width: '100%', 
+                padding: '10px', 
+                borderRadius: '6px', 
+                border: '1px solid #ddd',
+                fontSize: '14px' 
+              }}
+            >
+              <option value="">Select Installment</option>
+              <option value="1st Installment">1st Installment</option>
+              <option value="2nd Installment">2nd Installment</option>
+              <option value="3rd Installment">3rd Installment</option>
+              <option value="4th Installment">4th Installment</option>
+              <option value="5th Installment">5th Installment</option>
+              <option value="6th Installment">6th Installment</option>
+            </select>
+          </div>
+          
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+              Payment Date
+            </label>
+            <input
+              type="date"
+              value={paymentData.date}
+              onChange={(e) => setPaymentData({ ...paymentData, date: e.target.value })}
+              required
+              style={{ 
+                width: '100%', 
+                padding: '10px', 
+                borderRadius: '6px', 
+                border: '1px solid #ddd',
+                fontSize: '14px' 
+              }}
+            />
+          </div>
+          
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+              Amount
+            </label>
+            <input
+              type="number"
+              value={paymentData.amount}
+              onChange={(e) => setPaymentData({ ...paymentData, amount: e.target.value })}
+              required
+              style={{ 
+                width: '100%', 
+                padding: '10px', 
+                borderRadius: '6px', 
+                border: '1px solid #ddd',
+                fontSize: '14px' 
+              }}
+            />
+          </div>
+          
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '500' 
+            }}>
+              <input
+                type="checkbox"
+                checked={paymentData.paymentCompleted}
+                onChange={(e) => setPaymentData({ ...paymentData, paymentCompleted: e.target.checked })}
+                style={{ marginRight: '8px', width: '16px', height: '16px' }}
+              />
+              Payment Completed
+            </label>
+          </div>
+
+          {!paymentData.paymentCompleted && (
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+                Next Due Date
+              </label>
+              <input
+                type="date"
+                value={paymentData.nextDueDate}
+                onChange={(e) => setPaymentData({ ...paymentData, nextDueDate: e.target.value })}
+                required
+                style={{ 
+                  width: '100%', 
+                  padding: '10px', 
+                  borderRadius: '6px', 
+                  border: '1px solid #ddd',
+                  fontSize: '14px' 
+                }}
+              />
+            </div>
+          )}
+
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'flex-end', 
+            gap: '10px',
+            marginTop: '20px' 
+          }}>
+            <button
+              type="button"
+              onClick={() => setPaymentModalOpen(false)}
+              style={{ 
+                padding: '10px 20px', 
+                backgroundColor: '#f5f5f5', 
+                color: '#333', 
+                border: '1px solid #ddd', 
+                borderRadius: '6px', 
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500' 
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              style={{ 
+                padding: '10px 20px', 
+                backgroundColor: '#1D72B8', 
+                color: '#fff', 
+                border: 'none', 
+                borderRadius: '6px', 
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500',
+                boxShadow: '0 2px 6px rgba(29, 114, 184, 0.25)' 
+              }}
+            >
+              Add Payment
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Charge Modal */}
+      <Modal 
+        isOpen={isChargeModalOpen} 
+        onClose={() => setChargeModalOpen(false)}
+        title="Add Charge"
+      >
+        <form onSubmit={handleAddCharge}>
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+              Title
+            </label>
+            <input
+              type="text"
+              value={chargeData.title}
+              onChange={(e) => setChargeData({ ...chargeData, title: e.target.value })}
+              required
+              style={{ 
+                width: '100%', 
+                padding: '10px', 
+                borderRadius: '6px', 
+                border: '1px solid #ddd',
+                fontSize: '14px' 
+              }}
+            />
+          </div>
+          
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+              Date
+            </label>
+            <input
+              type="date"
+              value={chargeData.date}
+              onChange={(e) => setChargeData({ ...chargeData, date: e.target.value })}
+              required
+              style={{ 
+                width: '100%', 
+                padding: '10px', 
+                borderRadius: '6px', 
+                border: '1px solid #ddd',
+                fontSize: '14px' 
+              }}
+            />
+          </div>
+          
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+              Amount
+            </label>
+            <input
+              type="number"
+              value={chargeData.amount}
+              onChange={(e) => setChargeData({ ...chargeData, amount: e.target.value })}
+              required
+              style={{ 
+                width: '100%', 
+                padding: '10px', 
+                borderRadius: '6px', 
+                border: '1px solid #ddd',
+                fontSize: '14px' 
+              }}
+            />
+          </div>
+          
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'flex-end', 
+            gap: '10px',
+            marginTop: '20px' 
+          }}>
+            <button
+              type="button"
+              onClick={() => setChargeModalOpen(false)}
+              style={{ 
+                padding: '10px 20px', 
+                backgroundColor: '#f5f5f5', 
+                color: '#333', 
+                border: '1px solid #ddd', 
+                borderRadius: '6px', 
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500' 
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              style={{ 
+                padding: '10px 20px', 
+                backgroundColor: '#1D72B8', 
+                color: '#fff', 
+                border: 'none', 
+                borderRadius: '6px', 
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500',
+                boxShadow: '0 2px 6px rgba(29, 114, 184, 0.25)' 
+              }}
+            >
+              Add Charge
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Fee Status Modal */}
+      <Modal 
+        isOpen={showFeeStatusForm} 
+        onClose={() => setShowFeeStatusForm(false)}
+        title="Create Fee Status"
+      >
+        <form onSubmit={handleSubmitFeeStatus}>
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+              Admission Date
+            </label>
+            <input
+              type="date"
+              value={newFeeStatus.admissionDate}
+              onChange={(e) => setNewFeeStatus({ ...newFeeStatus, admissionDate: e.target.value })}
+              required
+              style={{ 
+                width: '100%', 
+                padding: '10px', 
+                borderRadius: '6px', 
+                border: '1px solid #ddd',
+                fontSize: '14px' 
+              }}
+            />
+          </div>
+          
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+              Total Fees
+            </label>
+            <input
+              type="number"
+              value={newFeeStatus.totalFees}
+              onChange={(e) => setNewFeeStatus({ ...newFeeStatus, totalFees: e.target.value })}
+              required
+              style={{ 
+                width: '100%', 
+                padding: '10px', 
+                borderRadius: '6px', 
+                border: '1px solid #ddd',
+                fontSize: '14px' 
+              }}
+            />
+          </div>
+          
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+              Fees Submitted
+            </label>
+            <input
+              type="number"
+              value={newFeeStatus.feesSubmitted}
+              onChange={(e) => setNewFeeStatus({ ...newFeeStatus, feesSubmitted: e.target.value })}
+              required
+              style={{ 
+                width: '100%', 
+                padding: '10px', 
+                borderRadius: '6px', 
+                border: '1px solid #ddd',
+                fontSize: '14px' 
+              }}
+            />
+          </div>
+          
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+              Remaining Fees
+            </label>
+            <input
+              type="number"
+              value={newFeeStatus.remainingFees}
+              readOnly
+              style={{ 
+                width: '100%', 
+                padding: '10px', 
+                borderRadius: '6px', 
+                border: '1px solid #ddd',
+                backgroundColor: '#f9f9f9',
+                fontSize: '14px' 
+              }}
+            />
+          </div>
+          
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+              Next Due Date
+            </label>
+            <input
+              type="date"
+              value={newFeeStatus.nextDueDate}
+              onChange={(e) => setNewFeeStatus({ ...newFeeStatus, nextDueDate: e.target.value })}
+              required
+              style={{ 
+                width: '100%', 
+                padding: '10px', 
+                borderRadius: '6px', 
+                border: '1px solid #ddd',
+                fontSize: '14px' 
+              }}
+            />
+          </div>
+          
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'flex-end', 
+            gap: '10px',
+            marginTop: '20px' 
+          }}>
+            <button
+              type="button"
+              onClick={() => setShowFeeStatusForm(false)}
+              style={{ 
+                padding: '10px 20px', 
+                backgroundColor: '#f5f5f5', 
+                color: '#333', 
+                border: '1px solid #ddd', 
+                borderRadius: '6px', 
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500' 
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              style={{ 
+                padding: '10px 20px', 
+                backgroundColor: '#1D72B8', 
+                color: '#fff', 
+                border: 'none', 
+                borderRadius: '6px', 
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500',
+                boxShadow: '0 2px 6px rgba(29, 114, 184, 0.25)' 
+              }}
+            >
+              Create Fee Status
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };
