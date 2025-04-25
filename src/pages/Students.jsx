@@ -370,6 +370,7 @@ const Students = () => {
   
     try {
       // Step 1: Create the student
+      console.log(studentData);
       const response = await axios.post(`${API_BASE_URL}/users/register`, studentData);
       
       // Check if user object exists in the response
@@ -419,7 +420,24 @@ const Students = () => {
       }
     } catch (error) {
       console.error("Error creating student:", error);
-      alert(`Error creating student: ${error.message || "Unknown error"}`);
+      
+      // Improved error handling to display the actual error message from the API
+      if (error.response && error.response.data) {
+        // Extract the specific error message from the API response
+        const errorMessage = error.response.data.message || "Unknown server error";
+        alert(`Error creating student: ${errorMessage}`);
+        
+        // If there are detailed validation errors, log them to console
+        if (error.response.data.errors) {
+          console.error("Validation errors:", error.response.data.errors);
+        }
+      } else if (error.request) {
+        // The request was made but no response was received
+        alert("Error creating student: No response from server. Please check your connection.");
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        alert(`Error creating student: ${error.message || "Unknown error"}`);
+      }
     }
   };
 
