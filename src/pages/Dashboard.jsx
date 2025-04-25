@@ -110,7 +110,7 @@ const Dashboard = () => {
         // Fetch student count data for all batches
         const batchDataPromises = batchesData.map(async (batch) => {
           try {
-            const response = await fetch(`"https://apistudents.sainikschoolcadet.com/api/studentBatches/student-counts/${batch.batch_id}`);
+            const response = await fetch(`https://apistudents.sainikschoolcadet.com/api/studentBatches/student-counts/${batch.batch_id}`);
             const data = await response.json();
             return { 
               batchId: batch.batch_id, 
