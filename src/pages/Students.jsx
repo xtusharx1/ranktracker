@@ -48,7 +48,7 @@ const Students = () => {
     previous_school_info: "",
     gender: "",
     state: "",
-    type: "",
+    type: "online",
     batch_id: "",
     created_at: new Date().toISOString(),
   };
@@ -887,22 +887,21 @@ const Students = () => {
                   </div>
                   
                   <div>
-  <label className="block text-base font-medium text-gray-700 mb-1">
-    Student Type <span className="text-red-500">*</span>
-  </label>
-  <select
-    name="type"
-    value={newStudent.type}
-    onChange={handleChange}
-    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-    required
-  >
-    <option value="">Select Type</option>
-    <option value="online">Online</option>
-    <option value="dayboarder">Day Boarder</option>
-    <option value="hosteller">Hosteller</option>
-  </select>
-</div>
+                    <label className="block text-base font-medium text-gray-700 mb-1">
+                      Student Type <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      name="type"
+                      value={newStudent.type}
+                      onChange={handleChange}
+                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    >
+                      <option value="online">Online</option>
+                      <option value="dayboarder">Day Boarder</option>
+                      <option value="hosteller">Hosteller</option>
+                    </select>
+                  </div>
                   
                   <div>
                     <label className="block text-base font-medium text-gray-700 mb-1">
