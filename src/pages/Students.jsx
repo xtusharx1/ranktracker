@@ -670,9 +670,11 @@ const Students = () => {
                         <td className="px-4 py-3 whitespace-nowrap text-base text-gray-500">
                           {student.user_id}
                         </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          <div className="text-base font-medium text-gray-900">{student.name}</div>
-                        </td>
+                        <td className="px-4 py-3">
+  <div className="text-base font-medium text-gray-900 max-w-[150px] break-words">
+    {student.name}
+  </div>
+</td>
                         <td className="px-4 py-3 whitespace-nowrap text-base text-gray-500">
                           {student.email}
                         </td>
