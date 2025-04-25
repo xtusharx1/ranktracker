@@ -48,7 +48,7 @@ const Students = () => {
     previous_school_info: "",
     gender: "",
     state: "",
-    type: "online",
+    type: "",
     batch_id: "",
     created_at: new Date().toISOString(),
   };
@@ -189,7 +189,7 @@ const Students = () => {
               return {
                 ...student,
                 batch_id: batchData?.batch_id || null,
-                batch_name: batchData?.batch_id ? mapping[batchData.batch_id] || "Inactive Batch" : "No Batch Assigned",
+                batch_name: batchData?.batch_id ? mapping[batchData.batch_id] || "Unknown Batch" : "No Batch Assigned",
                 counselor_id: counselorInfo.counselor_id,
                 counselor_name: counselorInfo.counselor_name,
                 type: type
@@ -887,13 +887,13 @@ const Students = () => {
                   </div>
                   
                   <div>
-  <label className="block text-base font-large text-gray-700 mb-1">
+  <label className="block text-base font-medium text-gray-700 mb-1">
     Student Type <span className="text-red-500">*</span>
   </label>
   <select
     name="type"
-    value={editingStudent.type || ""}
-    onChange={handleEditChange}
+    value={newStudent.type}
+    onChange={handleChange}
     className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
     required
   >
