@@ -30,6 +30,7 @@ const Students = () => {
     previous_school_info: "",
     gender: "",
     state: "",
+    type: "",
     created_at: new Date().toISOString(),
   });
   const [showEditModal, setShowEditModal] = useState(false);
@@ -58,7 +59,7 @@ const Students = () => {
         setBatches(batchesData);
         setBatchMapping(batchMapping);
   
-        // Fetch Batch Info and Counselor Info for Each Student
+        // Fetch Batch Info, Counselor Info, and Student Type for Each Student
         const studentDetailsPromises = studentsData.map(async (student) => {
           try {
             // Fetch batch info
@@ -123,6 +124,23 @@ const Students = () => {
               studentWithDetails.counselor_name = "Error Fetching Counselor";
             }
             
+            // Fetch student type
+            try {
+              const typeResponse = await fetch(
+                `https://apistudents.sainikschoolcadet.com/api/student-types/${student.user_id}`
+              );
+              
+              if (typeResponse.ok) {
+                const typeData = await typeResponse.json();
+                studentWithDetails.type = typeData.type ;
+              } else {
+                studentWithDetails.type = "Not Defined"; // Default type
+              }
+            } catch (error) {
+              console.error(`Error fetching student type for user ${student.user_id}:`, error);
+              studentWithDetails.type = "Not Defined"; // Default if error
+            }
+            
             return studentWithDetails;
           } catch (error) {
             console.error(`Error fetching details for user ${student.user_id}:`, error);
@@ -131,7 +149,8 @@ const Students = () => {
               batch_id: null, 
               batch_name: "Batch Fetch Error",
               counselor_id: null,
-              counselor_name: "Data Fetch Error"
+              counselor_name: "Data Fetch Error",
+              type: "online" // Default if error
             };
           }
         });
@@ -163,19 +182,19 @@ const Students = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     // Check if all mandatory fields are filled
     if (!newStudent.name || !newStudent.email || !newStudent.phone_number || !newStudent.password || !newStudent.status || !newStudent.gender) {
       alert("Please fill in all required fields.");
       return;
     }
-
+  
     // Validate total_course_fees as mandatory
     if (newStudent.total_course_fees === "" || isNaN(newStudent.total_course_fees)) {
       alert("Total course fees must be a valid number and is required.");
       return;
     }
-
+  
     // Construct the studentData object in the exact format required by the API
     const studentData = {
       name: newStudent.name,
@@ -200,10 +219,10 @@ const Students = () => {
       state: newStudent.state || "",
       status: newStudent.status
     };
-
+  
     try {
       console.log("Attempting to create student with data:", studentData);
-
+  
       const response = await fetch("https://apistudents.sainikschoolcadet.com/api/users/register", {
         method: "POST",
         headers: {
@@ -211,28 +230,28 @@ const Students = () => {
         },
         body: JSON.stringify(studentData),
       });
-
+  
       const data = await response.json();
       console.log("Response from student creation:", data);
-
+  
       // Check if user object exists in the response
       if (data.user && data.user.id) {
         setStudents([...students, data]);
-
+  
         // Get user_id and selectedBatch
         const user_id = data.user.id; // Use id from the response as user_id
         const selectedBatch = newStudent.batch_id; // Get the selected batch ID
-
+  
         // Log batch_id and user_id
         console.log("Batch ID:", selectedBatch);
         console.log("User ID:", user_id);
-
+  
         // Use the specified API endpoint and request format to add the student to the batch
         const addStudentToBatchResponse = await axios.post(`https://apistudents.sainikschoolcadet.com/api/studentBatches/students/batch/`, {
           user_id: user_id, // Send user_id in the request body
           batch_id: selectedBatch // Send batch_id in the request body
         });
-
+  
         console.log("Student added to batch:", addStudentToBatchResponse.data);
         
         // Get the counselor ID from localStorage
@@ -253,6 +272,18 @@ const Students = () => {
           }
         } else {
           console.log("No counselor ID found in localStorage, skipping counselor assignment");
+        }
+        
+        // Set student type
+        try {
+          const setStudentTypeResponse = await axios.post('https://apistudents.sainikschoolcadet.com/api/student-types', {
+            student_id: user_id,
+            type: newStudent.type
+          });
+          
+          console.log("Student type set:", setStudentTypeResponse.data);
+        } catch (error) {
+          console.error("Error setting student type:", error);
         }
         
         setShowModal(false);
@@ -277,24 +308,24 @@ const Students = () => {
   };
   const handleEditClick = async (userId) => {
     try {
-      // Fetch both student details and batch info
-      const [studentDetails, studentBatch] = await Promise.all([
-        fetchStudentDetails(userId),
-        fetchStudentBatch(userId),
-      ]);
+      const selectedStudent = students.find((student) => student.user_id === userId);
+      const studentBatch = await fetchStudentBatch(userId);
   
-      if (studentDetails) {
-        // Ensure batch info is included
+      if (selectedStudent) {
         setEditingStudent({
-          ...studentDetails,
-          batch_id: studentBatch?.batch_id || "",
+          ...selectedStudent,
+          batch_id: studentBatch?.batch_id || selectedStudent.batch_id || "",
+          type: selectedStudent.type || "", // ✅ Ensure type is set
         });
         setShowEditModal(true);
+      } else {
+        console.warn(`Student with ID ${userId} not found in the list.`);
       }
     } catch (error) {
-      console.error("Error fetching student data:", error);
+      console.error("Error loading student for editing:", error);
     }
   };
+  
   
   // Fetch individual student details
   const fetchStudentDetails = async (userId) => {
@@ -322,76 +353,98 @@ const Students = () => {
   
   const handleEditSubmit = async (e) => {
     e.preventDefault();
-
+  
     try {
-        // ✅ Step 1: Update student's basic info
-        const response = await fetch(`https://apistudents.sainikschoolcadet.com/api/users/user/${editingStudent.user_id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(editingStudent),
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            console.log("Student updated successfully:", data);
-
-            // ✅ Step 2: Fetch the student's current batch
-            let oldBatchId = null;
-            try {
-                const batchResponse = await axios.get(
-                    `https://apistudents.sainikschoolcadet.com/api/studentBatches/students/search/${editingStudent.user_id}`
-                );
-                const batchData = batchResponse.data;
-                if (batchData.length > 0) {
-                    oldBatchId = batchData[0].batch_id; // Assuming the first record is the current batch
-                    console.log(`Current batch found: ${oldBatchId}`);
-                } else {
-                    console.log("No existing batch found for the student.");
-                }
-            } catch (error) {
-                console.warn("Failed to fetch student's current batch:", error);
-            }
-
-            const newBatchId = editingStudent.batch_id;
-
-            if (!oldBatchId && newBatchId) {
-                // 🟢 No batch assigned before, so assign the student to the new batch
-                console.log(`Assigning student ${editingStudent.user_id} to batch ${newBatchId}`);
-                await axios.post(`https://apistudents.sainikschoolcadet.com/api/studentBatches/students/batch/`, {
-                    user_id: editingStudent.user_id, 
-                    batch_id: newBatchId, 
-                });
-                console.log("Student successfully assigned to batch.");
-            } else if (oldBatchId !== newBatchId) {
-                // 🟠 Batch is different, update the assignment
-                console.log(`Updating batch for student ${editingStudent.user_id} from ${oldBatchId} to ${newBatchId}`);
-                await axios.put(`https://apistudents.sainikschoolcadet.com/api/studentBatches/update`, {
-                    user_id: editingStudent.user_id,
-                    old_batch_id: oldBatchId,
-                    new_batch_id: newBatchId,
-                });
-                console.log("Student batch updated successfully.");
-            } else {
-                console.warn("No batch change detected.");
-            }
-
-            // ✅ Step 3: Refresh student list
-            const refreshResponse = await fetch("https://apistudents.sainikschoolcadet.com/api/users/role/2");
-            const refreshData = await refreshResponse.json();
-            window.location.reload();
-
-            setShowEditModal(false);
-            setEditingStudent(null);
-
-        } else {
-            alert('Failed to update student: ' + (data.message || 'Unknown error'));
+      // Log the student data before submission
+      console.log("Editing student:", editingStudent);
+  
+      // Log the student type before sending
+      console.log("Student Type being updated to:", editingStudent.type);
+  
+      // Step 1: Update student's basic info
+      const response = await fetch(`https://apistudents.sainikschoolcadet.com/api/users/user/${editingStudent.user_id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editingStudent),
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        console.log("Student updated successfully:", data);
+  
+        // Step 2: Fetch the student's current batch
+        let oldBatchId = null;
+        try {
+          const batchResponse = await axios.get(
+            `https://apistudents.sainikschoolcadet.com/api/studentBatches/students/search/${editingStudent.user_id}`
+          );
+          const batchData = batchResponse.data;
+          if (batchData.length > 0) {
+            oldBatchId = batchData[0].batch_id; // Assuming the first record is the current batch
+            console.log(`Current batch found: ${oldBatchId}`);
+          } else {
+            console.log("No existing batch found for the student.");
+          }
+        } catch (error) {
+          console.warn("Failed to fetch student's current batch:", error);
         }
+  
+        const newBatchId = editingStudent.batch_id;
+  
+        if (!oldBatchId && newBatchId) {
+          // 🟢 No batch assigned before, so assign the student to the new batch
+          console.log(`Assigning student ${editingStudent.user_id} to batch ${newBatchId}`);
+          await axios.post(`https://apistudents.sainikschoolcadet.com/api/studentBatches/students/batch/`, {
+            user_id: editingStudent.user_id, 
+            batch_id: newBatchId, 
+          });
+          console.log("Student successfully assigned to batch.");
+        } else if (oldBatchId !== newBatchId) {
+          // 🟠 Batch is different, update the assignment
+          console.log(`Updating batch for student ${editingStudent.user_id} from ${oldBatchId} to ${newBatchId}`);
+          await axios.put(`https://apistudents.sainikschoolcadet.com/api/studentBatches/update`, {
+            user_id: editingStudent.user_id,
+            old_batch_id: oldBatchId,
+            new_batch_id: newBatchId,
+          });
+          console.log("Student batch updated successfully.");
+        } else {
+          console.warn("No batch change detected.");
+        }
+  
+        // Step 3: Update student type
+        try {
+          console.log("Sending student type update request:", {
+            student_id: editingStudent.user_id,
+            type: editingStudent.type
+          });
+          const updateTypeResponse = await axios.post(`https://apistudents.sainikschoolcadet.com/api/student-types`, {
+            student_id: editingStudent.user_id,
+            type: editingStudent.type
+          });
+          console.log("Student type updated:", updateTypeResponse.data);
+        } catch (error) {
+          console.error("Error updating student type:", error);
+        }
+  
+        // Step 4: Refresh student list
+        const refreshResponse = await fetch("https://apistudents.sainikschoolcadet.com/api/users/role/2");
+        const refreshData = await refreshResponse.json();
+       window.location.reload();
+  
+        // Close the modal and reset the editing state
+        setShowEditModal(false);  // Close the modal
+        setEditingStudent(null);   // Reset the editing state
+      } else {
+        alert('Failed to update student: ' + (data.message || 'Unknown error'));
+      }
     } catch (error) {
-        console.error('Error updating student:', error);
-        alert('Error updating student: ' + error.message);
+      console.error('Error updating student:', error);
+      alert('Error updating student: ' + error.message);
     }
-};
+  };
+  
 
 
 
@@ -429,51 +482,69 @@ const paginate = (pageNumber) => setCurrentPage(pageNumber);
           padding: '5px',
           boxShadow: '0 0 10px rgba(0,0,0,0.1)'
         }}>
-          <table className="min-w-full table-auto bg-white border-collapse border border-gray-300">
-  <thead>
-    <tr className="bg-gray-200">
-      <th className="border border-gray-300 px-2 py-3 text-center" style={{ width: '40px' }}>S.No</th>
-      <th className="border border-gray-300 px-4 py-3 text-left">Name</th>
-      <th className="border border-gray-300 px-4 py-3 text-left">Email</th>
-      <th className="border border-gray-300 px-4 py-3 text-left">Phone Number</th>
-      <th className="border border-gray-300 px-4 py-3 text-left">Batch Name</th>
-      <th className="border border-gray-300 px-4 py-3 text-left">Added by</th>
-      <th className="border border-gray-300 px-4 py-3 text-left">Date of Admission</th>
-      <th className="border border-gray-300 px-4 py-3 text-left">Status</th>
-      <th className="border border-gray-300 px-4 py-3 text-center">Actions</th>
+         <table className="min-w-full table-auto bg-white border-collapse border border-gray-300">
+         <thead>
+  <tr className="bg-gray-200">
+    <th className="border border-gray-300 px-2 py-3 text-center" style={{ width: '40px' }}>S.No</th>
+    <th className="border border-gray-300 px-4 py-3 text-left">Admission ID</th>
+    <th className="border border-gray-300 px-4 py-3 text-left">Name</th>
+    <th className="border border-gray-300 px-4 py-3 text-left">Email</th>
+    <th className="border border-gray-300 px-4 py-3 text-left">Phone Number</th>
+    <th className="border border-gray-300 px-4 py-3 text-left">Batch Name</th>
+    <th className="border border-gray-300 px-4 py-3 text-left">Added by</th>
+    <th className="border border-gray-310 px-4 py-3 text-left" style={{ width: '150px' }}>Type</th> {/* Increased width */}
+    <th className="border border-gray-300 px-4 py-3 text-left">Date of Admission</th>
+    <th className="border border-gray-300 px-4 py-3 text-left">Status</th>
+    <th className="border border-gray-300 px-4 py-3 text-center">Actions</th>
+  </tr>
+</thead>
+<tbody>
+  {currentStudents.map((student, index) => (
+    <tr key={student.user_id} className="hover:bg-gray-50">
+      <td className="border border-gray-300 px-2 py-3 text-center">{indexOfFirstStudent + index + 1}</td>
+      <td className="border border-gray-300 px-4 py-3">{student.user_id}</td> {/* Admission ID */}
+      <td className="border border-gray-300 px-4 py-3">{student.name}</td>
+      <td className="border border-gray-300 px-4 py-3">{student.email}</td>
+      <td className="border border-gray-300 px-4 py-3">{student.phone_number}</td>
+      <td className="border border-gray-300 px-4 py-3">{student.batch_name}</td>
+      <td className="border border-gray-300 px-4 py-3">{student.counselor_name || "No Counselor"}</td>
+      <td className="border border-gray-310 px-4 py-3" style={{ width: '150px' }}>
+        <span className={`px-2 py-1 rounded-full ${
+          student.type === 'online' 
+            ? 'bg-blue-100 text-blue-800' 
+            : student.type === 'dayboarder'
+              ? 'bg-yellow-100 text-yellow-800'
+              : student.type === 'hosteller'
+                ? 'bg-green-100 text-green-800'
+                : 'bg-red-100 text-red-800'
+        }`}>
+          {student.type ? student.type.charAt(0).toUpperCase() + student.type.slice(1) : "Not Defined"}
+        </span>
+      </td>
+      <td className="border border-gray-300 px-4 py-3">{student.date_of_admission}</td>
+      <td className="border border-gray-300 px-4 py-3">
+        <span className={`px-2 py-1 rounded-full ${
+          student.status === 'active' 
+            ? 'bg-green-100 text-green-800' 
+            : 'bg-red-100 text-red-800'
+        }`}>
+          {student.status.charAt(0).toUpperCase() + student.status.slice(1)}
+        </span>
+      </td>
+      <td className="border border-gray-300 px-4 py-3 text-center">
+        <button
+          onClick={() => handleEditClick(student.user_id)}
+          className="bg-blue-500 text-white py-1 px-4 rounded-lg hover:bg-blue-600 transition duration-200"
+        >
+          Edit
+        </button>
+      </td>
     </tr>
-  </thead>
-  <tbody>
-    {currentStudents.map((student, index) => (
-      <tr key={student.user_id} className="hover:bg-gray-50">
-        <td className="border border-gray-300 px-2 py-3 text-center">{indexOfFirstStudent + index + 1}</td>
-        <td className="border border-gray-300 px-4 py-3">{student.name}</td>
-        <td className="border border-gray-300 px-4 py-3">{student.email}</td>
-        <td className="border border-gray-300 px-4 py-3">{student.phone_number}</td>
-        <td className="border border-gray-300 px-4 py-3">{student.batch_name}</td>
-        <td className="border border-gray-300 px-4 py-3">{student.counselor_name || "No Counselor"}</td>
-        <td className="border border-gray-300 px-4 py-3">{student.date_of_admission}</td>
-        <td className="border border-gray-300 px-4 py-3">
-          <span className={`px-2 py-1 rounded-full ${
-            student.status === 'active' 
-              ? 'bg-green-100 text-green-800' 
-              : 'bg-red-100 text-red-800'
-          }`}>
-            {student.status.charAt(0).toUpperCase() + student.status.slice(1)}
-          </span>
-        </td>
-        <td className="border border-gray-300 px-4 py-3 text-center">
-          <button
-            onClick={() => handleEditClick(student.user_id)}
-            className="bg-blue-500 text-white py-1 px-4 rounded-lg hover:bg-blue-600 transition duration-200"
-          >
-            Edit
-          </button>
-        </td>
-      </tr>
-    ))}
-  </tbody>
+  ))}
+</tbody>
+
 </table>
+
         </div>
 
         <div className="flex items-center justify-between mt-4 px-4 py-3 bg-white border-t border-gray-200 sm:px-6">
@@ -700,7 +771,19 @@ const paginate = (pageNumber) => setCurrentPage(pageNumber);
                     )}
                   </select>
                 </div>
-
+                <div style={{ marginBottom: '1rem' }}>
+  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Student Type</label>
+  <select
+    name="type"
+    value={newStudent.type}
+    onChange={handleChange}
+    style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '0.5rem', outline: 'none', transition: 'border-color 0.3s ease' }}
+  >
+    <option value="online">Online</option>
+    <option value="dayboarder">Day Boarder</option>
+    <option value="hosteller">Hosteller</option>
+  </select>
+</div>
                 <div style={{ marginBottom: '1rem' }}>
                   <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Father's Name</label>
                   <input
@@ -980,6 +1063,28 @@ const paginate = (pageNumber) => setCurrentPage(pageNumber);
                     ))}
                   </select>
                 </div>
+                <div style={{ marginBottom: '1rem' }}>
+  <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: '500', color: '#333' }}>Student Type</label>
+  <select
+    name="type"
+    value={editingStudent.type ?? ""}
+    onChange={handleEditChange}
+    style={{
+      width: '100%',
+      padding: '0.75rem',
+      border: '1px solid #ccc',
+      borderRadius: '0.5rem',
+      outline: 'none',
+      transition: 'border-color 0.3s ease'
+    }}
+  >
+    <option value="" disabled>Select student type</option>
+    <option value="online">Online</option>
+    <option value="dayboarder">Day Boarder</option>
+    <option value="hosteller">Hosteller</option>
+  </select>
+</div>
+
 
                 <div style={{ marginBottom: '1rem' }}>
                   <label style={{ display: 'block', fontSize: '1.125rem', fontWeight: 'medium', color: '#333' }}>Father's Name</label>

@@ -4,7 +4,7 @@ import { FiSettings } from 'react-icons/fi';
 import { TooltipComponent } from '@syncfusion/ej2-react-popups';
 import { useStateContext } from './contexts/ContextProvider';
 
-import { Navbar, Footer, Sidebar, ThemeSettings } from './components';
+import {Footer, Sidebar, ThemeSettings } from './components';
 import Dashboard from './pages/Dashboard';
 import Students from './pages/Students';
 import FeeRecords from './pages/FeeRecords';
@@ -122,9 +122,7 @@ const App = () => {
                 activeMenu ? 'md:ml-72' : 'flex-2'
               }`}
             >
-              <div className="fixed md:static bg-main-bg dark:bg-main-dark-bg navbar w-full">
-                <Navbar onLogout={handleLogout} /> {/* Pass handleLogout to Navbar */}
-              </div>
+              
               <div>
                 {themeSettings && <ThemeSettings />}
                 <Routes>

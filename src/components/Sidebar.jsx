@@ -1,9 +1,17 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { FiHome, FiUsers, FiFileText, FiBarChart, FiBook, FiClock, FiSettings, FiClipboard, FiCalendar, FiMap, FiUserCheck, FiChevronDown, FiChevronRight } from 'react-icons/fi';
+import { Link, useLocation } from 'react-router-dom';
+import {
+  FiHome, FiFileText, FiBook, FiUsers, FiSettings,
+  FiChevronDown, FiChevronRight, FiVideo, FiCalendar,
+  FiGrid, FiLogOut, FiUserPlus, FiFile,
+  FiMessageCircle, FiEdit, FiAward,
+  FiBarChart, FiClipboard, FiClock, FiUserCheck, FiMap
+} from 'react-icons/fi';
 
 const Sidebar = ({ role }) => {
-  const [openCategories, setOpenCategories] = useState({});
+  const [openCategories, setOpenCategories] = useState({ Dashboard: true });
+  const location = useLocation();
+  const userName = localStorage.getItem('name') || 'User';
 
   const toggleCategory = (category) => {
     setOpenCategories((prev) => ({
@@ -12,158 +20,196 @@ const Sidebar = ({ role }) => {
     }));
   };
 
-  const adminRoutes = [
-    {
-      category: 'Dashboard',
-      links: [{ path: '/', name: 'Dashboard', icon: <FiHome /> }],
-    },
-    {
-      category: 'Performance',
-      links: [
-        { path: '/test-records', name: 'Test Records', icon: <FiFileText /> },
-        { path: '/class-performance', name: 'Class Performance', icon: <FiBarChart /> },
-        { path: '/student-performance', name: 'Student Performance', icon: <FiUsers /> },
-      ],
-    },
-    {
-      category: 'Finance',
-      links: [
-        { path: '/fee-records', name: 'Fee Records', icon: <FiClipboard /> },
-        { path: '/fee-reminders', name: 'Fee Reminders', icon: <FiClock /> },
-      ],
-    },
-    {
-      category: 'Management',
-      links: [
-        { path: '/notice', name: 'Notice', icon: <FiClipboard /> },
-        { path: '/attendance', name: 'Attendance', icon: <FiCalendar /> },
-        { path: '/view-attendance', name: 'View Attendance', icon: <FiCalendar /> },
-      ],
-    },
-    {
-      category: 'Reports',
-      links: [
-        { path: '/class-records', name: 'Classwork Records', icon: <FiBook /> },
-        { path: '/teacher-reports', name: 'Teacher Reports', icon: <FiUserCheck /> },
-      ],
-    },
-    {
-      category: 'Administration',
-      links: [
-        { path: '/students', name: 'Students', icon: <FiUsers /> },
-        { path: '/course', name: 'Course', icon: <FiBook /> },
-        { path: '/user-roles', name: 'User Roles', icon: <FiSettings /> },
-        { path: '/school-map', name: 'School Map', icon: <FiMap /> },
-      ],
-    },
-    
-  ];
-
-  const teacherRoutes = [
-    {
-      category: 'Dashboard',
-      links: [{ path: '/', name: 'Dashboard', icon: <FiHome /> }],
-    },
-    {
-      category: 'Performance',
-      links: [
-        { path: '/test-records', name: 'Test Records', icon: <FiFileText /> },
-        { path: '/class-performance', name: 'Class Performance', icon: <FiBarChart /> },
-        { path: '/student-performance', name: 'Student Performance', icon: <FiUsers /> },
-      ],
-    },
-    {
-      category: 'Management',
-      links: [
-        { path: '/attendance', name: 'Attendance', icon: <FiClipboard /> },
-        { path: '/view-attendance', name: 'View Attendance', icon: <FiCalendar /> },
-      ],
-    },
-    {
-      category: 'Reports',
-      links: [
-        { path: '/class-records', name: 'Classwork Records', icon: <FiBook /> },
-      ],
-    },
-  ];
-
-  const counselorRoutes = [
-    {
-      category: 'Dashboard',
-      links: [{ path: '/', name: 'Dashboard', icon: <FiHome /> }],
-    },
-    {
-      category: 'Performance',
-      links: [
-        { path: '/test-records', name: 'Test Records', icon: <FiFileText /> },
-        { path: '/class-performance', name: 'Class Performance', icon: <FiBarChart /> },
-        { path: '/student-performance', name: 'Student Performance', icon: <FiUsers /> },
-      ],
-    },
-    {
-      category: 'Finance',
-      links: [
-        { path: '/fee-records', name: 'Fee Records', icon: <FiClipboard /> },
-        { path: '/fee-reminders', name: 'Fee Reminders', icon: <FiClock /> },
-      ],
-    },
-    {
-      category: 'Management',
-      links: [
-        { path: '/notice', name: 'Notice', icon: <FiClipboard /> },
-        { path: '/view-attendance', name: 'View Attendance', icon: <FiCalendar /> },
-        { path: '/students', name: 'Students', icon: <FiUsers /> },
-      ],
-    },
-  ];
-
-  const getRoutes = () => {
-    switch (role) {
-      case 'admin':
-        return adminRoutes;
-      case 'teacher':
-        return teacherRoutes;
-      case 'counselor':
-        return counselorRoutes;
-      default:
-        return [];
-    }
+  const performLogout = () => {
+    console.log('Performing logout from sidebar');
+    localStorage.removeItem('role');
+    localStorage.removeItem('name');
+    localStorage.removeItem('email');
+    localStorage.removeItem('token');
+    window.location.href = '/';
   };
 
-  const routes = getRoutes();
+  const routesByRole = {
+    admin: [
+      {
+        category: 'Dashboard',
+        links: [{ path: '/', name: 'Dashboard', icon: <FiHome className="text-xl" /> }],
+      },
+      {
+        category: 'Performance',
+        links: [
+          { path: '/test-records', name: 'Test Records', icon: <FiFileText className="text-xl" /> },
+          { path: '/class-performance', name: 'Class Performance', icon: <FiBarChart className="text-xl" /> },
+          { path: '/student-performance', name: 'Student Performance', icon: <FiUsers className="text-xl" /> },
+        ],
+      },
+      {
+        category: 'Finance',
+        links: [
+          { path: '/fee-records', name: 'Fee Records', icon: <FiClipboard className="text-xl" /> },
+          { path: '/fee-reminders', name: 'Fee Reminders', icon: <FiClock className="text-xl" /> },
+        ],
+      },
+      {
+        category: 'Management',
+        links: [
+          { path: '/notice', name: 'Notice', icon: <FiClipboard className="text-xl" /> },
+          { path: '/attendance', name: 'Attendance', icon: <FiCalendar className="text-xl" /> },
+          { path: '/view-attendance', name: 'View Attendance', icon: <FiCalendar className="text-xl" /> },
+        ],
+      },
+      {
+        category: 'Reports',
+        links: [
+          { path: '/class-records', name: 'Classwork Records', icon: <FiBook className="text-xl" /> },
+          { path: '/teacher-reports', name: 'Teacher Reports', icon: <FiUserCheck className="text-xl" /> },
+        ],
+      },
+      {
+        category: 'Administration',
+        links: [
+          { path: '/students', name: 'Students', icon: <FiUsers className="text-xl" /> },
+          { path: '/course', name: 'Course', icon: <FiBook className="text-xl" /> },
+          { path: '/user-roles', name: 'User Roles', icon: <FiSettings className="text-xl" /> },
+          { path: '/school-map', name: 'School Map', icon: <FiMap className="text-xl" /> },
+        ],
+      },
+    ],
+    teacher: [
+      {
+        category: 'Dashboard',
+        links: [{ path: '/', name: 'Dashboard', icon: <FiHome className="text-xl" /> }],
+      },
+      {
+        category: 'Performance',
+        links: [
+          { path: '/test-records', name: 'Test Records', icon: <FiFileText className="text-xl" /> },
+          { path: '/class-performance', name: 'Class Performance', icon: <FiBarChart className="text-xl" /> },
+          { path: '/student-performance', name: 'Student Performance', icon: <FiUsers className="text-xl" /> },
+        ],
+      },
+      {
+        category: 'Management',
+        links: [
+          { path: '/attendance', name: 'Attendance', icon: <FiClipboard className="text-xl" /> },
+          { path: '/view-attendance', name: 'View Attendance', icon: <FiCalendar className="text-xl" /> },
+        ],
+      },
+      {
+        category: 'Reports',
+        links: [
+          { path: '/class-records', name: 'Classwork Records', icon: <FiBook className="text-xl" /> },
+        ],
+      },
+    ],
+    counsellor: [
+      {
+        category: 'Dashboard',
+        links: [{ path: '/', name: 'Dashboard', icon: <FiHome className="text-xl" /> }],
+      },
+      {
+        category: 'Performance',
+        links: [
+          { path: '/test-records', name: 'Test Records', icon: <FiFileText className="text-xl" /> },
+          { path: '/class-performance', name: 'Class Performance', icon: <FiBarChart className="text-xl" /> },
+          { path: '/student-performance', name: 'Student Performance', icon: <FiUsers className="text-xl" /> },
+        ],
+      },
+      {
+        category: 'Finance',
+        links: [
+          { path: '/fee-records', name: 'Fee Records', icon: <FiClipboard className="text-xl" /> },
+          { path: '/fee-reminders', name: 'Fee Reminders', icon: <FiClock className="text-xl" /> },
+        ],
+      },
+      {
+        category: 'Management',
+        links: [
+          { path: '/notice', name: 'Notice', icon: <FiClipboard className="text-xl" /> },
+          { path: '/view-attendance', name: 'View Attendance', icon: <FiCalendar className="text-xl" /> },
+          { path: '/students', name: 'Students', icon: <FiUsers className="text-xl" /> },
+        ],
+      },
+    ],
+  };
+
+  const routes = routesByRole[role] || routesByRole.admin;
+  const isActive = (path) => location.pathname === path;
 
   return (
-    <div className="w-72 fixed sidebar bg-white text-black shadow-none z-50">
-      <div className="h-full overflow-auto">
-        <div className="flex items-center p-6">
-          <h2 className="text-xl font-semibold">Dabad Academy</h2>
+    <div className="w-72 fixed h-full bg-gradient-to-b from-blue-600 to-blue-400 text-white shadow-xl z-50">
+      <div className="h-full flex flex-col">
+        <div className="py-3 px-4">
+          <div className="flex items-center">
+            <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center border border-blue-300">
+              <span className="text-white font-bold text-xl">DA</span>
+            </div>
+            <div className="ml-3">
+              <h2 className="text-lg font-bold text-white m-0">Dabad Academy Admin</h2>
+            </div>
+          </div>
         </div>
-        <div className="mt-6">
+
+        <div className="border-b border-blue-500"></div>
+
+        <div className="px-6 py-5 border-b border-blue-500">
+          <h3 className="text-white text-base font-medium">{userName}</h3>
+          <p className="text-blue-200 text-sm">
+            {role === 'admin' ? 'Administrator' : role === 'teacher' ? 'Teacher' : 'Counselor'}
+          </p>
+        </div>
+
+        <div className="flex-grow overflow-auto py-4 scrollbar-thin scrollbar-thumb-blue-300 scrollbar-track-transparent">
           {routes.map((category) => (
-            <div key={category.category}>
+            <div key={category.category} className="mb-3 px-4">
               <div
-                className="flex items-center justify-between p-4 text-black hover:bg-gray-100 transition-all duration-300 ease-in-out rounded-md mb-2 cursor-pointer"
+                className="flex items-center justify-between p-4 text-white hover:bg-blue-700 transition-all duration-200 rounded-lg cursor-pointer"
                 onClick={() => toggleCategory(category.category)}
               >
-                <span className="text-lg font-semibold">{category.category}</span>
-                {openCategories[category.category] ? <FiChevronDown /> : <FiChevronRight />}
+                <div className="flex items-center">
+                  <span className="text-xl mr-4">{category.icon}</span>
+                  <span className="text-lg font-medium">{category.category}</span>
+                </div>
+                <span className="text-sm text-blue-100">
+                  {openCategories[category.category] ? <FiChevronDown /> : <FiChevronRight />}
+                </span>
               </div>
               {openCategories[category.category] && (
-                <div className="ml-4">
+                <div className="ml-8 mt-3 space-y-2">
                   {category.links.map((route) => (
                     <Link
                       key={route.path}
                       to={route.path}
-                      className="flex items-center p-4 text-black hover:bg-gray-100 transition-all duration-300 ease-in-out rounded-md mb-2"
+                      className={`flex items-center py-3 px-4 text-lg rounded-lg transition-all duration-200 ${
+                        isActive(route.path)
+                          ? 'bg-blue-700 text-white font-medium shadow-md'
+                          : 'text-blue-100 hover:bg-blue-700 hover:text-white'
+                      }`}
                     >
-                      <div className="mr-3 text-xl">{route.icon}</div>
-                      <span className="text-lg">{route.name}</span>
+                      <div className={`mr-4 text-xl ${isActive(route.path) ? 'text-white' : 'text-blue-200'}`}>
+                        {route.icon}
+                      </div>
+                      <span>{route.name}</span>
+                      {isActive(route.path) && (
+                        <div className="w-2 h-2 rounded-full bg-white ml-auto"></div>
+                      )}
                     </Link>
                   ))}
                 </div>
               )}
             </div>
           ))}
+        </div>
+
+        <div className="mt-auto px-6 py-6 border-t border-blue-500">
+          <button
+            type="button"
+            onClick={performLogout}
+            className="flex items-center justify-center w-full py-4 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all duration-200 cursor-pointer"
+          >
+            <FiLogOut className="mr-4" />
+            <span className="font-medium text-xl">Logout</span>
+          </button>
         </div>
       </div>
     </div>
