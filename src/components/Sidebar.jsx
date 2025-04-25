@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   FiHome, FiFileText, FiBook, FiUsers, FiSettings,
@@ -12,6 +12,29 @@ const Sidebar = ({ role }) => {
   const [openCategories, setOpenCategories] = useState({ Dashboard: true });
   const location = useLocation();
   const userName = localStorage.getItem('name') || 'User';
+  const [userRole, setUserRole] = useState(role);
+
+  // Normalize role on component mount
+  useEffect(() => {
+    // Log the current role for debugging
+    console.log('Current role from props:', role);
+    
+    // Normalize the role to handle spelling variations
+    if (role) {
+      const normalizedRole = role.toLowerCase();
+      if (normalizedRole === 'counselor' || normalizedRole === 'counsellor') {
+        setUserRole('counselor');
+      } else if (normalizedRole === 'admin') {
+        setUserRole('admin');
+      } else if (normalizedRole === 'teacher') {
+        setUserRole('teacher');
+      } else {
+        // If role is not recognized, don't set a default
+        console.warn(`Unknown role: ${role}`);
+        setUserRole(null);
+      }
+    }
+  }, [role]);
 
   const toggleCategory = (category) => {
     setOpenCategories((prev) => ({
@@ -102,7 +125,7 @@ const Sidebar = ({ role }) => {
         ],
       },
     ],
-    counsellor: [
+    counselor: [
       {
         category: 'Dashboard',
         links: [{ path: '/', name: 'Dashboard', icon: <FiHome className="text-xl" /> }],
@@ -133,8 +156,51 @@ const Sidebar = ({ role }) => {
     ],
   };
 
-  const routes = routesByRole[role] || routesByRole.admin;
+  // Get routes based on role without defaulting to admin
+  const getRoutesForRole = () => {
+    if (!userRole) {
+      return []; // Return empty array if role is not recognized
+    }
+    return routesByRole[userRole] || [];
+  };
+  
+  const routes = getRoutesForRole();
   const isActive = (path) => location.pathname === path;
+
+  // If no valid role is found, render a simple error message
+  if (!routes.length) {
+    return (
+      <div className="w-72 fixed h-full bg-gradient-to-b from-blue-600 to-blue-400 text-white shadow-xl z-50">
+        <div className="h-full flex flex-col">
+          <div className="py-3 px-4">
+            <div className="flex items-center">
+              <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center border border-blue-300">
+                <span className="text-white font-bold text-xl">DA</span>
+              </div>
+              <div className="ml-3">
+                <h2 className="text-lg font-bold text-white m-0">Dabad Academy</h2>
+              </div>
+            </div>
+          </div>
+          <div className="border-b border-blue-500"></div>
+          <div className="flex-grow flex items-center justify-center">
+            <div className="text-center px-4">
+              <h3 className="text-xl mb-4">Invalid User Role</h3>
+              <p>You don't have a valid role assigned. Please contact an administrator.</p>
+              <button
+                type="button"
+                onClick={performLogout}
+                className="mt-6 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all duration-200 cursor-pointer"
+              >
+                <FiLogOut className="inline mr-2" />
+                <span>Logout</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-72 fixed h-full bg-gradient-to-b from-blue-600 to-blue-400 text-white shadow-xl z-50">
@@ -145,7 +211,7 @@ const Sidebar = ({ role }) => {
               <span className="text-white font-bold text-xl">DA</span>
             </div>
             <div className="ml-3">
-              <h2 className="text-lg font-bold text-white m-0">Dabad Academy Admin</h2>
+              <h2 className="text-lg font-bold text-white m-0">Dabad Academy</h2>
             </div>
           </div>
         </div>
@@ -155,7 +221,7 @@ const Sidebar = ({ role }) => {
         <div className="px-6 py-5 border-b border-blue-500">
           <h3 className="text-white text-base font-medium">{userName}</h3>
           <p className="text-blue-200 text-sm">
-            {role === 'admin' ? 'Administrator' : role === 'teacher' ? 'Teacher' : 'Counselor'}
+            {userRole === 'admin' ? 'Administrator' : userRole === 'teacher' ? 'Teacher' : 'Counselor'}
           </p>
         </div>
 
