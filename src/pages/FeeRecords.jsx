@@ -250,416 +250,455 @@ const RecordsTable = ({ records }) => {
 // Main Component
 const FeeRecords = () => {
   // State declarations
-  const [feeSummary, setFeeSummary] = useState(null);
-  const [batches, setBatches] = useState([]);
-  const [students, setStudents] = useState([]);
-  const [selectedStudent, setSelectedStudent] = useState(null);
-  const [selectedStudentFees, setSelectedStudentFees] = useState({
-    totalFees: 0,
-    feesSubmitted: 0,
-    remainingFees: 0
-  });
-  const [feePaymentRecords, setFeePaymentRecords] = useState([]);
-  const [otherChargesRecords, setOtherChargesRecords] = useState([]);
-  const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
-  const [isChargeModalOpen, setChargeModalOpen] = useState(false);
-  const [showFeeStatusForm, setShowFeeStatusForm] = useState(false);
-  const [feeStatusExists, setFeeStatusExists] = useState(false);
-  const [selectedBatch, setSelectedBatch] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [loading, setLoading] = useState(true);
+  // State declarations
+const [feeSummary, setFeeSummary] = useState(null);
+const [batches, setBatches] = useState([]);
+const [students, setStudents] = useState([]);
+const [selectedStudent, setSelectedStudent] = useState(null);
+const [selectedStudentFees, setSelectedStudentFees] = useState({
+  totalFees: 0,
+  feesSubmitted: 0,
+  remainingFees: 0
+});
+const [feePaymentRecords, setFeePaymentRecords] = useState([]);
+const [otherChargesRecords, setOtherChargesRecords] = useState([]);
+const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
+const [isChargeModalOpen, setChargeModalOpen] = useState(false);
+const [showFeeStatusForm, setShowFeeStatusForm] = useState(false);
+const [feeStatusExists, setFeeStatusExists] = useState(false);
+const [selectedBatch, setSelectedBatch] = useState(null);
+const [searchTerm, setSearchTerm] = useState('');
+const [loading, setLoading] = useState(true);
+
+// Form state
+const [paymentData, setPaymentData] = useState({ 
+  title: '', 
+  date: '', 
+  amount: '', 
+  paymentCompleted: false, 
+  nextDueDate: '' 
+});
+
+const [chargeData, setChargeData] = useState({ 
+  title: '', 
+  date: '', 
+  amount: '' 
+});
+
+const [newFeeStatus, setNewFeeStatus] = useState({
+  admissionDate: '',
+  totalFees: '',
+  feesSubmitted: '0',
+  remainingFees: '',
+  nextDueDate: '',
+  user_id: null,
+});
+
+// API Functions
+const fetchData = useCallback(async () => {
+  try {
+    setLoading(true);
+    
+    // Parallel API requests for better performance
+    const [batchesRes, feeSummaryRes] = await Promise.all([
+      fetch(`${BASE_URL}/api/batches/`),
+      fetch(`${BASE_URL}/api/feestatus/summary`)
+    ]);
+    
+    if (batchesRes.ok) {
+      const batchesData = await batchesRes.json();
+      setBatches(batchesData);
+    }
+    
+    if (feeSummaryRes.ok) {
+      const summaryData = await feeSummaryRes.json();
+      setFeeSummary(summaryData);
+    }
+  } catch (error) {
+    console.error('Error fetching initial data:', error);
+  } finally {
+    setLoading(false);
+  }
+}, []);
+
+// First define fetchStudentRecords which doesn't depend on other functions
+const fetchStudentRecords = useCallback(async (student) => {
+  if (!student || !student.feeStatusId) return;
   
-  // Form state
-  const [paymentData, setPaymentData] = useState({ 
-    title: '', 
-    date: '', 
-    amount: '', 
-    paymentCompleted: false, 
-    nextDueDate: '' 
+  try {
+    const [paymentsRes, chargesRes] = await Promise.all([
+      fetch(`${BASE_URL}/api/feepaymentrecords/payments/${student.feeStatusId}`),
+      fetch(`${BASE_URL}/api/otherchargesrecords/charges/${student.feeStatusId}`)
+    ]);
+    
+    if (paymentsRes.ok) {
+      const payments = await paymentsRes.json();
+      setFeePaymentRecords(payments.map(record => ({ ...record, type: 'payment' })));
+    }
+    
+    if (chargesRes.ok) {
+      const charges = await chargesRes.json();
+      setOtherChargesRecords(charges.map(record => ({ ...record, type: 'charge' })));
+    }
+  } catch (error) {
+    console.error('Error fetching student records:', error);
+  }
+}, []);
+
+// Create a function to select a student without dependencies on fetchStudentsByBatch
+const selectStudent = useCallback(async (student) => {
+  // Save the selected student's ID and batch to localStorage
+  localStorage.setItem('lastSelectedStudentId', student.user_id);
+  if (selectedBatch) {
+    localStorage.setItem('lastSelectedBatchId', selectedBatch);
+  }
+  
+  setSelectedStudent(student);
+  
+  // Reset the records when a new student is selected
+  setFeePaymentRecords([]);
+  setOtherChargesRecords([]);
+  
+  if (!student.feeStatusId) {
+    setFeeStatusExists(false);
+    setShowFeeStatusForm(true);
+    return;
+  }
+  
+  setFeeStatusExists(true);
+  setSelectedStudentFees({
+    totalFees: student.totalFees || 0,
+    feesSubmitted: student.feesSubmitted || 0,
+    remainingFees: student.remainingFees || 0
   });
   
-  const [chargeData, setChargeData] = useState({ 
-    title: '', 
-    date: '', 
-    amount: '' 
-  });
+  await fetchStudentRecords(student);
   
-  const [newFeeStatus, setNewFeeStatus] = useState({
+  // Reset forms
+  setNewFeeStatus({
     admissionDate: '',
-    totalFees: '',
+    totalFees: student.totalFees || '',
     feesSubmitted: '0',
-    remainingFees: '',
+    remainingFees: student.remainingFees || '',
     nextDueDate: '',
-    user_id: null,
+    user_id: student.user_id,
   });
+}, [fetchStudentRecords, selectedBatch]);
 
-  // API Functions
-  const fetchData = useCallback(async () => {
-    try {
-      setLoading(true);
-      
-      // Parallel API requests for better performance
-      const [batchesRes, feeSummaryRes] = await Promise.all([
-        fetch(`${BASE_URL}/api/batches/`),
-        fetch(`${BASE_URL}/api/feestatus/summary`)
-      ]);
-      
-      if (batchesRes.ok) {
-        const batchesData = await batchesRes.json();
-        setBatches(batchesData);
-      }
-      
-      if (feeSummaryRes.ok) {
-        const summaryData = await feeSummaryRes.json();
-        setFeeSummary(summaryData);
-      }
-    } catch (error) {
-      console.error('Error fetching initial data:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+// Now create handleStudentClick using selectStudent
+const handleStudentClick = useCallback((student) => {
+  selectStudent(student);
+}, [selectStudent]);
 
-  const fetchStudentsByBatch = useCallback(async (batchId) => {
-    if (!batchId) {
-      setStudents([]);
-      return;
-    }
+// Finally define fetchStudentsByBatch using selectStudent
+const fetchStudentsByBatch = useCallback(async (batchId) => {
+  if (!batchId) {
+    setStudents([]);
+    return;
+  }
+  
+  try {
+    setLoading(true);
+    const response = await fetch(`${BASE_URL}/api/studentBatches/students/batch/${batchId}`);
     
-    try {
-      setLoading(true);
-      const response = await fetch(`${BASE_URL}/api/studentBatches/students/batch/${batchId}`);
+    if (response.ok) {
+      const studentsData = await response.json();
       
-      if (response.ok) {
-        const studentsData = await response.json();
-        
-        // Process all students in parallel for better performance
-        const enrichedStudents = await Promise.all(studentsData.map(async (student) => {
-          try {
-            // Parallel requests for each student
-            const [feeResponse, userResponse] = await Promise.all([
-              fetch(`${BASE_URL}/api/feestatus/user/${student.user_id}`),
-              fetch(`${BASE_URL}/api/users/user/${student.user_id}`)
-            ]);
-            
-            let feeData = {};
-            let userName = 'Unnamed Student';
-            
-            if (feeResponse.ok) {
-              const feeResult = await feeResponse.json();
-              if (Array.isArray(feeResult) && feeResult.length > 0) {
-                feeData = feeResult[0];
-              }
+      // Process all students in parallel for better performance
+      const enrichedStudents = await Promise.all(studentsData.map(async (student) => {
+        try {
+          // Parallel requests for each student
+          const [feeResponse, userResponse] = await Promise.all([
+            fetch(`${BASE_URL}/api/feestatus/user/${student.user_id}`),
+            fetch(`${BASE_URL}/api/users/user/${student.user_id}`)
+          ]);
+          
+          let feeData = {};
+          let userName = 'Unnamed Student';
+          
+          if (feeResponse.ok) {
+            const feeResult = await feeResponse.json();
+            if (Array.isArray(feeResult) && feeResult.length > 0) {
+              feeData = feeResult[0];
             }
-            
-            if (userResponse.ok) {
-              const userData = await userResponse.json();
-              userName = userData.user?.name || 'Unnamed Student';
-            }
-            
-            return {
-              ...student,
-              name: userName,
-              feeStatusId: feeData.id || null,
-              totalFees: feeData.totalFees || 0,
-              feesSubmitted: feeData.feesSubmitted || 0,
-              remainingFees: feeData.remainingFees || 0,
-              nextDueDate: feeData.nextDueDate || null,
-              paymentCompleted: feeData.paymentCompleted || false
-            };
-          } catch (error) {
-            console.error(`Error enriching student data for ID: ${student.user_id}`, error);
-            return student;
           }
-        }));
-        
-        // Sort by next due date, null dates at the end
-        const sortedStudents = enrichedStudents.sort((a, b) => {
-          if (a.nextDueDate && b.nextDueDate) {
-            return new Date(a.nextDueDate) - new Date(b.nextDueDate);
+          
+          if (userResponse.ok) {
+            const userData = await userResponse.json();
+            userName = userData.user?.name || 'Unnamed Student';
           }
-          return a.nextDueDate ? -1 : 1;
-        });
-        
-        setStudents(sortedStudents);
-      }
-    } catch (error) {
-      console.error('Error fetching students:', error);
-      setStudents([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const fetchStudentRecords = useCallback(async (student) => {
-    if (!student || !student.feeStatusId) return;
-    
-    try {
-      const [paymentsRes, chargesRes] = await Promise.all([
-        fetch(`${BASE_URL}/api/feepaymentrecords/payments/${student.feeStatusId}`),
-        fetch(`${BASE_URL}/api/otherchargesrecords/charges/${student.feeStatusId}`)
-      ]);
+          
+          return {
+            ...student,
+            name: userName,
+            feeStatusId: feeData.id || null,
+            totalFees: feeData.totalFees || 0,
+            feesSubmitted: feeData.feesSubmitted || 0,
+            remainingFees: feeData.remainingFees || 0,
+            nextDueDate: feeData.nextDueDate || null,
+            paymentCompleted: feeData.paymentCompleted || false
+          };
+        } catch (error) {
+          console.error(`Error enriching student data for ID: ${student.user_id}`, error);
+          return student;
+        }
+      }));
       
-      if (paymentsRes.ok) {
-        const payments = await paymentsRes.json();
-        setFeePaymentRecords(payments.map(record => ({ ...record, type: 'payment' })));
-      }
-      
-      if (chargesRes.ok) {
-        const charges = await chargesRes.json();
-        setOtherChargesRecords(charges.map(record => ({ ...record, type: 'charge' })));
-      }
-    } catch (error) {
-      console.error('Error fetching student records:', error);
-    }
-  }, []);
-
-  // Handlers
-  const handleStudentClick = useCallback(async (student) => {
-    setSelectedStudent(student);
-    
-    if (!student.feeStatusId) {
-      setFeeStatusExists(false);
-      setShowFeeStatusForm(true);
-      return;
-    }
-    
-    setFeeStatusExists(true);
-    setSelectedStudentFees({
-      totalFees: student.totalFees || 0,
-      feesSubmitted: student.feesSubmitted || 0,
-      remainingFees: student.remainingFees || 0
-    });
-    
-    await fetchStudentRecords(student);
-    
-    // Reset forms
-    setNewFeeStatus({
-      admissionDate: '',
-      totalFees: student.totalFees || '',
-      feesSubmitted: '0',
-      remainingFees: student.remainingFees || '',
-      nextDueDate: '',
-      user_id: student.user_id,
-    });
-  }, [fetchStudentRecords]);
-
-  const handleBatchChange = useCallback((event) => {
-    const batchId = event.target.value;
-    setSelectedBatch(batchId);
-    fetchStudentsByBatch(batchId);
-    setSelectedStudent(null);
-  }, [fetchStudentsByBatch]);
-
-  const handleAddPayment = useCallback(async (e) => {
-    e.preventDefault();
-    
-    if (!selectedStudent?.feeStatusId) return;
-    
-    try {
-      const paymentDataToSend = {
-        title: paymentData.title,
-        date: paymentData.date,
-        amount: paymentData.amount,
-        isPaid: true,
-        feeStatusId: selectedStudent.feeStatusId,
-      };
-      
-      if (!paymentData.paymentCompleted) {
-        paymentDataToSend.nextDueDate = paymentData.nextDueDate;
-      }
-      
-      const response = await fetch(`${BASE_URL}/api/feepaymentrecords/add-payment`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(paymentDataToSend),
+      // Sort by next due date, null dates at the end
+      const sortedStudents = enrichedStudents.sort((a, b) => {
+        if (a.nextDueDate && b.nextDueDate) {
+          return new Date(a.nextDueDate) - new Date(b.nextDueDate);
+        }
+        return a.nextDueDate ? -1 : 1;
       });
       
-      if (response.ok) {
-        const newRecord = await response.json();
-        
-        // Calculate new values
-        const updatedFeesSubmitted = parseFloat(selectedStudentFees.feesSubmitted) + parseFloat(paymentData.amount);
-        const updatedRemainingFees = parseFloat(selectedStudentFees.totalFees) - updatedFeesSubmitted;
-        const paymentCompleted = updatedRemainingFees <= 0;
-        
-        // Update fee status on server
-        await fetch(`${BASE_URL}/api/feestatus/${selectedStudent.feeStatusId}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            nextDueDate: paymentCompleted ? null : paymentData.nextDueDate,
-            feesSubmitted: updatedFeesSubmitted,
-            remainingFees: updatedRemainingFees,
-            paymentCompleted: paymentCompleted,
-          }),
-        });
-        
-        // Update local state
-        setFeePaymentRecords(prev => [...prev, { ...newRecord, type: 'payment' }]);
-        setSelectedStudentFees({
-          ...selectedStudentFees,
-          feesSubmitted: updatedFeesSubmitted,
-          remainingFees: updatedRemainingFees,
-        });
-        
-        // Reset form and close modal
-        setPaymentData({ title: '', date: '', amount: '', paymentCompleted: false, nextDueDate: '' });
-        setPaymentModalOpen(false);
-        
-        // Update the selected student
-        setSelectedStudent({
-          ...selectedStudent,
-          feesSubmitted: updatedFeesSubmitted,
-          remainingFees: updatedRemainingFees,
-          nextDueDate: paymentCompleted ? null : paymentData.nextDueDate,
-          paymentCompleted
-        });
-      }
-    } catch (error) {
-      console.error('Error adding payment:', error);
-    }
-  }, [selectedStudent, paymentData, selectedStudentFees]);
-
-  const handleAddCharge = useCallback(async (e) => {
-    e.preventDefault();
-    
-    if (!selectedStudent?.feeStatusId) return;
-    
-    try {
-      const response = await fetch(`${BASE_URL}/api/otherchargesrecords/add-other-charges`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          title: chargeData.title,
-          date: chargeData.date,
-          amount: chargeData.amount,
-          feeStatusId: selectedStudent.feeStatusId
-        }),
-      });
+      setStudents(sortedStudents);
       
-      if (response.ok) {
-        const newCharge = await response.json();
-        
-        // Calculate new values
-        const updatedTotalFees = parseFloat(selectedStudentFees.totalFees) + parseFloat(chargeData.amount);
-        const updatedRemainingFees = parseFloat(selectedStudentFees.remainingFees) + parseFloat(chargeData.amount);
-        
-        // Update fee status on server
-        await fetch(`${BASE_URL}/api/feestatus/${selectedStudent.feeStatusId}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            totalFees: updatedTotalFees,
-            remainingFees: updatedRemainingFees,
-            paymentCompleted: updatedRemainingFees <= 0,
-          }),
-        });
-        
-        // Update local state
-        setOtherChargesRecords(prev => [...prev, { ...newCharge, type: 'charge' }]);
-        setSelectedStudentFees({
-          ...selectedStudentFees,
-          totalFees: updatedTotalFees,
-          remainingFees: updatedRemainingFees,
-        });
-        
-        // Update the selected student
-        setSelectedStudent({
-          ...selectedStudent,
-          totalFees: updatedTotalFees,
-          remainingFees: updatedRemainingFees,
-        });
-        
-        // Reset form and close modal
-        setChargeData({ title: '', date: '', amount: '' });
-        setChargeModalOpen(false);
-      }
-    } catch (error) {
-      console.error('Error adding charge:', error);
-    }
-  }, [selectedStudent, chargeData, selectedStudentFees]);
-
-  const handleSubmitFeeStatus = useCallback(async (e) => {
-    e.preventDefault();
-    
-    if (!selectedStudent?.user_id) return;
-    
-    try {
-      const response = await fetch(`${BASE_URL}/api/feestatus/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          admissionDate: newFeeStatus.admissionDate,
-          totalFees: newFeeStatus.totalFees,
-          feesSubmitted: newFeeStatus.feesSubmitted,
-          remainingFees: newFeeStatus.remainingFees,
-          nextDueDate: newFeeStatus.nextDueDate,
-          user_id: selectedStudent.user_id,
-        }),
-      });
-      
-      if (response.ok) {
-        const newFeeStatusData = await response.json();
-        
-        // Update the selected student with new fee status
-        setSelectedStudent({
-          ...selectedStudent,
-          feeStatusId: newFeeStatusData.id,
-          totalFees: newFeeStatusData.totalFees,
-          feesSubmitted: newFeeStatusData.feesSubmitted,
-          remainingFees: newFeeStatusData.remainingFees,
-          nextDueDate: newFeeStatusData.nextDueDate,
-        });
-        
-        setSelectedStudentFees({
-          totalFees: newFeeStatusData.totalFees,
-          feesSubmitted: newFeeStatusData.feesSubmitted,
-          remainingFees: newFeeStatusData.remainingFees,
-        });
-        
-        setFeeStatusExists(true);
-        setShowFeeStatusForm(false);
-        
-        // Refresh student list to reflect changes
-        if (selectedBatch) {
-          fetchStudentsByBatch(selectedBatch);
+      // Check if we need to restore the previously selected student
+      const lastSelectedStudentId = localStorage.getItem('lastSelectedStudentId');
+      if (lastSelectedStudentId) {
+        const lastStudent = sortedStudents.find(s => s.user_id === lastSelectedStudentId);
+        if (lastStudent) {
+          selectStudent(lastStudent);
         }
       }
-    } catch (error) {
-      console.error('Error creating fee status:', error);
     }
-  }, [selectedStudent, newFeeStatus, selectedBatch, fetchStudentsByBatch]);
+  } catch (error) {
+    console.error('Error fetching students:', error);
+    setStudents([]);
+  } finally {
+    setLoading(false);
+  }
+}, [selectStudent]);
 
-  // Calculate derived values
-  const combinedRecords = useMemo(() => {
-    const allRecords = [...feePaymentRecords, ...otherChargesRecords];
-    return allRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
-  }, [feePaymentRecords, otherChargesRecords]);
+const handleBatchChange = useCallback((event) => {
+  const batchId = event.target.value;
+  setSelectedBatch(batchId);
+  
+  // Save the selected batch to localStorage
+  localStorage.setItem('lastSelectedBatchId', batchId);
+  
+  // Clear the selected student when batch changes
+  setSelectedStudent(null);
+  
+  fetchStudentsByBatch(batchId);
+}, [fetchStudentsByBatch]);
 
-  // Initial data fetch
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+const handleAddPayment = useCallback(async (e) => {
+  e.preventDefault();
+  
+  if (!selectedStudent?.feeStatusId) return;
+  
+  try {
+    const paymentDataToSend = {
+      title: paymentData.title,
+      date: paymentData.date,
+      amount: paymentData.amount,
+      isPaid: true,
+      feeStatusId: selectedStudent.feeStatusId,
+    };
+    
+    if (!paymentData.paymentCompleted) {
+      paymentDataToSend.nextDueDate = paymentData.nextDueDate;
+    }
+    
+    const response = await fetch(`${BASE_URL}/api/feepaymentrecords/add-payment`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(paymentDataToSend),
+    });
+    
+    if (response.ok) {
+      const newRecord = await response.json();
+      
+      // Calculate new values
+      const updatedFeesSubmitted = parseFloat(selectedStudentFees.feesSubmitted) + parseFloat(paymentData.amount);
+      const updatedRemainingFees = parseFloat(selectedStudentFees.totalFees) - updatedFeesSubmitted;
+      const paymentCompleted = updatedRemainingFees <= 0;
+      
+      // Update fee status on server
+      await fetch(`${BASE_URL}/api/feestatus/${selectedStudent.feeStatusId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nextDueDate: paymentCompleted ? null : paymentData.nextDueDate,
+          feesSubmitted: updatedFeesSubmitted,
+          remainingFees: updatedRemainingFees,
+          paymentCompleted: paymentCompleted,
+        }),
+      });
+      
+      // Update local state
+      setFeePaymentRecords(prev => [...prev, { ...newRecord, type: 'payment' }]);
+      setSelectedStudentFees({
+        ...selectedStudentFees,
+        feesSubmitted: updatedFeesSubmitted,
+        remainingFees: updatedRemainingFees,
+      });
+      
+      // Reset form and close modal
+      setPaymentData({ title: '', date: '', amount: '', paymentCompleted: false, nextDueDate: '' });
+      setPaymentModalOpen(false);
+      
+      // Update the selected student
+      setSelectedStudent({
+        ...selectedStudent,
+        feesSubmitted: updatedFeesSubmitted,
+        remainingFees: updatedRemainingFees,
+        nextDueDate: paymentCompleted ? null : paymentData.nextDueDate,
+        paymentCompleted
+      });
+    }
+  } catch (error) {
+    console.error('Error adding payment:', error);
+  }
+}, [selectedStudent, paymentData, selectedStudentFees]);
 
-  // Update remaining fees when total fees or fees submitted change
-  useEffect(() => {
-    const totalFees = parseFloat(newFeeStatus.totalFees) || 0;
-    const feesSubmitted = parseFloat(newFeeStatus.feesSubmitted) || 0;
-    const remainingFees = totalFees - feesSubmitted;
-    setNewFeeStatus(prev => ({ ...prev, remainingFees: remainingFees.toString() }));
-  }, [newFeeStatus.totalFees, newFeeStatus.feesSubmitted]);
+const handleAddCharge = useCallback(async (e) => {
+  e.preventDefault();
+  
+  if (!selectedStudent?.feeStatusId) return;
+  
+  try {
+    const response = await fetch(`${BASE_URL}/api/otherchargesrecords/add-other-charges`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        title: chargeData.title,
+        date: chargeData.date,
+        amount: chargeData.amount,
+        feeStatusId: selectedStudent.feeStatusId
+      }),
+    });
+    
+    if (response.ok) {
+      const newCharge = await response.json();
+      
+      // Calculate new values
+      const updatedTotalFees = parseFloat(selectedStudentFees.totalFees) + parseFloat(chargeData.amount);
+      const updatedRemainingFees = parseFloat(selectedStudentFees.remainingFees) + parseFloat(chargeData.amount);
+      
+      // Update fee status on server
+      await fetch(`${BASE_URL}/api/feestatus/${selectedStudent.feeStatusId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          totalFees: updatedTotalFees,
+          remainingFees: updatedRemainingFees,
+          paymentCompleted: updatedRemainingFees <= 0,
+        }),
+      });
+      
+      // Update local state
+      setOtherChargesRecords(prev => [...prev, { ...newCharge, type: 'charge' }]);
+      setSelectedStudentFees({
+        ...selectedStudentFees,
+        totalFees: updatedTotalFees,
+        remainingFees: updatedRemainingFees,
+      });
+      
+      // Update the selected student
+      setSelectedStudent({
+        ...selectedStudent,
+        totalFees: updatedTotalFees,
+        remainingFees: updatedRemainingFees,
+      });
+      
+      // Reset form and close modal
+      setChargeData({ title: '', date: '', amount: '' });
+      setChargeModalOpen(false);
+    }
+  } catch (error) {
+    console.error('Error adding charge:', error);
+  }
+}, [selectedStudent, chargeData, selectedStudentFees]);
 
+const handleSubmitFeeStatus = useCallback(async (e) => {
+  e.preventDefault();
+  
+  if (!selectedStudent?.user_id) return;
+  
+  try {
+    const response = await fetch(`${BASE_URL}/api/feestatus/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        admissionDate: newFeeStatus.admissionDate,
+        totalFees: newFeeStatus.totalFees,
+        feesSubmitted: newFeeStatus.feesSubmitted,
+        remainingFees: newFeeStatus.remainingFees,
+        nextDueDate: newFeeStatus.nextDueDate,
+        user_id: selectedStudent.user_id,
+      }),
+    });
+    
+    if (response.ok) {
+      const newFeeStatusData = await response.json();
+      
+      // Update the selected student with new fee status
+      setSelectedStudent({
+        ...selectedStudent,
+        feeStatusId: newFeeStatusData.id,
+        totalFees: newFeeStatusData.totalFees,
+        feesSubmitted: newFeeStatusData.feesSubmitted,
+        remainingFees: newFeeStatusData.remainingFees,
+        nextDueDate: newFeeStatusData.nextDueDate,
+      });
+      
+      setSelectedStudentFees({
+        totalFees: newFeeStatusData.totalFees,
+        feesSubmitted: newFeeStatusData.feesSubmitted,
+        remainingFees: newFeeStatusData.remainingFees,
+      });
+      
+      setFeeStatusExists(true);
+      setShowFeeStatusForm(false);
+      
+      // Refresh student list to reflect changes
+      if (selectedBatch) {
+        fetchStudentsByBatch(selectedBatch);
+      }
+    }
+  } catch (error) {
+    console.error('Error creating fee status:', error);
+  }
+}, [selectedStudent, newFeeStatus, selectedBatch, fetchStudentsByBatch]);
+
+// Calculate derived values
+const combinedRecords = useMemo(() => {
+  const allRecords = [...feePaymentRecords, ...otherChargesRecords];
+  return allRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
+}, [feePaymentRecords, otherChargesRecords]);
+
+// Initial data fetch with localStorage restore
+useEffect(() => {
+  fetchData().then(() => {
+    // After initial data is loaded, check if we had a previously selected batch
+    const lastSelectedBatchId = localStorage.getItem('lastSelectedBatchId');
+    if (lastSelectedBatchId) {
+      setSelectedBatch(lastSelectedBatchId);
+      fetchStudentsByBatch(lastSelectedBatchId);
+    }
+  });
+}, [fetchData, fetchStudentsByBatch]);
+
+// Update remaining fees when total fees or fees submitted change
+useEffect(() => {
+  const totalFees = parseFloat(newFeeStatus.totalFees) || 0;
+  const feesSubmitted = parseFloat(newFeeStatus.feesSubmitted) || 0;
+  const remainingFees = totalFees - feesSubmitted;
+  setNewFeeStatus(prev => ({ ...prev, remainingFees: remainingFees.toString() }));
+}, [newFeeStatus.totalFees, newFeeStatus.feesSubmitted]);
   if (loading && !batches.length) {
     return (
       <div style={{ 
