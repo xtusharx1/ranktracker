@@ -226,15 +226,28 @@ const Students = () => {
 
   // Format date for API (YYYY-MM-DD to DD-MM-YY)
   const formatDateForAPI = (dateStr) => {
-    if (!dateStr) return '';
+    if (!dateStr) return null;
     
-    const date = new Date(dateStr);
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const year = date.getFullYear().toString().slice(-2);
-    return `${day}-${month}-${year}`;
+    try {
+      const date = new Date(dateStr);
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        console.warn('Invalid date:', dateStr);
+        return null;
+      }
+      
+      // Format as YYYY-MM-DD (SQL standard format)
+      const year = date.getFullYear();
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, '0');
+      
+      return `${year}-${month}-${day}`;
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return null;
+    }
   };
-
   // Handler for form input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -444,7 +457,7 @@ const Students = () => {
   // Submit handler for updating a student
   const handleEditSubmit = async (e) => {
     e.preventDefault();
-  
+    
     // Basic validation for essential fields
     if (!editingStudent.name || !editingStudent.email || !editingStudent.phone_number || 
         !editingStudent.status) {
@@ -468,6 +481,7 @@ const Students = () => {
       name: editingStudent.name,
       email: editingStudent.email,
       phone_number: editingStudent.phone_number,
+      role_id: 2,
       status: editingStudent.status,
       gender: editingStudent.gender || "",
       present_class: editingStudent.present_class || "",
@@ -488,18 +502,85 @@ const Students = () => {
     
     console.log("Data being submitted to API:", studentData);
     
+    // Flag to track overall success
+    let mainUpdateSuccessful = false;
+    
     try {
       // Step 1: Update student's basic info
-      await axios.put(`${API_BASE_URL}/users/user/${editingStudent.user_id}`, studentData);
+      const response = await axios.put(`${API_BASE_URL}/users/user/${editingStudent.user_id}`, studentData);
+      console.log("API Response:", response.data);
+      mainUpdateSuccessful = true;
       
-      // Continue with the rest of your function (batch update, type update)
-      // ...
+      // Track success of each step
+      let batchUpdateSuccessful = true;
+      let typeUpdateSuccessful = true;
+      
+      // Step 2: Try to update batch information
+      try {
+        if (editingStudent.batch_id) {
+          console.log(`Attempting to update batch for user ${editingStudent.user_id} with batch ${editingStudent.batch_id}`);
+          
+          // Use same format as in handleSubmit
+          await axios.post(`${API_BASE_URL}/studentBatches/students/batch/`, {
+            user_id: editingStudent.user_id,
+            batch_id: editingStudent.batch_id
+          });
+          
+          console.log("Batch update successful");
+        }
+      } catch (batchError) {
+        console.error("Batch update error:", batchError.response ? batchError.response.data : batchError);
+        batchUpdateSuccessful = false;
+      }
+      
+      // Step 3: Try to update student type
+      try {
+        if (editingStudent.type) {
+          console.log(`Attempting to update type for user ${editingStudent.user_id} with type ${editingStudent.type}`);
+          
+          // Use same format as in handleSubmit
+          await axios.post(`${API_BASE_URL}/student-types`, {
+            student_id: editingStudent.user_id,
+            type: editingStudent.type
+          });
+          
+          console.log("Type update successful");
+        }
+      } catch (typeError) {
+        console.error("Type update error:", typeError.response ? typeError.response.data : typeError);
+        typeUpdateSuccessful = false;
+      }
+      
+      // Provide appropriate message based on what succeeded
+      if (mainUpdateSuccessful && batchUpdateSuccessful && typeUpdateSuccessful) {
+        alert('Student updated successfully!');
+      } else if (mainUpdateSuccessful) {
+        if (!batchUpdateSuccessful && !typeUpdateSuccessful) {
+          alert('Student basic information updated successfully, but there were issues updating both batch and type information.');
+        } else if (!batchUpdateSuccessful) {
+          alert('Student basic information updated successfully, but there was an issue updating the batch information.');
+        } else {
+          alert('Student basic information updated successfully, but there was an issue updating the type information.');
+        }
+      }
+      
+      // Reload the page regardless of batch/type update success
+      window.location.reload();
+      
     } catch (error) {
       console.error('Error updating student:', error);
-      alert('Error updating student: ' + error.message);
+      
+      if (error.response && error.response.data) {
+        const errorMessage = error.response.data.message || "Unknown server error";
+        alert(`Error updating student: ${errorMessage}`);
+      } else if (error.request) {
+        alert("Error updating student: No response from server. Please check your connection.");
+      } else {
+        alert(`Error updating student: ${error.message || "Unknown error"}`);
+      }
     }
   };
-
+  
   // Filter students based on search term and filters
   const filteredStudents = useMemo(() => {
     return students.filter(student => {
