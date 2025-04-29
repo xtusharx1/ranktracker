@@ -22,6 +22,7 @@ import ViewAttendance from './pages/ViewAttendance';
 import SchoolMap from './pages/SchoolMap';
 import ClassRecords from './pages/ClassRecord';
 import TeacherReports from './pages/TeacherReports';
+import Notice from './pages/Notice';
 import path from 'path-browserify';
 const App = () => {
   const {
@@ -58,7 +59,7 @@ const App = () => {
       { path: '/attendance', element: <Attendance /> },
       { path: '/view-attendance', element: <ViewAttendance /> },
       { path: '/teacher-reports', element:<TeacherReports/>},
-      //{ path: '/notice', element: <Notice /> }, 
+      { path: '/notice', element: <Notice /> }, 
       //{ path: '/attendance', element: <Attendance /> },  
       { path: '/class-performance', element: <ClassPerformance /> },
       {path: '/school-map', element: <SchoolMap />},
@@ -84,7 +85,7 @@ const App = () => {
       { path: '/student-performance', element: <StudentPerformance /> },
       { path: '/fee-records', element: <FeeRecords /> },
       { path: '/fee-reminders', element: <FeeReminders /> },
-      //{ path: '/notice', element: <Notice /> }, 
+      { path: '/notice', element: <Notice /> }, 
       { path: '/students', element: <Students /> },
       { path: '/view-attendance', element: <ViewAttendance /> },
     ],
