@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Send, X, CheckCircle, AlertCircle } from 'lucide-react';
 
 // Base URL for all API requests
-const BASE_URL = 'http://ec2-13-202-53-68.ap-south-1.compute.amazonaws.com:3002';
+const BASE_URL = 'https://apistudents.sainikschoolcadet.com';
 
 const Notice = () => {
   // State management
