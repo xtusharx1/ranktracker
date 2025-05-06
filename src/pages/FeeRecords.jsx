@@ -967,7 +967,7 @@ useEffect(() => {
         <form onSubmit={handleAddPayment}>
           <div style={{ marginBottom: '15px' }}>
             <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
-              Installment
+              Payment Type
             </label>
             <select
               value={paymentData.title}
@@ -981,13 +981,18 @@ useEffect(() => {
                 fontSize: '14px' 
               }}
             >
-              <option value="">Select Installment</option>
-              <option value="1st Installment">1st Installment</option>
-              <option value="2nd Installment">2nd Installment</option>
-              <option value="3rd Installment">3rd Installment</option>
-              <option value="4th Installment">4th Installment</option>
-              <option value="5th Installment">5th Installment</option>
-              <option value="6th Installment">6th Installment</option>
+              <option value="">Select Payment Type</option>
+<option value="1st Installment">1st Installment</option>
+<option value="2nd Installment">2nd Installment</option>
+<option value="3rd Installment">3rd Installment</option>
+<option value="4th Installment">4th Installment</option>
+<option value="5th Installment">5th Installment</option>
+<option value="6th Installment">6th Installment</option>
+<option value="tshirt">Tshirt</option>
+<option value="laundry">Laundry</option>
+<option value="hoodies">Hoodies</option>
+<option value="food">Food</option>
+
             </select>
           </div>
           
