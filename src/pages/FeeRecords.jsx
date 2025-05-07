@@ -1136,7 +1136,7 @@ useEffect(() => {
   Title
 </label>
 
-<select style={{ padding: '8px', fontSize: '14px', borderRadius: '4px', border: '1px solid #ccc' }}>
+<select style={{ display: 'block', padding: '8px', fontSize: '14px', borderRadius: '4px', border: '1px solid #ccc' }}>
   <option value="" disabled selected>Select</option>
   <option value="admissionAcademicFee">Admission + Academic Fee</option>
   <option value="food">Food</option>
