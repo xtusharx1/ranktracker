@@ -643,10 +643,10 @@ const handleSubmitFeeStatus = useCallback(async (e) => {
       },
       body: JSON.stringify({
         admissionDate: newFeeStatus.admissionDate,
-        totalFees: total,
+        totalFees: 0,
         feesSubmitted: 0, // force to 0
-        remainingFees: total, // remaining = total
-        nextDueDate: newFeeStatus.nextDueDate,
+        remainingFees: 0, // remaining = total
+        nextDueDate: null,  // set nextDueDate to null
         user_id: selectedStudent.user_id,
       }),
     });
@@ -661,7 +661,7 @@ const handleSubmitFeeStatus = useCallback(async (e) => {
         totalFees: newFeeStatusData.totalFees,
         feesSubmitted: newFeeStatusData.feesSubmitted,
         remainingFees: newFeeStatusData.remainingFees,
-        nextDueDate: newFeeStatusData.nextDueDate,
+        nextDueDate: newFeeStatusData.nextDueDate,  // it will be null
       });
 
       setSelectedStudentFees({
@@ -1256,45 +1256,7 @@ useEffect(() => {
             />
           </div>
           
-          <div style={{ marginBottom: '15px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
-              Total Fees
-            </label>
-            <input
-              type="number"
-              value={newFeeStatus.totalFees}
-              onChange={(e) => setNewFeeStatus({ ...newFeeStatus, totalFees: e.target.value })}
-              required
-              style={{ 
-                width: '100%', 
-                padding: '10px', 
-                borderRadius: '6px', 
-                border: '1px solid #ddd',
-                fontSize: '14px' 
-              }}
-            />
-          </div>
           
-          
-          
-          <div style={{ marginBottom: '15px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
-              Next Due Date
-            </label>
-            <input
-              type="date"
-              value={newFeeStatus.nextDueDate}
-              onChange={(e) => setNewFeeStatus({ ...newFeeStatus, nextDueDate: e.target.value })}
-              required
-              style={{ 
-                width: '100%', 
-                padding: '10px', 
-                borderRadius: '6px', 
-                border: '1px solid #ddd',
-                fontSize: '14px' 
-              }}
-            />
-          </div>
           
           <div style={{ 
             display: 'flex', 
