@@ -64,9 +64,17 @@ const Modal = ({ isOpen, onClose, title, children }) => {
 // Student List Component
 const StudentList = ({ students, searchTerm, onStudentClick, selectedStudent }) => {
   const filteredStudents = useMemo(() => {
-    return students.filter(student => 
-      student.name?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const seenIds = new Set();
+    return students
+      .filter(student => 
+        student.name?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      .filter(student => {
+        // Deduplicate by user_id
+        if (seenIds.has(student.user_id)) return false;
+        seenIds.add(student.user_id);
+        return true;
+      });
   }, [students, searchTerm]);
 
   return (
@@ -620,12 +628,13 @@ const handleAddCharge = useCallback(async (e) => {
     console.error('Error adding charge:', error);
   }
 }, [selectedStudent, chargeData, selectedStudentFees]);
-
 const handleSubmitFeeStatus = useCallback(async (e) => {
   e.preventDefault();
-  
+
   if (!selectedStudent?.user_id) return;
-  
+
+  const total = parseFloat(newFeeStatus.totalFees) || 0;
+
   try {
     const response = await fetch(`${BASE_URL}/api/feestatus/`, {
       method: 'POST',
@@ -634,17 +643,17 @@ const handleSubmitFeeStatus = useCallback(async (e) => {
       },
       body: JSON.stringify({
         admissionDate: newFeeStatus.admissionDate,
-        totalFees: newFeeStatus.totalFees,
-        feesSubmitted: newFeeStatus.feesSubmitted,
-        remainingFees: newFeeStatus.remainingFees,
+        totalFees: total,
+        feesSubmitted: 0, // force to 0
+        remainingFees: total, // remaining = total
         nextDueDate: newFeeStatus.nextDueDate,
         user_id: selectedStudent.user_id,
       }),
     });
-    
+
     if (response.ok) {
       const newFeeStatusData = await response.json();
-      
+
       // Update the selected student with new fee status
       setSelectedStudent({
         ...selectedStudent,
@@ -654,16 +663,16 @@ const handleSubmitFeeStatus = useCallback(async (e) => {
         remainingFees: newFeeStatusData.remainingFees,
         nextDueDate: newFeeStatusData.nextDueDate,
       });
-      
+
       setSelectedStudentFees({
         totalFees: newFeeStatusData.totalFees,
         feesSubmitted: newFeeStatusData.feesSubmitted,
         remainingFees: newFeeStatusData.remainingFees,
       });
-      
+
       setFeeStatusExists(true);
       setShowFeeStatusForm(false);
-      
+
       // Refresh student list to reflect changes
       if (selectedBatch) {
         fetchStudentsByBatch(selectedBatch);
@@ -672,7 +681,7 @@ const handleSubmitFeeStatus = useCallback(async (e) => {
   } catch (error) {
     console.error('Error creating fee status:', error);
   }
-}, [selectedStudent, newFeeStatus, selectedBatch, fetchStudentsByBatch]);
+}, [selectedStudent, newFeeStatus.admissionDate, newFeeStatus.totalFees, newFeeStatus.nextDueDate, selectedBatch, fetchStudentsByBatch]);
 
 // Calculate derived values
 const combinedRecords = useMemo(() => {
@@ -1266,43 +1275,7 @@ useEffect(() => {
             />
           </div>
           
-          <div style={{ marginBottom: '15px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
-              Fees Submitted
-            </label>
-            <input
-              type="number"
-              value={newFeeStatus.feesSubmitted}
-              onChange={(e) => setNewFeeStatus({ ...newFeeStatus, feesSubmitted: e.target.value })}
-              required
-              style={{ 
-                width: '100%', 
-                padding: '10px', 
-                borderRadius: '6px', 
-                border: '1px solid #ddd',
-                fontSize: '14px' 
-              }}
-            />
-          </div>
           
-          <div style={{ marginBottom: '15px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
-              Remaining Fees
-            </label>
-            <input
-              type="number"
-              value={newFeeStatus.remainingFees}
-              readOnly
-              style={{ 
-                width: '100%', 
-                padding: '10px', 
-                borderRadius: '6px', 
-                border: '1px solid #ddd',
-                backgroundColor: '#f9f9f9',
-                fontSize: '14px' 
-              }}
-            />
-          </div>
           
           <div style={{ marginBottom: '15px' }}>
             <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
