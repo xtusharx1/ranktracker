@@ -1132,9 +1132,18 @@ useEffect(() => {
       >
         <form onSubmit={handleAddCharge}>
           <div style={{ marginBottom: '15px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
-              Title
-            </label>
+          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+  Type
+</label>
+
+<select style={{ padding: '8px', fontSize: '14px', borderRadius: '4px', border: '1px solid #ccc' }}>
+  <option value="admissionAcademicFee">Admission + Academic Fee</option>
+  <option value="food">Food</option>
+  <option value="tshirt">Tshirt</option>
+  <option value="hoodie">Hoodie</option>
+  <option value="laundry">Laundry</option>
+</select>
+
             <input
               type="text"
               value={chargeData.title}
