@@ -1144,19 +1144,7 @@ useEffect(() => {
   <option value="laundry">Laundry</option>
 </select>
 
-            <input
-              type="text"
-              value={chargeData.title}
-              onChange={(e) => setChargeData({ ...chargeData, title: e.target.value })}
-              required
-              style={{ 
-                width: '100%', 
-                padding: '10px', 
-                borderRadius: '6px', 
-                border: '1px solid #ddd',
-                fontSize: '14px' 
-              }}
-            />
+            
           </div>
           
           <div style={{ marginBottom: '15px' }}>
