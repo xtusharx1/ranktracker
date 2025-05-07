@@ -1133,10 +1133,11 @@ useEffect(() => {
         <form onSubmit={handleAddCharge}>
           <div style={{ marginBottom: '15px' }}>
           <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
-  Type
+  Title
 </label>
 
 <select style={{ padding: '8px', fontSize: '14px', borderRadius: '4px', border: '1px solid #ccc' }}>
+  <option value="" disabled selected>Select</option>
   <option value="admissionAcademicFee">Admission + Academic Fee</option>
   <option value="food">Food</option>
   <option value="tshirt">Tshirt</option>
