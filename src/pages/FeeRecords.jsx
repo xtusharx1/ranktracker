@@ -1058,10 +1058,10 @@ useEffect(() => {
 <option value="4th Installment">4th Installment</option>
 <option value="5th Installment">5th Installment</option>
 <option value="6th Installment">6th Installment</option>
-<option value="tshirt">Tshirt</option>
-<option value="laundry">Laundry</option>
-<option value="hoodies">Hoodies</option>
-<option value="food">Food</option>
+<option value="Tshirt">Tshirt</option>
+<option value="Laundry">Laundry</option>
+<option value="Hoodies">Hoodies</option>
+<option value="Food">Food</option>
 
             </select>
           </div>
