@@ -194,8 +194,11 @@ const FeeSummaryCards = ({ studentFees, nextDueDate, paymentCompleted }) => {
   );
 };
 
-// Records Table Component
-const RecordsTable = ({ records }) => {
+const RecordsTable = ({ 
+  records, 
+  onEditPayment, 
+  onEditCharge 
+}) => {
   if (records.length === 0) {
     return (
       <div style={{ 
@@ -218,7 +221,8 @@ const RecordsTable = ({ records }) => {
           <th style={{ border: '1px solid #ddd', padding: '12px', backgroundColor: '#f2f2f2', borderTopLeftRadius: '8px' }}>Title</th>
           <th style={{ border: '1px solid #ddd', padding: '12px', backgroundColor: '#f2f2f2' }}>Date</th>
           <th style={{ border: '1px solid #ddd', padding: '12px', backgroundColor: '#f2f2f2' }}>You Gave</th>
-          <th style={{ border: '1px solid #ddd', padding: '12px', backgroundColor: '#f2f2f2', borderTopRightRadius: '8px' }}>You Got</th>
+          <th style={{ border: '1px solid #ddd', padding: '12px', backgroundColor: '#f2f2f2' }}>You Got</th>
+          <th style={{ border: '1px solid #ddd', padding: '12px', backgroundColor: '#f2f2f2', borderTopRightRadius: '8px' }}>Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -247,6 +251,22 @@ const RecordsTable = ({ records }) => {
               fontWeight: record.type === 'payment' ? '600' : 'normal'
             }}>
               {record.type === 'payment' ? `₹${record.amount}` : '-'}
+            </td>
+            <td style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'center' }}>
+              <button
+                onClick={() => record.type === 'payment' ? onEditPayment(record) : onEditCharge(record)}
+                style={{ 
+                  padding: '6px 12px', 
+                  backgroundColor: '#1D72B8', 
+                  color: '#fff', 
+                  border: 'none', 
+                  borderRadius: '4px', 
+                  cursor: 'pointer',
+                  fontSize: '13px'
+                }}
+              >
+                Edit
+              </button>
             </td>
           </tr>
         ))}
@@ -277,7 +297,10 @@ const [feeStatusExists, setFeeStatusExists] = useState(false);
 const [selectedBatch, setSelectedBatch] = useState(null);
 const [searchTerm, setSearchTerm] = useState('');
 const [loading, setLoading] = useState(true);
-
+const [isEditPaymentModalOpen, setEditPaymentModalOpen] = useState(false);
+const [isEditChargeModalOpen, setEditChargeModalOpen] = useState(false);
+const [editingPayment, setEditingPayment] = useState(null);
+const [editingCharge, setEditingCharge] = useState(null);
 // Form state
 const [paymentData, setPaymentData] = useState({ 
   title: '', 
@@ -335,8 +358,8 @@ const fetchStudentRecords = useCallback(async (student) => {
   
   try {
     const [paymentsRes, chargesRes] = await Promise.all([
-      fetch(`${BASE_URL}/api/feepaymentrecords/payments/${student.feeStatusId}`),
-      fetch(`${BASE_URL}/api/otherchargesrecords/charges/${student.feeStatusId}`)
+      fetch(`${BASE_URL}/api/feepaymentrecords/fee-status/${student.feeStatusId}`),
+      fetch(`${BASE_URL}/api/otherchargesrecords/fee-status/${student.feeStatusId}`)
     ]);
     
     if (paymentsRes.ok) {
@@ -762,6 +785,173 @@ useEffect(() => {
   });
 }, [fetchData, fetchStudentsByBatch]);
 
+// Edit payment handler
+const handleEditPayment = useCallback(async (e) => {
+  e.preventDefault();
+  
+  if (!selectedStudent?.feeStatusId || !editingPayment) return;
+  
+  try {
+    // Calculate amount difference
+    const originalAmount = parseFloat(editingPayment.originalAmount) || 0;
+    const newAmount = parseFloat(editingPayment.amount) || 0;
+    const amountDifference = newAmount - originalAmount;
+    
+    // Prepare data for API
+    const paymentData = {
+      title: editingPayment.title,
+      date: editingPayment.date,
+      amount: newAmount,
+      isPaid: editingPayment.isPaid !== undefined ? editingPayment.isPaid : true,
+      feeStatusId: selectedStudent.feeStatusId
+    };
+    
+    // Call API to update payment
+    const response = await fetch(`${BASE_URL}/api/otherchargesrecords/${editingPayment.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(paymentData),
+    });
+    
+    if (response.ok) {
+      const updatedPayment = await response.json();
+      
+      // Update local payment records
+      setFeePaymentRecords(prev => 
+        prev.map(record => 
+          record.id === editingPayment.id 
+            ? {...record, ...paymentData, type: 'payment'} 
+            : record
+        )
+      );
+      
+      // Update fee status values
+      const updatedFeesSubmitted = parseFloat(selectedStudentFees.feesSubmitted) + amountDifference;
+      const updatedRemainingFees = parseFloat(selectedStudentFees.totalFees) - updatedFeesSubmitted;
+      const paymentCompleted = updatedRemainingFees <= 0;
+      
+      // Update local state for fee status
+      setSelectedStudentFees({
+        totalFees: parseFloat(selectedStudentFees.totalFees),
+        feesSubmitted: updatedFeesSubmitted,
+        remainingFees: updatedRemainingFees
+      });
+      
+      // Update selected student with new values
+      setSelectedStudent(prev => ({
+        ...prev,
+        feesSubmitted: updatedFeesSubmitted,
+        remainingFees: updatedRemainingFees,
+        paymentCompleted
+      }));
+      
+      // Close modal and reset edit state
+      setEditingPayment(null);
+      setEditPaymentModalOpen(false);
+      
+      // Refresh data if needed
+      if (selectedBatch) {
+        fetchStudentsByBatch(selectedBatch);
+      }
+    }
+  } catch (error) {
+    console.error('Error updating payment:', error);
+  }
+}, [editingPayment, selectedStudent, selectedStudentFees, selectedBatch, fetchStudentsByBatch]);
+const openEditPaymentModal = useCallback((payment) => {
+  // Make a copy with the originalAmount to track changes
+  setEditingPayment({
+    ...payment,
+    originalAmount: payment.amount
+  });
+  setEditPaymentModalOpen(true);
+}, []);
+
+// Function to open the edit charge modal
+const openEditChargeModal = useCallback((charge) => {
+  // Make a copy with the originalAmount to track changes
+  setEditingCharge({
+    ...charge,
+    originalAmount: charge.amount
+  });
+  setEditChargeModalOpen(true);
+}, []);
+// Edit charge handler
+const handleEditCharge = useCallback(async (e) => {
+  e.preventDefault();
+  
+  if (!selectedStudent?.feeStatusId || !editingCharge) return;
+  
+  try {
+    // Calculate amount difference
+    const originalAmount = parseFloat(editingCharge.originalAmount) || 0;
+    const newAmount = parseFloat(editingCharge.amount) || 0;
+    const amountDifference = newAmount - originalAmount;
+    
+    // Prepare data for API
+    const chargeData = {
+      title: editingCharge.title,
+      date: editingCharge.date,
+      amount: newAmount,
+      feeStatusId: selectedStudent.feeStatusId
+    };
+    
+    // Call API to update charge
+    const response = await fetch(`${BASE_URL}/api/otherchargesrecords/${editingCharge.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(chargeData),
+    });
+    
+    if (response.ok) {
+      const updatedCharge = await response.json();
+      
+      // Update local charge records
+      setOtherChargesRecords(prev => 
+        prev.map(record => 
+          record.id === editingCharge.id 
+            ? {...record, ...chargeData, type: 'charge'} 
+            : record
+        )
+      );
+      
+      // Update fee status values
+      const updatedTotalFees = parseFloat(selectedStudentFees.totalFees) + amountDifference;
+      const updatedRemainingFees = parseFloat(selectedStudentFees.remainingFees) + amountDifference;
+      const paymentCompleted = updatedRemainingFees <= 0;
+      
+      // Update local state for fee status
+      setSelectedStudentFees({
+        totalFees: updatedTotalFees,
+        feesSubmitted: parseFloat(selectedStudentFees.feesSubmitted),
+        remainingFees: updatedRemainingFees
+      });
+      
+      // Update selected student with new values
+      setSelectedStudent(prev => ({
+        ...prev,
+        totalFees: updatedTotalFees,
+        remainingFees: updatedRemainingFees,
+        paymentCompleted
+      }));
+      
+      // Close modal and reset edit state
+      setEditingCharge(null);
+      setEditChargeModalOpen(false);
+      
+      // Refresh data if needed
+      if (selectedBatch) {
+        fetchStudentsByBatch(selectedBatch);
+      }
+    }
+  } catch (error) {
+    console.error('Error updating charge:', error);
+  }
+}, [editingCharge, selectedStudent, selectedStudentFees, selectedBatch, fetchStudentsByBatch]);
 // Update remaining fees when total fees or fees submitted change
 useEffect(() => {
   const totalFees = parseFloat(newFeeStatus.totalFees) || 0;
@@ -945,7 +1135,11 @@ useEffect(() => {
                       paymentCompleted={selectedStudent.paymentCompleted}
                     />
 
-                    <RecordsTable records={combinedRecords} />
+<RecordsTable 
+        records={combinedRecords}
+        onEditPayment={openEditPaymentModal}
+        onEditCharge={openEditChargeModal} // This was missing
+      />
 
                     <div style={{ 
                       marginTop: '30px', 
@@ -1027,7 +1221,250 @@ useEffect(() => {
           </div>
         </div>
       </div>
+{/* Edit Payment Modal */}
+<Modal 
+  isOpen={isEditPaymentModalOpen} 
+  onClose={() => {
+    setEditPaymentModalOpen(false);
+    setEditingPayment(null);
+  }}
+  title="Edit Payment"
+>
+  {editingPayment && (
+    <form onSubmit={handleEditPayment}>
+      <div style={{ marginBottom: '15px' }}>
+        <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+          Payment Type
+        </label>
+        <select
+          value={editingPayment.title}
+          onChange={(e) => setEditingPayment({ ...editingPayment, title: e.target.value })}
+          required
+          style={{ 
+            width: '100%', 
+            padding: '10px', 
+            borderRadius: '6px', 
+            border: '1px solid #ddd',
+            fontSize: '14px' 
+          }}
+        >
+          <option value="">Select Payment Type</option>
+          <option value="1st Installment">1st Installment</option>
+          <option value="2nd Installment">2nd Installment</option>
+          <option value="3rd Installment">3rd Installment</option>
+          <option value="4th Installment">4th Installment</option>
+          <option value="5th Installment">5th Installment</option>
+          <option value="6th Installment">6th Installment</option>
+          <option value="Tshirt">Tshirt</option>
+          <option value="Laundry">Laundry</option>
+          <option value="Hoodies">Hoodies</option>
+          <option value="Food">Food</option>
+        </select>
+      </div>
+      
+      <div style={{ marginBottom: '15px' }}>
+        <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+          Payment Date
+        </label>
+        <input
+          type="date"
+          value={editingPayment.date}
+          onChange={(e) => setEditingPayment({ ...editingPayment, date: e.target.value })}
+          required
+          style={{ 
+            width: '100%', 
+            padding: '10px', 
+            borderRadius: '6px', 
+            border: '1px solid #ddd',
+            fontSize: '14px' 
+          }}
+        />
+      </div>
+      
+      <div style={{ marginBottom: '15px' }}>
+        <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+          Amount
+        </label>
+        <input
+          type="number"
+          value={editingPayment.amount}
+          onChange={(e) => setEditingPayment({ ...editingPayment, amount: e.target.value })}
+          required
+          style={{ 
+            width: '100%', 
+            padding: '10px', 
+            borderRadius: '6px', 
+            border: '1px solid #ddd',
+            fontSize: '14px' 
+          }}
+        />
+      </div>
+      
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'flex-end', 
+        gap: '10px',
+        marginTop: '20px' 
+      }}>
+        <button
+          type="button"
+          onClick={() => {
+            setEditPaymentModalOpen(false);
+            setEditingPayment(null);
+          }}
+          style={{ 
+            padding: '10px 20px', 
+            backgroundColor: '#f5f5f5', 
+            color: '#333', 
+            border: '1px solid #ddd', 
+            borderRadius: '6px', 
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: '500' 
+          }}
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          style={{ 
+            padding: '10px 20px', 
+            backgroundColor: '#1D72B8', 
+            color: '#fff', 
+            border: 'none', 
+            borderRadius: '6px', 
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: '500',
+            boxShadow: '0 2px 6px rgba(29, 114, 184, 0.25)' 
+          }}
+        >
+          Update Payment
+        </button>
+      </div>
+    </form>
+  )}
+</Modal>
 
+{/* Edit Charge Modal */}
+<Modal 
+  isOpen={isEditChargeModalOpen} 
+  onClose={() => {
+    setEditChargeModalOpen(false);
+    setEditingCharge(null);
+  }}
+  title="Edit Charge"
+>
+  {editingCharge && (
+    <form onSubmit={handleEditCharge}>
+      <div style={{ marginBottom: '15px' }}>
+        <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+          Title
+        </label>
+        <select
+          value={editingCharge.title}
+          onChange={(e) => setEditingCharge({ ...editingCharge, title: e.target.value })}
+          required
+          style={{ 
+            width: '100%', 
+            padding: '10px', 
+            borderRadius: '6px', 
+            border: '1px solid #ddd', 
+            fontSize: '14px' 
+          }}
+        >
+          <option value="" disabled>Select</option>
+          <option value="Admission + Academic Fee">Admission + Academic Fee</option>
+          <option value="Food">Food</option>
+          <option value="Tshirt">Tshirt</option>
+          <option value="Hoodie">Hoodie</option>
+          <option value="Laundry">Laundry</option>
+        </select>
+      </div>
+      
+      <div style={{ marginBottom: '15px' }}>
+        <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+          Date
+        </label>
+        <input
+          type="date"
+          value={editingCharge.date}
+          onChange={(e) => setEditingCharge({ ...editingCharge, date: e.target.value })}
+          required
+          style={{ 
+            width: '100%', 
+            padding: '10px', 
+            borderRadius: '6px', 
+            border: '1px solid #ddd',
+            fontSize: '14px' 
+          }}
+        />
+      </div>
+      
+      <div style={{ marginBottom: '15px' }}>
+        <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+          Amount
+        </label>
+        <input
+          type="number"
+          value={editingCharge.amount}
+          onChange={(e) => setEditingCharge({ ...editingCharge, amount: e.target.value })}
+          required
+          style={{ 
+            width: '100%', 
+            padding: '10px', 
+            borderRadius: '6px', 
+            border: '1px solid #ddd',
+            fontSize: '14px' 
+          }}
+        />
+      </div>
+      
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'flex-end', 
+        gap: '10px',
+        marginTop: '20px' 
+      }}>
+        <button
+          type="button"
+          onClick={() => {
+            setEditChargeModalOpen(false);
+            setEditingCharge(null);
+          }}
+          style={{ 
+            padding: '10px 20px', 
+            backgroundColor: '#f5f5f5', 
+            color: '#333', 
+            border: '1px solid #ddd', 
+            borderRadius: '6px', 
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: '500' 
+          }}
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          style={{ 
+            padding: '10px 20px', 
+            backgroundColor: '#1D72B8', 
+            color: '#fff', 
+            border: 'none', 
+            borderRadius: '6px', 
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: '500',
+            boxShadow: '0 2px 6px rgba(29, 114, 184, 0.25)' 
+          }}
+        >
+          Update Charge
+        </button>
+      </div>
+    </form>
+  )}
+</Modal>
       {/* Payment Modal */}
       <Modal 
         isOpen={isPaymentModalOpen} 
