@@ -197,81 +197,212 @@ const FeeSummaryCards = ({ studentFees, nextDueDate, paymentCompleted }) => {
 const RecordsTable = ({ 
   records, 
   onEditPayment, 
-  onEditCharge 
+  onEditCharge,
+  onDeletePayment,
+  onDeleteCharge
 }) => {
+  // Group records by date (newest first)
+  const sortedRecords = [...records].sort((a, b) => new Date(b.date) - new Date(a.date));
+  
   if (records.length === 0) {
     return (
       <div style={{ 
         textAlign: 'center', 
         color: '#555',
-        padding: '30px',
+        padding: '40px 20px',
         backgroundColor: '#f9f9f9',
-        borderRadius: '8px',
-        marginTop: '20px'
+        borderRadius: '12px',
+        marginTop: '25px',
+        boxShadow: 'inset 0 0 10px rgba(0, 0, 0, 0.05)'
       }}>
-        <p>No transaction records found.</p>
+        <div style={{ fontSize: '36px', marginBottom: '15px' }}>📋</div>
+        <p style={{ fontSize: '16px', fontWeight: '500' }}>No transaction records found</p>
+        <p style={{ fontSize: '14px', color: '#777', marginTop: '10px' }}>
+          Add a payment or charge using the buttons below
+        </p>
       </div>
     );
   }
 
   return (
-    <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px', marginTop: '20px' }}>
-      <thead>
-        <tr>
-          <th style={{ border: '1px solid #ddd', padding: '12px', backgroundColor: '#f2f2f2', borderTopLeftRadius: '8px' }}>Title</th>
-          <th style={{ border: '1px solid #ddd', padding: '12px', backgroundColor: '#f2f2f2' }}>Date</th>
-          <th style={{ border: '1px solid #ddd', padding: '12px', backgroundColor: '#f2f2f2' }}>You Gave</th>
-          <th style={{ border: '1px solid #ddd', padding: '12px', backgroundColor: '#f2f2f2' }}>You Got</th>
-          <th style={{ border: '1px solid #ddd', padding: '12px', backgroundColor: '#f2f2f2', borderTopRightRadius: '8px' }}>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {records.map(record => (
-          <tr
-            key={record.id}
+    <div style={{ marginTop: '25px' }}>
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        marginBottom: '15px'
+      }}>
+        <h3 style={{ 
+          margin: 0, 
+          fontSize: '18px', 
+          fontWeight: '600', 
+          color: '#333' 
+        }}>
+          Transaction History ({records.length})
+        </h3>
+        
+        <div style={{
+          fontSize: '14px',
+          color: '#666',
+          display: 'flex',
+          gap: '15px'
+        }}>
+          
+        </div>
+      </div>
+
+      <div style={{
+        borderRadius: '8px',
+        overflow: 'hidden',
+        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.08)',
+        border: '1px solid #eaeaea'
+      }}>
+        {/* Table Header */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '40% 15% 15% 15% 15%',
+          backgroundColor: '#f5f5f5',
+          padding: '12px 15px',
+          borderBottom: '1px solid #eaeaea',
+          fontWeight: '600',
+          fontSize: '14px',
+          color: '#555'
+        }}>
+          <div>Detail</div>
+          <div style={{ textAlign: 'center' }}>Date</div>
+          <div style={{ textAlign: 'center' }}>You Gave</div>
+          <div style={{ textAlign: 'center' }}>You Got</div>
+          <div style={{ textAlign: 'center' }}>Actions</div>
+        </div>
+
+        {/* Records */}
+        {sortedRecords.map(record => (
+          <div 
+            key={record.uniqueId}
             style={{
-              backgroundColor: record.type === 'charge' ? '#FFEBEE' : record.type === 'payment' ? '#E8F5E9' : '#fff',
-              transition: 'background-color 0.2s'
+              display: 'grid',
+              gridTemplateColumns: '40% 15% 15% 15% 15%',
+              borderBottom: '1px solid #eaeaea',
+              backgroundColor: record.type === 'charge' ? 'rgba(255, 235, 238, 0.3)' : 'rgba(232, 245, 233, 0.3)',
+              transition: 'background-color 0.2s',
+              alignItems: 'center',
+              padding: '12px 15px',
+              position: 'relative'
             }}
           >
-            <td style={{ border: '1px solid #ddd', padding: '12px' }}>{record.title}</td>
-            <td style={{ border: '1px solid #ddd', padding: '12px' }}>{formatDate(record.date)}</td>
-            <td style={{ 
-              border: '1px solid #ddd', 
-              padding: '12px',
-              color: record.type === 'charge' ? '#D32F2F' : 'inherit',
-              fontWeight: record.type === 'charge' ? '600' : 'normal'
+            {/* Title and Description */}
+            <div style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: '4px'
+            }}>
+              <div style={{ 
+                fontWeight: '600', 
+                fontSize: '15px', 
+                color: '#333' 
+              }}>
+                {record.title}
+              </div>
+              {record.description && (
+                <div style={{ 
+                  fontSize: '13px', 
+                  color: '#666',
+                  maxWidth: '95%',
+                  textOverflow: 'ellipsis',
+                  overflow: 'hidden',
+                  whiteSpace: 'nowrap'
+                }}>
+                  {record.description}
+                </div>
+              )}
+            </div>
+
+            {/* Date */}
+            <div style={{ 
+              fontSize: '14px', 
+              color: '#555',
+              textAlign: 'center'
+            }}>
+              {formatDate(record.date)}
+            </div>
+
+            {/* You Gave (Charges) */}
+            <div style={{ 
+              fontSize: '15px',
+              fontWeight: record.type === 'charge' ? '600' : 'normal',
+              color: record.type === 'charge' ? '#D32F2F' : '#888',
+              textAlign: 'center'
             }}>
               {record.type === 'charge' ? `₹${record.amount}` : '-'}
-            </td>
-            <td style={{ 
-              border: '1px solid #ddd', 
-              padding: '12px',
-              color: record.type === 'payment' ? '#388E3C' : 'inherit',
-              fontWeight: record.type === 'payment' ? '600' : 'normal'
+            </div>
+
+            {/* You Got (Payments) */}
+            <div style={{ 
+              fontSize: '15px',
+              fontWeight: record.type === 'payment' ? '600' : 'normal',
+              color: record.type === 'payment' ? '#388E3C' : '#888',
+              textAlign: 'center'
             }}>
               {record.type === 'payment' ? `₹${record.amount}` : '-'}
-            </td>
-            <td style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'center' }}>
+            </div>
+
+            {/* Actions */}
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              gap: '10px' 
+            }}>
               <button
                 onClick={() => record.type === 'payment' ? onEditPayment(record) : onEditCharge(record)}
                 style={{ 
                   padding: '6px 12px', 
-                  backgroundColor: '#1D72B8', 
-                  color: '#fff', 
-                  border: 'none', 
+                  backgroundColor: 'white', 
+                  color: '#1D72B8', 
+                  border: '1px solid #1D72B8', 
                   borderRadius: '4px', 
                   cursor: 'pointer',
-                  fontSize: '13px'
+                  fontSize: '13px',
+                  fontWeight: '500',
+                  transition: 'all 0.2s'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.backgroundColor = '#E3F2FD';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.backgroundColor = 'white';
                 }}
               >
                 Edit
               </button>
-            </td>
-          </tr>
+              <button
+                onClick={() => record.type === 'payment' ? onDeletePayment(record) : onDeleteCharge(record)}
+                style={{ 
+                  padding: '6px 12px', 
+                  backgroundColor: 'white', 
+                  color: '#D32F2F', 
+                  border: '1px solid #D32F2F', 
+                  borderRadius: '4px', 
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  fontWeight: '500',
+                  transition: 'all 0.2s'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.backgroundColor = '#FFEBEE';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.backgroundColor = 'white';
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
         ))}
-      </tbody>
-    </table>
+      </div>
+
+     
+    </div>
   );
 };
 
@@ -301,11 +432,14 @@ const [isEditPaymentModalOpen, setEditPaymentModalOpen] = useState(false);
 const [isEditChargeModalOpen, setEditChargeModalOpen] = useState(false);
 const [editingPayment, setEditingPayment] = useState(null);
 const [editingCharge, setEditingCharge] = useState(null);
+const [deleteConfirmModalOpen, setDeleteConfirmModalOpen] = useState(false);
+const [recordToDelete, setRecordToDelete] = useState(null);
 // Form state
 const [paymentData, setPaymentData] = useState({ 
   title: '', 
   date: '', 
   amount: '', 
+  description: '', // Add description field
   paymentCompleted: false, 
   nextDueDate: '' 
 });
@@ -313,7 +447,8 @@ const [paymentData, setPaymentData] = useState({
 const [chargeData, setChargeData] = useState({ 
   title: '', 
   date: '', 
-  amount: '' 
+  amount: '',
+  description: '' // Add description field
 });
 
 const [newFeeStatus, setNewFeeStatus] = useState({
@@ -392,7 +527,7 @@ const selectStudent = useCallback(async (student) => {
   
   if (!student.feeStatusId) {
     setFeeStatusExists(false);
-    setShowFeeStatusForm(true);
+    //setShowFeeStatusForm(true);
     return;
   }
   
@@ -527,6 +662,7 @@ const handleAddPayment = useCallback(async (e) => {
       title: paymentData.title,
       date: paymentData.date,
       amount: parseFloat(paymentData.amount) || 0,
+      description: paymentData.description || null, // Add description
       isPaid: true,
       feeStatusId: selectedStudent.feeStatusId,
     };
@@ -534,6 +670,8 @@ const handleAddPayment = useCallback(async (e) => {
     if (!paymentData.paymentCompleted) {
       paymentDataToSend.nextDueDate = paymentData.nextDueDate;
     }
+    
+    console.log('Sending payment data:', paymentDataToSend); // Debug log
     
     const response = await fetch(`${BASE_URL}/api/feepaymentrecords/`, {
       method: 'POST',
@@ -545,6 +683,7 @@ const handleAddPayment = useCallback(async (e) => {
     
     if (response.ok) {
       const newRecord = await response.json();
+      console.log('Payment record created:', newRecord); // Debug log
       
       // Calculate new values
       const updatedFeesSubmitted = parseFloat(selectedStudentFees.feesSubmitted) + (parseFloat(paymentData.amount) || 0);
@@ -567,23 +706,18 @@ const handleAddPayment = useCallback(async (e) => {
         body: JSON.stringify(updatedFeeStatus),
       });
       
-      let updatedFeeData = updatedFeeStatus;
-      if (feeStatusResponse.ok) {
-        // If available, get the updated data from server response
-        const feeStatusResult = await feeStatusResponse.json();
-        if (feeStatusResult) {
-          updatedFeeData = feeStatusResult;
-        }
-      }
-      
       // Create a properly formatted payment record
       const formattedRecord = {
-        id: newRecord.id,
-        title: newRecord.title || paymentData.title,
-        date: newRecord.date || paymentData.date,
-        amount: parseFloat(newRecord.amount) || parseFloat(paymentData.amount) || 0,
-        type: 'payment'
+        id: newRecord.id || newRecord.payment?.id,
+        title: newRecord.title || newRecord.payment?.title || paymentData.title,
+        date: newRecord.date || newRecord.payment?.date || paymentData.date,
+        amount: parseFloat(newRecord.amount || newRecord.payment?.amount) || parseFloat(paymentData.amount) || 0,
+        description: newRecord.description || newRecord.payment?.description || paymentData.description || null,
+        type: 'payment',
+        uniqueId: `payment-${newRecord.id || newRecord.payment?.id}` 
       };
+      
+      console.log('Adding payment record to state:', formattedRecord);
       
       // Update local state
       setFeePaymentRecords(prev => [...prev, formattedRecord]);
@@ -606,41 +740,69 @@ const handleAddPayment = useCallback(async (e) => {
       }));
       
       // Reset form and close modal
-      setPaymentData({ title: '', date: '', amount: '', paymentCompleted: false, nextDueDate: '' });
+      setPaymentData({ 
+        title: '', 
+        date: '', 
+        amount: '', 
+        description: '', 
+        paymentCompleted: false, 
+        nextDueDate: '' 
+      });
       setPaymentModalOpen(false);
       
       // Refetch student data to ensure consistency
-      if (selectedBatch) {
-        fetchStudentsByBatch(selectedBatch);
+      if (selectedStudent?.feeStatusId) {
+        // Small delay to ensure API operations complete
+        setTimeout(() => {
+          fetchStudentRecords(selectedStudent);
+        }, 500);
       }
+    } else {
+      console.error('API error response:', await response.text());
     }
   } catch (error) {
     console.error('Error adding payment:', error);
+  } finally {
+    // Ensure modal closes even if there's an error
+    setPaymentModalOpen(false);
+    setPaymentData({ 
+      title: '', 
+      date: '', 
+      amount: '', 
+      description: '', 
+      paymentCompleted: false, 
+      nextDueDate: '' 
+    });
   }
-}, [selectedStudent, paymentData, selectedStudentFees, selectedBatch, fetchStudentsByBatch]);
+}, [selectedStudent, paymentData, selectedStudentFees, fetchStudentRecords]);
 
-// Improved handleAddCharge with proper state updates for all fee fields
 const handleAddCharge = useCallback(async (e) => {
   e.preventDefault();
   
   if (!selectedStudent?.feeStatusId) return;
   
   try {
+    const chargeDataToSend = {
+      title: chargeData.title,
+      date: chargeData.date,
+      amount: parseFloat(chargeData.amount) || 0,
+      description: chargeData.description || null,
+      feeStatusId: selectedStudent.feeStatusId
+    };
+    
+    console.log('Sending charge data:', chargeDataToSend);
+    
     const response = await fetch(`${BASE_URL}/api/otherchargesrecords/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        title: chargeData.title,
-        date: chargeData.date,
-        amount: parseFloat(chargeData.amount) || 0,
-        feeStatusId: selectedStudent.feeStatusId
-      }),
+      body: JSON.stringify(chargeDataToSend),
     });
     
     if (response.ok) {
       const newCharge = await response.json();
+      console.log('Charge record created:', newCharge);
       
       // Calculate new values
       const updatedTotalFees = parseFloat(selectedStudentFees.totalFees) + (parseFloat(chargeData.amount) || 0);
@@ -662,23 +824,18 @@ const handleAddCharge = useCallback(async (e) => {
         body: JSON.stringify(updatedFeeStatus),
       });
       
-      let updatedFeeData = updatedFeeStatus;
-      if (feeStatusResponse.ok) {
-        // If available, get the updated data from server response
-        const feeStatusResult = await feeStatusResponse.json();
-        if (feeStatusResult) {
-          updatedFeeData = feeStatusResult;
-        }
-      }
-      
       // Create a properly formatted charge record
       const formattedCharge = {
-        id: newCharge.id,
-        title: newCharge.title || chargeData.title,
-        date: newCharge.date || chargeData.date,
-        amount: parseFloat(newCharge.amount) || parseFloat(chargeData.amount) || 0,
-        type: 'charge'
+        id: newCharge.id || newCharge.charge?.id,
+        title: newCharge.title || newCharge.charge?.title || chargeData.title,
+        date: newCharge.date || newCharge.charge?.date || chargeData.date,
+        amount: parseFloat(newCharge.amount || newCharge.charge?.amount) || parseFloat(chargeData.amount) || 0,
+        description: newCharge.description || newCharge.charge?.description || chargeData.description || null,
+        type: 'charge',
+        uniqueId: `charge-${newCharge.id || newCharge.charge?.id}`
       };
+      
+      console.log('Adding charge record to state:', formattedCharge);
       
       // Update local state
       setOtherChargesRecords(prev => [...prev, formattedCharge]);
@@ -700,18 +857,37 @@ const handleAddCharge = useCallback(async (e) => {
       }));
       
       // Reset form and close modal
-      setChargeData({ title: '', date: '', amount: '' });
+      setChargeData({ 
+        title: '', 
+        date: '', 
+        amount: '',
+        description: '' 
+      });
       setChargeModalOpen(false);
       
       // Refetch student data to ensure consistency
-      if (selectedBatch) {
-        fetchStudentsByBatch(selectedBatch);
+      if (selectedStudent?.feeStatusId) {
+        // Small delay to ensure API operations complete
+        setTimeout(() => {
+          fetchStudentRecords(selectedStudent);
+        }, 500);
       }
+    } else {
+      console.error('API error response:', await response.text());
     }
   } catch (error) {
     console.error('Error adding charge:', error);
+  } finally {
+    // Ensure modal closes even if there's an error
+    setChargeModalOpen(false);
+    setChargeData({ 
+      title: '', 
+      date: '', 
+      amount: '',
+      description: '' 
+    });
   }
-}, [selectedStudent, chargeData, selectedStudentFees, selectedBatch, fetchStudentsByBatch]);
+}, [selectedStudent, chargeData, selectedStudentFees, fetchStudentRecords]);
 const handleSubmitFeeStatus = useCallback(async (e) => {
   e.preventDefault();
 
@@ -770,9 +946,23 @@ const handleSubmitFeeStatus = useCallback(async (e) => {
 // Calculate derived values
 const combinedRecords = useMemo(() => {
   const allRecords = [...feePaymentRecords, ...otherChargesRecords];
-  return allRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
+  
+  // Create a Map to deduplicate by ID and assign uniqueId
+  const uniqueRecords = new Map();
+  
+  allRecords.forEach(record => {
+    const key = `${record.type}-${record.id}`;
+    // Add uniqueId property
+    uniqueRecords.set(key, {
+      ...record,
+      uniqueId: key
+    });
+  });
+  
+  // Convert back to array and sort
+  return Array.from(uniqueRecords.values())
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
 }, [feePaymentRecords, otherChargesRecords]);
-
 // Initial data fetch with localStorage restore
 useEffect(() => {
   fetchData().then(() => {
@@ -792,22 +982,31 @@ const handleEditPayment = useCallback(async (e) => {
   if (!selectedStudent?.feeStatusId || !editingPayment) return;
   
   try {
+    console.log('Editing payment:', editingPayment);
+    
     // Calculate amount difference
     const originalAmount = parseFloat(editingPayment.originalAmount) || 0;
     const newAmount = parseFloat(editingPayment.amount) || 0;
     const amountDifference = newAmount - originalAmount;
+    
+    console.log('Payment amount change:', {
+      originalAmount,
+      newAmount,
+      difference: amountDifference
+    });
     
     // Prepare data for API
     const paymentData = {
       title: editingPayment.title,
       date: editingPayment.date,
       amount: newAmount,
+      description: editingPayment.description || null,
       isPaid: editingPayment.isPaid !== undefined ? editingPayment.isPaid : true,
       feeStatusId: selectedStudent.feeStatusId
     };
     
     // Call API to update payment
-    const response = await fetch(`${BASE_URL}/api/otherchargesrecords/${editingPayment.id}`, {
+    const response = await fetch(`${BASE_URL}/api/feepaymentrecords/${editingPayment.id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -817,20 +1016,51 @@ const handleEditPayment = useCallback(async (e) => {
     
     if (response.ok) {
       const updatedPayment = await response.json();
+      console.log('Payment updated successfully:', updatedPayment);
       
       // Update local payment records
       setFeePaymentRecords(prev => 
         prev.map(record => 
           record.id === editingPayment.id 
-            ? {...record, ...paymentData, type: 'payment'} 
+            ? {
+                ...record, 
+                ...paymentData, 
+                type: 'payment',
+                uniqueId: `payment-${record.id}`
+              } 
             : record
         )
       );
       
       // Update fee status values
+      // When a payment amount changes:
+      // 1. Adjust fees submitted by the difference
+      // 2. Adjust remaining fees by the inverse of the difference
       const updatedFeesSubmitted = parseFloat(selectedStudentFees.feesSubmitted) + amountDifference;
       const updatedRemainingFees = parseFloat(selectedStudentFees.totalFees) - updatedFeesSubmitted;
       const paymentCompleted = updatedRemainingFees <= 0;
+      
+      console.log('Fee calculations after payment edit:', {
+        newFeesSubmitted: updatedFeesSubmitted,
+        newRemainingFees: updatedRemainingFees,
+        paymentCompleted
+      });
+      
+      // Update fee status on server
+      const updatedFeeStatus = {
+        feesSubmitted: updatedFeesSubmitted,
+        remainingFees: updatedRemainingFees,
+        paymentCompleted: paymentCompleted,
+        // Don't update nextDueDate here
+      };
+      
+      const feeStatusResponse = await fetch(`${BASE_URL}/api/feestatus/${selectedStudent.feeStatusId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedFeeStatus),
+      });
       
       // Update local state for fee status
       setSelectedStudentFees({
@@ -847,19 +1077,202 @@ const handleEditPayment = useCallback(async (e) => {
         paymentCompleted
       }));
       
-      // Close modal and reset edit state
-      setEditingPayment(null);
-      setEditPaymentModalOpen(false);
-      
-      // Refresh data if needed
-      if (selectedBatch) {
-        fetchStudentsByBatch(selectedBatch);
-      }
+      // Refresh records
+      setTimeout(() => {
+        fetchStudentRecords(selectedStudent);
+      }, 500);
+    } else {
+      console.error('API error when updating payment:', await response.text());
     }
   } catch (error) {
     console.error('Error updating payment:', error);
+  } finally {
+    // Close modal and reset edit state
+    setEditingPayment(null);
+    setEditPaymentModalOpen(false);
   }
-}, [editingPayment, selectedStudent, selectedStudentFees, selectedBatch, fetchStudentsByBatch]);
+}, [editingPayment, selectedStudent, selectedStudentFees, fetchStudentRecords]);
+const handleDeletePayment = useCallback(async () => {
+  if (!recordToDelete || !selectedStudent?.feeStatusId) {
+    setDeleteConfirmModalOpen(false);
+    setRecordToDelete(null);
+    return;
+  }
+  
+  try {
+    console.log('Deleting payment record:', recordToDelete);
+    
+    const response = await fetch(`${BASE_URL}/api/feepaymentrecords/${recordToDelete.id}`, {
+      method: 'DELETE',
+    });
+    
+    if (response.ok) {
+      // Calculate new values - when deleting a payment:
+      // 1. Decrease fees submitted by the payment amount
+      // 2. Increase remaining fees by the payment amount
+      const amount = parseFloat(recordToDelete.amount) || 0;
+      const updatedFeesSubmitted = parseFloat(selectedStudentFees.feesSubmitted) - amount;
+      const updatedRemainingFees = parseFloat(selectedStudentFees.totalFees) - updatedFeesSubmitted;
+      const paymentCompleted = updatedRemainingFees <= 0;
+      
+      console.log('Fee calculations after payment deletion:', {
+        originalAmount: amount,
+        newFeesSubmitted: updatedFeesSubmitted,
+        newRemainingFees: updatedRemainingFees,
+        paymentCompleted
+      });
+      
+      // Update fee status on server
+      const updatedFeeStatus = {
+        feesSubmitted: updatedFeesSubmitted,
+        remainingFees: updatedRemainingFees,
+        paymentCompleted: paymentCompleted,
+        // Don't update nextDueDate here - it should be set when a payment is made
+      };
+      
+      const feeStatusResponse = await fetch(`${BASE_URL}/api/feestatus/${selectedStudent.feeStatusId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedFeeStatus),
+      });
+      
+      // Update local payment records
+      setFeePaymentRecords(prev => 
+        prev.filter(record => record.id !== recordToDelete.id)
+      );
+      
+      // Update local state for fee status
+      setSelectedStudentFees({
+        totalFees: parseFloat(selectedStudentFees.totalFees),
+        feesSubmitted: updatedFeesSubmitted,
+        remainingFees: updatedRemainingFees
+      });
+      
+      // Update selected student with new values
+      setSelectedStudent(prev => ({
+        ...prev,
+        feesSubmitted: updatedFeesSubmitted,
+        remainingFees: updatedRemainingFees,
+        paymentCompleted
+      }));
+      
+      // Refresh records
+      setTimeout(() => {
+        fetchStudentRecords(selectedStudent);
+      }, 500);
+    } else {
+      console.error('API error when deleting payment:', await response.text());
+    }
+  } catch (error) {
+    console.error('Error deleting payment:', error);
+  } finally {
+    // Close modal and reset delete state
+    setDeleteConfirmModalOpen(false);
+    setRecordToDelete(null);
+  }
+}, [recordToDelete, selectedStudent, selectedStudentFees, fetchStudentRecords]);
+// Delete charge handler
+const handleDeleteCharge = useCallback(async () => {
+  if (!recordToDelete || !selectedStudent?.feeStatusId) {
+    setDeleteConfirmModalOpen(false);
+    setRecordToDelete(null);
+    return;
+  }
+  
+  try {
+    console.log('Deleting charge record:', recordToDelete);
+    
+    const response = await fetch(`${BASE_URL}/api/otherchargesrecords/${recordToDelete.id}`, {
+      method: 'DELETE',
+    });
+    
+    if (response.ok) {
+      // Calculate new values - when deleting a charge:
+      // 1. Decrease total fees by the charge amount
+      // 2. Decrease remaining fees by the charge amount
+      const amount = parseFloat(recordToDelete.amount) || 0;
+      const updatedTotalFees = parseFloat(selectedStudentFees.totalFees) - amount;
+      const updatedRemainingFees = parseFloat(selectedStudentFees.remainingFees) - amount;
+      const paymentCompleted = updatedRemainingFees <= 0;
+      
+      console.log('Fee calculations after charge deletion:', {
+        originalAmount: amount,
+        newTotalFees: updatedTotalFees,
+        newRemainingFees: updatedRemainingFees,
+        paymentCompleted
+      });
+      
+      // Update fee status on server
+      const updatedFeeStatus = {
+        totalFees: updatedTotalFees,
+        remainingFees: updatedRemainingFees,
+        paymentCompleted: paymentCompleted,
+      };
+      
+      const feeStatusResponse = await fetch(`${BASE_URL}/api/feestatus/${selectedStudent.feeStatusId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedFeeStatus),
+      });
+      
+      // Update local charge records
+      setOtherChargesRecords(prev => 
+        prev.filter(record => record.id !== recordToDelete.id)
+      );
+      
+      // Update local state for fee status
+      setSelectedStudentFees({
+        totalFees: updatedTotalFees,
+        feesSubmitted: parseFloat(selectedStudentFees.feesSubmitted),
+        remainingFees: updatedRemainingFees
+      });
+      
+      // Update selected student with new values
+      setSelectedStudent(prev => ({
+        ...prev,
+        totalFees: updatedTotalFees,
+        remainingFees: updatedRemainingFees,
+        paymentCompleted
+      }));
+      
+      // Refresh records
+      setTimeout(() => {
+        fetchStudentRecords(selectedStudent);
+      }, 500);
+    } else {
+      console.error('API error when deleting charge:', await response.text());
+    }
+  } catch (error) {
+    console.error('Error deleting charge:', error);
+  } finally {
+    // Close modal and reset delete state
+    setDeleteConfirmModalOpen(false);
+    setRecordToDelete(null);
+  }
+}, [recordToDelete, selectedStudent, selectedStudentFees, fetchStudentRecords]);
+const confirmDeletePayment = useCallback((payment) => {
+  setRecordToDelete({...payment, deleteType: 'payment'});
+  setDeleteConfirmModalOpen(true);
+}, []);
+
+// Function to confirm deletion of a charge
+const confirmDeleteCharge = useCallback((charge) => {
+  setRecordToDelete({...charge, deleteType: 'charge'});
+  setDeleteConfirmModalOpen(true);
+}, []);
+const handleDeleteRecord = useCallback(() => {
+  if (!recordToDelete) return;
+  
+  if (recordToDelete.deleteType === 'payment') {
+    handleDeletePayment();
+  } else if (recordToDelete.deleteType === 'charge') {
+    handleDeleteCharge();
+  }
+}, [recordToDelete, handleDeletePayment, handleDeleteCharge]);
 const openEditPaymentModal = useCallback((payment) => {
   // Make a copy with the originalAmount to track changes
   setEditingPayment({
@@ -885,16 +1298,25 @@ const handleEditCharge = useCallback(async (e) => {
   if (!selectedStudent?.feeStatusId || !editingCharge) return;
   
   try {
+    console.log('Editing charge:', editingCharge);
+    
     // Calculate amount difference
     const originalAmount = parseFloat(editingCharge.originalAmount) || 0;
     const newAmount = parseFloat(editingCharge.amount) || 0;
     const amountDifference = newAmount - originalAmount;
+    
+    console.log('Charge amount change:', {
+      originalAmount,
+      newAmount,
+      difference: amountDifference
+    });
     
     // Prepare data for API
     const chargeData = {
       title: editingCharge.title,
       date: editingCharge.date,
       amount: newAmount,
+      description: editingCharge.description || null,
       feeStatusId: selectedStudent.feeStatusId
     };
     
@@ -909,20 +1331,50 @@ const handleEditCharge = useCallback(async (e) => {
     
     if (response.ok) {
       const updatedCharge = await response.json();
+      console.log('Charge updated successfully:', updatedCharge);
       
       // Update local charge records
       setOtherChargesRecords(prev => 
         prev.map(record => 
           record.id === editingCharge.id 
-            ? {...record, ...chargeData, type: 'charge'} 
+            ? {
+                ...record, 
+                ...chargeData, 
+                type: 'charge',
+                uniqueId: `charge-${record.id}`
+              } 
             : record
         )
       );
       
       // Update fee status values
+      // When a charge amount changes:
+      // 1. Adjust total fees by the difference
+      // 2. Adjust remaining fees by the difference
       const updatedTotalFees = parseFloat(selectedStudentFees.totalFees) + amountDifference;
       const updatedRemainingFees = parseFloat(selectedStudentFees.remainingFees) + amountDifference;
       const paymentCompleted = updatedRemainingFees <= 0;
+      
+      console.log('Fee calculations after charge edit:', {
+        newTotalFees: updatedTotalFees,
+        newRemainingFees: updatedRemainingFees,
+        paymentCompleted
+      });
+      
+      // Update fee status on server
+      const updatedFeeStatus = {
+        totalFees: updatedTotalFees,
+        remainingFees: updatedRemainingFees,
+        paymentCompleted: paymentCompleted,
+      };
+      
+      const feeStatusResponse = await fetch(`${BASE_URL}/api/feestatus/${selectedStudent.feeStatusId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedFeeStatus),
+      });
       
       // Update local state for fee status
       setSelectedStudentFees({
@@ -939,19 +1391,22 @@ const handleEditCharge = useCallback(async (e) => {
         paymentCompleted
       }));
       
-      // Close modal and reset edit state
-      setEditingCharge(null);
-      setEditChargeModalOpen(false);
-      
-      // Refresh data if needed
-      if (selectedBatch) {
-        fetchStudentsByBatch(selectedBatch);
-      }
+      // Refresh records
+      setTimeout(() => {
+        fetchStudentRecords(selectedStudent);
+      }, 500);
+    } else {
+      console.error('API error when updating charge:', await response.text());
     }
   } catch (error) {
     console.error('Error updating charge:', error);
+  } finally {
+    // Close modal and reset edit state
+    setEditingCharge(null);
+    setEditChargeModalOpen(false);
   }
-}, [editingCharge, selectedStudent, selectedStudentFees, selectedBatch, fetchStudentsByBatch]);
+}, [editingCharge, selectedStudent, selectedStudentFees, fetchStudentRecords]);
+
 // Update remaining fees when total fees or fees submitted change
 useEffect(() => {
   const totalFees = parseFloat(newFeeStatus.totalFees) || 0;
@@ -1107,7 +1562,7 @@ useEffect(() => {
                     marginTop: '30px'
                   }}>
                    <p style={{ marginBottom: '20px', fontSize: '16px', color: '#555' }}>
-                      No fee status record found for this student. Create one to start tracking fees.
+                      No fee record found for this student. Create one to start tracking fees.
                     </p>
                     <button 
                       onClick={() => setShowFeeStatusForm(true)} 
@@ -1124,7 +1579,7 @@ useEffect(() => {
                         transition: 'all 0.2s ease'
                       }}
                     >
-                      Create Fee Status
+                      Create Fee Record
                     </button>
                   </div>
                 ) : (
@@ -1134,59 +1589,85 @@ useEffect(() => {
                       nextDueDate={selectedStudent.nextDueDate}
                       paymentCompleted={selectedStudent.paymentCompleted}
                     />
-
 <RecordsTable 
-        records={combinedRecords}
-        onEditPayment={openEditPaymentModal}
-        onEditCharge={openEditChargeModal} // This was missing
-      />
+  records={combinedRecords}
+  onEditPayment={openEditPaymentModal}
+  onEditCharge={openEditChargeModal}
+  onDeletePayment={confirmDeletePayment}
+  onDeleteCharge={confirmDeleteCharge}
+/>
 
-                    <div style={{ 
-                      marginTop: '30px', 
-                      display: 'flex', 
-                      justifyContent: 'center',
-                      gap: '15px' 
-                    }}>
-                      <button 
-                        onClick={() => setPaymentModalOpen(true)} 
-                        style={{ 
-                          padding: '12px 35px', 
-                          backgroundColor: '#388E3C', 
-                          color: '#fff', 
-                          border: 'none', 
-                          borderRadius: '6px', 
-                          cursor: 'pointer',
-                          fontSize: '15px',
-                          fontWeight: '500',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          boxShadow: '0 2px 8px rgba(56, 142, 60, 0.25)',
-                          transition: 'all 0.2s ease'
-                        }}
-                      >
-                        <span style={{ fontSize: '18px' }}>+</span> You Got
-                      </button>
-                      <button 
-                        onClick={() => setChargeModalOpen(true)} 
-                        style={{ 
-                          padding: '12px 35px', 
-                          backgroundColor: '#D32F2F', 
-                          color: '#fff', 
-                          border: 'none', 
-                          borderRadius: '6px', 
-                          cursor: 'pointer',
-                          fontSize: '15px',
-                          fontWeight: '500',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          boxShadow: '0 2px 8px rgba(211, 47, 47, 0.25)',
-                          transition: 'all 0.2s ease'
-                        }}
-                      >
-                        <span style={{ fontSize: '18px' }}>+</span> You Gave
-                      </button>
+<div style={{ 
+  marginTop: '30px', 
+  display: 'flex', 
+  justifyContent: 'center',
+  gap: '20px' 
+}}>
+  <button 
+    onClick={() => setPaymentModalOpen(true)} 
+    style={{ 
+      padding: '12px 25px', 
+      backgroundColor: '#4CAF50', 
+      color: '#fff', 
+      border: 'none', 
+      borderRadius: '50px', 
+      cursor: 'pointer',
+      fontSize: '15px',
+      fontWeight: '500',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      boxShadow: '0 3px 10px rgba(76, 175, 80, 0.3)',
+      transition: 'all 0.2s ease',
+      minWidth: '180px',
+      justifyContent: 'center'
+    }}
+    onMouseOver={(e) => {
+      e.currentTarget.style.backgroundColor = '#43A047';
+      e.currentTarget.style.transform = 'translateY(-2px)';
+      e.currentTarget.style.boxShadow = '0 5px 15px rgba(76, 175, 80, 0.4)';
+    }}
+    onMouseOut={(e) => {
+      e.currentTarget.style.backgroundColor = '#4CAF50';
+      e.currentTarget.style.transform = 'translateY(0)';
+      e.currentTarget.style.boxShadow = '0 3px 10px rgba(76, 175, 80, 0.3)';
+    }}
+  >
+   You Got
+  </button>
+  
+  <button 
+    onClick={() => setChargeModalOpen(true)} 
+    style={{ 
+      padding: '12px 25px', 
+      backgroundColor: '#F44336', 
+      color: '#fff', 
+      border: 'none', 
+      borderRadius: '50px', 
+      cursor: 'pointer',
+      fontSize: '15px',
+      fontWeight: '500',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      boxShadow: '0 3px 10px rgba(244, 67, 54, 0.3)',
+      transition: 'all 0.2s ease',
+      minWidth: '180px',
+      justifyContent: 'center'
+    }}
+    onMouseOver={(e) => {
+      e.currentTarget.style.backgroundColor = '#E53935';
+      e.currentTarget.style.transform = 'translateY(-2px)';
+      e.currentTarget.style.boxShadow = '0 5px 15px rgba(244, 67, 54, 0.4)';
+    }}
+    onMouseOut={(e) => {
+      e.currentTarget.style.backgroundColor = '#F44336';
+      e.currentTarget.style.transform = 'translateY(0)';
+      e.currentTarget.style.boxShadow = '0 3px 10px rgba(244, 67, 54, 0.3)';
+    }}
+  >
+    You Gave
+  </button>
                     </div>
                   </div>
                 )}
@@ -1280,7 +1761,25 @@ useEffect(() => {
           }}
         />
       </div>
-      
+      <div style={{ marginBottom: '15px' }}>
+  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+    Description (Optional)
+  </label>
+  <textarea
+    value={editingPayment.description || ''}
+    onChange={(e) => setEditingPayment({ ...editingPayment, description: e.target.value })}
+    style={{ 
+      width: '100%', 
+      padding: '10px', 
+      borderRadius: '6px', 
+      border: '1px solid #ddd',
+      fontSize: '14px',
+      minHeight: '60px',
+      resize: 'vertical'
+    }}
+    placeholder="Enter additional details about this payment"
+  />
+</div>
       <div style={{ marginBottom: '15px' }}>
         <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
           Amount
@@ -1400,7 +1899,25 @@ useEffect(() => {
           }}
         />
       </div>
-      
+      <div style={{ marginBottom: '15px' }}>
+  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+    Description (Optional)
+  </label>
+  <textarea
+    value={editingCharge.description || ''}
+    onChange={(e) => setEditingCharge({ ...editingCharge, description: e.target.value })}
+    style={{ 
+      width: '100%', 
+      padding: '10px', 
+      borderRadius: '6px', 
+      border: '1px solid #ddd',
+      fontSize: '14px',
+      minHeight: '60px',
+      resize: 'vertical'
+    }}
+    placeholder="Enter additional details about this charge"
+  />
+</div>
       <div style={{ marginBottom: '15px' }}>
         <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
           Amount
@@ -1521,7 +2038,25 @@ useEffect(() => {
               }}
             />
           </div>
-          
+          <div style={{ marginBottom: '15px' }}>
+  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+    Description (Optional)
+  </label>
+  <textarea
+    value={paymentData.description || ''}
+    onChange={(e) => setPaymentData({ ...paymentData, description: e.target.value })}
+    style={{ 
+      width: '100%', 
+      padding: '10px', 
+      borderRadius: '6px', 
+      border: '1px solid #ddd',
+      fontSize: '14px',
+      minHeight: '60px',
+      resize: 'vertical'
+    }}
+    placeholder="Enter additional details about this payment"
+  />
+</div>
           <div style={{ marginBottom: '15px' }}>
             <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
               Amount
@@ -1673,7 +2208,26 @@ useEffect(() => {
               }}
             />
           </div>
-          
+          <div style={{ marginBottom: '15px' }}>
+  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+    Description (Optional)
+  </label>
+  <textarea
+    value={chargeData.description || ''}
+    onChange={(e) => setChargeData({ ...chargeData, description: e.target.value })}
+    style={{ 
+      width: '100%', 
+      padding: '10px', 
+      borderRadius: '6px', 
+      border: '1px solid #ddd',
+      fontSize: '14px',
+      minHeight: '60px',
+      resize: 'vertical'
+    }}
+    placeholder="Enter additional details about this charge"
+  />
+</div>
+
           <div style={{ marginBottom: '15px' }}>
             <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
               Amount
@@ -1804,6 +2358,70 @@ useEffect(() => {
           </div>
         </form>
       </Modal>
+      <Modal
+  isOpen={deleteConfirmModalOpen}
+  onClose={() => {
+    setDeleteConfirmModalOpen(false);
+    setRecordToDelete(null);
+  }}
+  title="Confirm Delete"
+>
+  <div style={{ marginBottom: '20px', textAlign: 'center' }}>
+    <p style={{ fontSize: '16px', color: '#333', marginBottom: '15px' }}>
+      Are you sure you want to delete this {recordToDelete?.deleteType === 'payment' ? 'payment' : 'charge'} record?
+    </p>
+    <p style={{ fontSize: '14px', color: '#777' }}>
+      <strong>Title:</strong> {recordToDelete?.title}<br />
+      <strong>Amount:</strong> ₹{recordToDelete?.amount}<br />
+      <strong>Date:</strong> {recordToDelete ? formatDate(recordToDelete.date) : ''}
+    </p>
+    <p style={{ fontSize: '14px', color: '#D32F2F', marginTop: '15px', fontWeight: '500' }}>
+      This action cannot be undone.
+    </p>
+  </div>
+  
+  <div style={{ 
+    display: 'flex', 
+    justifyContent: 'center', 
+    gap: '15px',
+    marginTop: '20px' 
+  }}>
+    <button
+      onClick={() => {
+        setDeleteConfirmModalOpen(false);
+        setRecordToDelete(null);
+      }}
+      style={{ 
+        padding: '10px 20px', 
+        backgroundColor: '#f5f5f5', 
+        color: '#333', 
+        border: '1px solid #ddd', 
+        borderRadius: '6px', 
+        cursor: 'pointer',
+        fontSize: '14px',
+        fontWeight: '500' 
+      }}
+    >
+      Cancel
+    </button>
+    <button
+      onClick={handleDeleteRecord}
+      style={{ 
+        padding: '10px 20px', 
+        backgroundColor: '#D32F2F', 
+        color: '#fff', 
+        border: 'none', 
+        borderRadius: '6px', 
+        cursor: 'pointer',
+        fontSize: '14px',
+        fontWeight: '500',
+        boxShadow: '0 2px 6px rgba(211, 47, 47, 0.25)' 
+      }}
+    >
+      Delete
+    </button>
+  </div>
+</Modal>
     </div>
   );
 };
