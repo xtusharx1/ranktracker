@@ -62,71 +62,185 @@ const Modal = ({ isOpen, onClose, title, children }) => {
 };
 
 // Student List Component
-const StudentList = ({ students, searchTerm, onStudentClick, selectedStudent }) => {
-  const filteredStudents = useMemo(() => {
-    const seenIds = new Set();
-    return students
-      .filter(student => 
-        student.name?.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-      .filter(student => {
-        // Deduplicate by user_id
-        if (seenIds.has(student.user_id)) return false;
-        seenIds.add(student.user_id);
-        return true;
-      });
-  }, [students, searchTerm]);
+// Student List Component with improved UI
+const StudentList = ({ students, onStudentClick, selectedStudent }) => {
+  if (students.length === 0) {
+    return (
+      <div style={{
+        padding: '20px',
+        color: '#888',
+        textAlign: 'center',
+        backgroundColor: '#f9f9f9',
+        borderRadius: '12px',
+        boxShadow: 'inset 0 0 8px rgba(0, 0, 0, 0.05)',
+        margin: '10px 0'
+      }}>
+        <div style={{ fontSize: '28px', marginBottom: '10px' }}>🔍</div>
+        <p style={{ fontSize: '15px', marginBottom: '5px', fontWeight: '500' }}>No students found</p>
+        <p style={{ fontSize: '13px', color: '#999' }}>Try changing your search or select a different course</p>
+      </div>
+    );
+  }
+
+  // Helper to check if a due date is upcoming (within 7 days)
+  const isUpcomingDueDate = (dueDate) => {
+    if (!dueDate) return false;
+    const today = new Date();
+    const due = new Date(dueDate);
+    const diffTime = due - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays >= 0 && diffDays <= 7;
+  };
+  
+  // Helper to format currency
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount).replace('₹', '₹ ');
+  };
 
   return (
-    <ul style={{ listStyleType: 'none', padding: '0', margin: '0' }}>
-      {filteredStudents.length > 0 ? (
-        filteredStudents.map((student) => (
-          <li 
+    <div style={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      gap: '8px',
+      paddingTop: '5px',
+      paddingBottom: '5px'
+    }}>
+      {students.map((student) => {
+        const hasUpcomingDue = isUpcomingDueDate(student.nextDueDate);
+        const isSelected = selectedStudent?.user_id === student.user_id;
+        
+        return (
+          <div 
             key={student.user_id} 
             style={{
-              padding: '15px',
-              borderBottom: '1px solid #ddd',
+              padding: '12px 15px',
+              backgroundColor: isSelected ? '#E3F2FD' : '#ffffff',
+              borderRadius: '10px',
+              boxShadow: isSelected 
+                ? '0 3px 12px rgba(29, 114, 184, 0.15)' 
+                : '0 2px 6px rgba(0, 0, 0, 0.06)',
               cursor: 'pointer',
-              backgroundColor: selectedStudent?.user_id === student.user_id ? '#E3F2FD' : '#ffffff',
-              marginBottom: '10px',
               transition: 'all 0.2s ease',
-              borderRadius: '8px',
-              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+              borderLeft: hasUpcomingDue 
+                ? '4px solid #FF9800' 
+                : '4px solid transparent',
+              position: 'relative',
+              overflow: 'hidden'
             }} 
             onClick={() => onStudentClick(student)}
           >
+            {/* Student Name */}
             <div style={{
-              fontWeight: 'bold',
+              fontWeight: '600',
               color: '#333',
-              fontSize: '16px',
-              marginBottom: '5px',
+              fontSize: '15px',
+              lineHeight: '1.2',
+              marginBottom: '8px',
+              textOverflow: 'ellipsis',
+              overflow: 'hidden',
+              whiteSpace: 'nowrap'
             }}>
               {student.name || 'Unnamed Student'}
             </div>
+            
+            {/* Balance Info Row */}
             <div style={{
-              fontSize: '14px',
-              color: student.remainingFees > 0 ? '#D32F2F' : '#388E3C',
-              fontWeight: '500',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
             }}>
-              Balance: {student.remainingFees || 'No Fees Due'}
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '3px'
+              }}>
+                <div style={{ 
+                  fontSize: '12px', 
+                  color: '#666',
+                  fontWeight: '500'
+                }}>
+                  Balance
+                </div>
+                <div style={{
+                  fontSize: '15px',
+                  color: student.remainingFees > 0 ? '#D32F2F' : '#388E3C',
+                  fontWeight: '600',
+                }}>
+                  {formatCurrency(student.remainingFees || 0)}
+                </div>
+              </div>
+              
+              {student.nextDueDate && (
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-end',
+                  gap: '3px'
+                }}>
+                  
+                  <div style={{
+                    fontSize: '13px',
+                    fontWeight: '500',
+                    color: '#666',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}>
+                    {new Date(student.nextDueDate).toLocaleDateString('en-US', {
+                      day: '2-digit',
+                      month: 'short'
+                    })}
+                  </div>
+                </div>
+              )}
+              
+              {!student.nextDueDate && (
+                <div style={{
+                  fontSize: '12px',
+                  color: '#666',
+                  backgroundColor: '#f5f5f5',
+                  padding: '3px 8px',
+                  borderRadius: '4px',
+                  fontWeight: '500'
+                }}>
+                  No Due Date
+                </div>
+              )}
             </div>
-          </li>
-        ))
-      ) : (
-        <li style={{
-          padding: '15px',
-          color: '#888',
-          textAlign: 'center',
-          backgroundColor: '#f9f9f9',
-          borderRadius: '8px',
-        }}>
-          No students found.
-        </li>
-      )}
-    </ul>
+            
+            {/* Progress Bar for Paid/Total */}
+            {(student.totalFees > 0) && (
+              <div style={{
+                height: '4px',
+                backgroundColor: '#f0f0f0',
+                borderRadius: '2px',
+                marginTop: '10px',
+                overflow: 'hidden',
+                position: 'relative'
+              }}>
+                <div style={{
+                  position: 'absolute',
+                  left: '0',
+                  top: '0',
+                  height: '100%',
+                  width: `${Math.min(100, (student.feesSubmitted / student.totalFees) * 100)}%`,
+                  backgroundColor: student.remainingFees <= 0 ? '#4CAF50' : '#1D72B8',
+                  borderRadius: '2px',
+                  transition: 'width 0.3s ease'
+                }}></div>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
   );
 };
-
 // Fee Summary Cards Component
 const FeeSummaryCards = ({ studentFees, nextDueDate, paymentCompleted }) => {
   return (
@@ -434,6 +548,11 @@ const [editingPayment, setEditingPayment] = useState(null);
 const [editingCharge, setEditingCharge] = useState(null);
 const [deleteConfirmModalOpen, setDeleteConfirmModalOpen] = useState(false);
 const [recordToDelete, setRecordToDelete] = useState(null);
+const [studentSortOption, setStudentSortOption] = useState('dueDate'); // Default sort
+const handleStudentSortChange = useCallback((sortType) => {
+  setStudentSortOption(sortType);
+}, []);
+
 // Form state
 const [paymentData, setPaymentData] = useState({ 
   title: '', 
@@ -467,7 +586,7 @@ const fetchData = useCallback(async () => {
     
     // Parallel API requests for better performance
     const [batchesRes, feeSummaryRes] = await Promise.all([
-      fetch(`${BASE_URL}/api/batches/`),
+      fetch(`${BASE_URL}/api/batches/all`),
       fetch(`${BASE_URL}/api/feestatus/summary`)
     ]);
     
@@ -636,7 +755,21 @@ const fetchStudentsByBatch = useCallback(async (batchId) => {
     setLoading(false);
   }
 }, [selectStudent]);
-
+// Add this function to your component
+const updateStudentInList = useCallback((updatedStudentData) => {
+  if (!updatedStudentData || !updatedStudentData.user_id) return;
+  
+  setStudents(prevStudents => {
+    return prevStudents.map(student => {
+      if (student.user_id === updatedStudentData.user_id) {
+        // Return the updated student data while preserving any fields
+        // that might not be included in the updatedStudentData
+        return { ...student, ...updatedStudentData };
+      }
+      return student;
+    });
+  });
+}, []);
 const handleBatchChange = useCallback((event) => {
   const batchId = event.target.value;
   setSelectedBatch(batchId);
@@ -729,15 +862,22 @@ const handleAddPayment = useCallback(async (e) => {
         remainingFees: updatedRemainingFees,
       });
       
-      // Update the selected student with all fee-related fields
-      setSelectedStudent(prevStudent => ({
-        ...prevStudent,
-        totalFees: parseFloat(prevStudent.totalFees) || 0,
+      // Create updated student data object
+      const updatedStudentData = {
+        ...selectedStudent,
+        totalFees: parseFloat(selectedStudentFees.totalFees) || 0,
         feesSubmitted: updatedFeesSubmitted,
         remainingFees: updatedRemainingFees,
         nextDueDate: paymentCompleted ? null : paymentData.nextDueDate,
         paymentCompleted
-      }));
+      };
+      
+      // Update the selected student
+      setSelectedStudent(updatedStudentData);
+      
+      // Update the student in the sidebar list
+      console.log('Updating student in list after payment:', updatedStudentData);
+      updateStudentInList(updatedStudentData);
       
       // Reset form and close modal
       setPaymentData({ 
@@ -754,7 +894,7 @@ const handleAddPayment = useCallback(async (e) => {
       if (selectedStudent?.feeStatusId) {
         // Small delay to ensure API operations complete
         setTimeout(() => {
-          fetchStudentRecords(selectedStudent);
+          fetchStudentRecords(updatedStudentData);
         }, 500);
       }
     } else {
@@ -774,7 +914,7 @@ const handleAddPayment = useCallback(async (e) => {
       nextDueDate: '' 
     });
   }
-}, [selectedStudent, paymentData, selectedStudentFees, fetchStudentRecords]);
+}, [selectedStudent, paymentData, selectedStudentFees, fetchStudentRecords, updateStudentInList]);
 
 const handleAddCharge = useCallback(async (e) => {
   e.preventDefault();
@@ -847,14 +987,21 @@ const handleAddCharge = useCallback(async (e) => {
         remainingFees: updatedRemainingFees,
       });
       
-      // Update the selected student with all fee-related fields
-      setSelectedStudent(prevStudent => ({
-        ...prevStudent,
+      // Create updated student data object
+      const updatedStudentData = {
+        ...selectedStudent,
         totalFees: updatedTotalFees,
         remainingFees: updatedRemainingFees,
-        nextDueDate: prevStudent.nextDueDate,
+        nextDueDate: selectedStudent.nextDueDate,
         paymentCompleted
-      }));
+      };
+      
+      // Update the selected student
+      setSelectedStudent(updatedStudentData);
+      
+      // Update the student in the sidebar list
+      console.log('Updating student in list after charge:', updatedStudentData);
+      updateStudentInList(updatedStudentData);
       
       // Reset form and close modal
       setChargeData({ 
@@ -869,7 +1016,7 @@ const handleAddCharge = useCallback(async (e) => {
       if (selectedStudent?.feeStatusId) {
         // Small delay to ensure API operations complete
         setTimeout(() => {
-          fetchStudentRecords(selectedStudent);
+          fetchStudentRecords(updatedStudentData);
         }, 500);
       }
     } else {
@@ -887,7 +1034,8 @@ const handleAddCharge = useCallback(async (e) => {
       description: '' 
     });
   }
-}, [selectedStudent, chargeData, selectedStudentFees, fetchStudentRecords]);
+}, [selectedStudent, chargeData, selectedStudentFees, fetchStudentRecords, updateStudentInList]);
+
 const handleSubmitFeeStatus = useCallback(async (e) => {
   e.preventDefault();
 
@@ -942,40 +1090,6 @@ const handleSubmitFeeStatus = useCallback(async (e) => {
     console.error('Error creating fee status:', error);
   }
 }, [selectedStudent, newFeeStatus.admissionDate, newFeeStatus.totalFees, newFeeStatus.nextDueDate, selectedBatch, fetchStudentsByBatch]);
-
-// Calculate derived values
-const combinedRecords = useMemo(() => {
-  const allRecords = [...feePaymentRecords, ...otherChargesRecords];
-  
-  // Create a Map to deduplicate by ID and assign uniqueId
-  const uniqueRecords = new Map();
-  
-  allRecords.forEach(record => {
-    const key = `${record.type}-${record.id}`;
-    // Add uniqueId property
-    uniqueRecords.set(key, {
-      ...record,
-      uniqueId: key
-    });
-  });
-  
-  // Convert back to array and sort
-  return Array.from(uniqueRecords.values())
-    .sort((a, b) => new Date(b.date) - new Date(a.date));
-}, [feePaymentRecords, otherChargesRecords]);
-// Initial data fetch with localStorage restore
-useEffect(() => {
-  fetchData().then(() => {
-    // After initial data is loaded, check if we had a previously selected batch
-    const lastSelectedBatchId = localStorage.getItem('lastSelectedBatchId');
-    if (lastSelectedBatchId) {
-      setSelectedBatch(lastSelectedBatchId);
-      fetchStudentsByBatch(lastSelectedBatchId);
-    }
-  });
-}, [fetchData, fetchStudentsByBatch]);
-
-// Edit payment handler
 const handleEditPayment = useCallback(async (e) => {
   e.preventDefault();
   
@@ -1069,17 +1183,24 @@ const handleEditPayment = useCallback(async (e) => {
         remainingFees: updatedRemainingFees
       });
       
-      // Update selected student with new values
-      setSelectedStudent(prev => ({
-        ...prev,
+      // Create updated student data object
+      const updatedStudentData = {
+        ...selectedStudent,
         feesSubmitted: updatedFeesSubmitted,
         remainingFees: updatedRemainingFees,
         paymentCompleted
-      }));
+      };
+      
+      // Update the selected student
+      setSelectedStudent(updatedStudentData);
+      
+      // Update the student in the sidebar list
+      console.log('Updating student in list after payment edit:', updatedStudentData);
+      updateStudentInList(updatedStudentData);
       
       // Refresh records
       setTimeout(() => {
-        fetchStudentRecords(selectedStudent);
+        fetchStudentRecords(updatedStudentData);
       }, 500);
     } else {
       console.error('API error when updating payment:', await response.text());
@@ -1091,7 +1212,8 @@ const handleEditPayment = useCallback(async (e) => {
     setEditingPayment(null);
     setEditPaymentModalOpen(false);
   }
-}, [editingPayment, selectedStudent, selectedStudentFees, fetchStudentRecords]);
+}, [editingPayment, selectedStudent, selectedStudentFees, fetchStudentRecords, updateStudentInList]);
+
 const handleDeletePayment = useCallback(async () => {
   if (!recordToDelete || !selectedStudent?.feeStatusId) {
     setDeleteConfirmModalOpen(false);
@@ -1150,17 +1272,24 @@ const handleDeletePayment = useCallback(async () => {
         remainingFees: updatedRemainingFees
       });
       
-      // Update selected student with new values
-      setSelectedStudent(prev => ({
-        ...prev,
+      // Create updated student data object
+      const updatedStudentData = {
+        ...selectedStudent,
         feesSubmitted: updatedFeesSubmitted,
         remainingFees: updatedRemainingFees,
         paymentCompleted
-      }));
+      };
+      
+      // Update the selected student
+      setSelectedStudent(updatedStudentData);
+      
+      // Update the student in the sidebar list
+      console.log('Updating student in list after payment deletion:', updatedStudentData);
+      updateStudentInList(updatedStudentData);
       
       // Refresh records
       setTimeout(() => {
-        fetchStudentRecords(selectedStudent);
+        fetchStudentRecords(updatedStudentData);
       }, 500);
     } else {
       console.error('API error when deleting payment:', await response.text());
@@ -1172,7 +1301,8 @@ const handleDeletePayment = useCallback(async () => {
     setDeleteConfirmModalOpen(false);
     setRecordToDelete(null);
   }
-}, [recordToDelete, selectedStudent, selectedStudentFees, fetchStudentRecords]);
+}, [recordToDelete, selectedStudent, selectedStudentFees, fetchStudentRecords, updateStudentInList]);
+
 // Delete charge handler
 const handleDeleteCharge = useCallback(async () => {
   if (!recordToDelete || !selectedStudent?.feeStatusId) {
@@ -1231,17 +1361,24 @@ const handleDeleteCharge = useCallback(async () => {
         remainingFees: updatedRemainingFees
       });
       
-      // Update selected student with new values
-      setSelectedStudent(prev => ({
-        ...prev,
+      // Create updated student data object
+      const updatedStudentData = {
+        ...selectedStudent,
         totalFees: updatedTotalFees,
         remainingFees: updatedRemainingFees,
         paymentCompleted
-      }));
+      };
+      
+      // Update the selected student
+      setSelectedStudent(updatedStudentData);
+      
+      // Update the student in the sidebar list
+      console.log('Updating student in list after charge deletion:', updatedStudentData);
+      updateStudentInList(updatedStudentData);
       
       // Refresh records
       setTimeout(() => {
-        fetchStudentRecords(selectedStudent);
+        fetchStudentRecords(updatedStudentData);
       }, 500);
     } else {
       console.error('API error when deleting charge:', await response.text());
@@ -1253,45 +1390,8 @@ const handleDeleteCharge = useCallback(async () => {
     setDeleteConfirmModalOpen(false);
     setRecordToDelete(null);
   }
-}, [recordToDelete, selectedStudent, selectedStudentFees, fetchStudentRecords]);
-const confirmDeletePayment = useCallback((payment) => {
-  setRecordToDelete({...payment, deleteType: 'payment'});
-  setDeleteConfirmModalOpen(true);
-}, []);
+}, [recordToDelete, selectedStudent, selectedStudentFees, fetchStudentRecords, updateStudentInList]);
 
-// Function to confirm deletion of a charge
-const confirmDeleteCharge = useCallback((charge) => {
-  setRecordToDelete({...charge, deleteType: 'charge'});
-  setDeleteConfirmModalOpen(true);
-}, []);
-const handleDeleteRecord = useCallback(() => {
-  if (!recordToDelete) return;
-  
-  if (recordToDelete.deleteType === 'payment') {
-    handleDeletePayment();
-  } else if (recordToDelete.deleteType === 'charge') {
-    handleDeleteCharge();
-  }
-}, [recordToDelete, handleDeletePayment, handleDeleteCharge]);
-const openEditPaymentModal = useCallback((payment) => {
-  // Make a copy with the originalAmount to track changes
-  setEditingPayment({
-    ...payment,
-    originalAmount: payment.amount
-  });
-  setEditPaymentModalOpen(true);
-}, []);
-
-// Function to open the edit charge modal
-const openEditChargeModal = useCallback((charge) => {
-  // Make a copy with the originalAmount to track changes
-  setEditingCharge({
-    ...charge,
-    originalAmount: charge.amount
-  });
-  setEditChargeModalOpen(true);
-}, []);
-// Edit charge handler
 const handleEditCharge = useCallback(async (e) => {
   e.preventDefault();
   
@@ -1383,17 +1483,24 @@ const handleEditCharge = useCallback(async (e) => {
         remainingFees: updatedRemainingFees
       });
       
-      // Update selected student with new values
-      setSelectedStudent(prev => ({
-        ...prev,
+      // Create updated student data object
+      const updatedStudentData = {
+        ...selectedStudent,
         totalFees: updatedTotalFees,
         remainingFees: updatedRemainingFees,
         paymentCompleted
-      }));
+      };
+      
+      // Update the selected student
+      setSelectedStudent(updatedStudentData);
+      
+      // Update the student in the sidebar list
+      console.log('Updating student in list after charge edit:', updatedStudentData);
+      updateStudentInList(updatedStudentData);
       
       // Refresh records
       setTimeout(() => {
-        fetchStudentRecords(selectedStudent);
+        fetchStudentRecords(updatedStudentData);
       }, 500);
     } else {
       console.error('API error when updating charge:', await response.text());
@@ -1405,8 +1512,177 @@ const handleEditCharge = useCallback(async (e) => {
     setEditingCharge(null);
     setEditChargeModalOpen(false);
   }
-}, [editingCharge, selectedStudent, selectedStudentFees, fetchStudentRecords]);
+}, [editingCharge, selectedStudent, selectedStudentFees, fetchStudentRecords, updateStudentInList]);
+// Calculate derived values
+const combinedRecords = useMemo(() => {
+  const allRecords = [...feePaymentRecords, ...otherChargesRecords];
+  
+  // Create a Map to deduplicate by ID and assign uniqueId
+  const uniqueRecords = new Map();
+  
+  allRecords.forEach(record => {
+    const key = `${record.type}-${record.id}`;
+    // Add uniqueId property
+    uniqueRecords.set(key, {
+      ...record,
+      uniqueId: key
+    });
+  });
+  
+  // Convert back to array and sort
+  return Array.from(uniqueRecords.values())
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
+}, [feePaymentRecords, otherChargesRecords]);
+// Initial data fetch with localStorage restore
+useEffect(() => {
+  fetchData().then(() => {
+    // After initial data is loaded, check if we had a previously selected batch
+    const lastSelectedBatchId = localStorage.getItem('lastSelectedBatchId');
+    if (lastSelectedBatchId) {
+      setSelectedBatch(lastSelectedBatchId);
+      fetchStudentsByBatch(lastSelectedBatchId);
+    }
+  });
+}, [fetchData, fetchStudentsByBatch]);
 
+// Edit payment handler
+
+const confirmDeletePayment = useCallback((payment) => {
+  setRecordToDelete({...payment, deleteType: 'payment'});
+  setDeleteConfirmModalOpen(true);
+}, []);
+
+// Function to confirm deletion of a charge
+const confirmDeleteCharge = useCallback((charge) => {
+  setRecordToDelete({...charge, deleteType: 'charge'});
+  setDeleteConfirmModalOpen(true);
+}, []);
+const handleDeleteRecord = useCallback(() => {
+  if (!recordToDelete) return;
+  
+  if (recordToDelete.deleteType === 'payment') {
+    handleDeletePayment();
+  } else if (recordToDelete.deleteType === 'charge') {
+    handleDeleteCharge();
+  }
+}, [recordToDelete, handleDeletePayment, handleDeleteCharge]);
+const openEditPaymentModal = useCallback((payment) => {
+  // Make a copy with the originalAmount to track changes
+  setEditingPayment({
+    ...payment,
+    originalAmount: payment.amount
+  });
+  setEditPaymentModalOpen(true);
+}, []);
+
+// Function to open the edit charge modal
+const openEditChargeModal = useCallback((charge) => {
+  // Make a copy with the originalAmount to track changes
+  setEditingCharge({
+    ...charge,
+    originalAmount: charge.amount
+  });
+  setEditChargeModalOpen(true);
+}, []);
+// Edit charge handler
+
+
+
+const StudentListFilters = ({ onSortChange, currentSort }) => {
+  return (
+    <div style={{
+      marginBottom: '15px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '10px'
+    }}>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '0 5px'
+      }}>
+        <span style={{ 
+          fontSize: '14px', 
+          fontWeight: '500', 
+          color: '#555' 
+        }}>
+          Sort By:
+        </span>
+        
+        <div style={{ 
+          display: 'flex',
+          alignItems: 'center'
+        }}>
+          <select
+            onChange={(e) => onSortChange(e.target.value)}
+            value={currentSort}
+            style={{
+              padding: '6px 10px',
+              borderRadius: '6px',
+              border: '1px solid #ddd',
+              fontSize: '13px',
+              color: '#555',
+              backgroundColor: '#fff',
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+              cursor: 'pointer',
+              width: '100%'
+            }}
+          >
+            <option value="balance">Highest Balance</option>
+            <option value="dueDate">Nearest Due Date</option>
+            <option value="name">Name (A-Z)</option>
+          </select>
+        </div>
+      </div>
+      
+      <div style={{
+        height: '1px',
+        backgroundColor: '#eaeaea',
+        margin: '5px 0'
+      }}></div>
+    </div>
+  );
+};
+
+
+// Add this function to sort students
+const getSortedStudents = useCallback(() => {
+  if (!students || students.length === 0) return [];
+  
+  const filteredStudents = students.filter(student => 
+    student.name?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  
+  // Remove duplicates by user_id
+  const uniqueStudents = [];
+  const seenIds = new Set();
+  
+  filteredStudents.forEach(student => {
+    if (!seenIds.has(student.user_id)) {
+      seenIds.add(student.user_id);
+      uniqueStudents.push(student);
+    }
+  });
+  
+  // Sort the students based on the selected option
+  return uniqueStudents.sort((a, b) => {
+    if (studentSortOption === 'balance') {
+      // Sort by remaining fees (highest first)
+      return (parseFloat(b.remainingFees) || 0) - (parseFloat(a.remainingFees) || 0);
+    } else if (studentSortOption === 'dueDate') {
+      // Sort by next due date (soonest first)
+      if (!a.nextDueDate && !b.nextDueDate) return 0;
+      if (!a.nextDueDate) return 1; // Put null dates at the end
+      if (!b.nextDueDate) return -1;
+      return new Date(a.nextDueDate) - new Date(b.nextDueDate);
+    } else if (studentSortOption === 'name') {
+      // Sort by name alphabetically
+      return (a.name || '').localeCompare(b.name || '');
+    }
+    return 0;
+  });
+}, [students, searchTerm, studentSortOption]);
 // Update remaining fees when total fees or fees submitted change
 useEffect(() => {
   const totalFees = parseFloat(newFeeStatus.totalFees) || 0;
@@ -1458,54 +1734,55 @@ useEffect(() => {
         }}>
           {/* Sidebar */}
           <div style={{
-            width: '300px',
-            borderRight: '1px solid #eaeaea',
-            padding: '20px',
-            backgroundColor: '#f9fafb',
-            overflowY: 'auto',
-            display: 'flex',
-            flexDirection: 'column'
-          }}>
-            <h2 style={{
-              textAlign: 'center',
-              color: '#1D72B8',
-              fontSize: '18px',
-              marginBottom: '20px',
-              fontWeight: '500',
-            }}>
-              Select Course
-            </h2>
-            
-            <select 
-              onChange={handleBatchChange} 
-              value={selectedBatch || ''}
-              style={{
-                width: '100%',
-                padding: '12px',
-                borderRadius: '8px',
-                border: '1px solid #ddd',
-                marginBottom: '20px',
-                fontSize: '14px',
-                color: '#555',
-                backgroundColor: '#fff',
-                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
-              }}
-            >
-              <option value="">Select Course</option>
-              {batches.map(batch => (
-                <option key={batch.batch_id} value={batch.batch_id}>{batch.batch_name}</option>
-              ))}
-            </select>
+  width: '300px',
+  borderRight: '1px solid #eaeaea',
+  padding: '20px',
+  backgroundColor: '#f9fafb',
+  overflowY: 'auto',
+  display: 'flex',
+  flexDirection: 'column'
+}}>
+  <h2 style={{
+    textAlign: 'center',
+    color: '#1D72B8',
+    fontSize: '18px',
+    marginBottom: '15px', // Reduced from 20px
+    fontWeight: '500',
+  }}>
+    Select Course
+  </h2>
+  
+  <select 
+    onChange={handleBatchChange} 
+    value={selectedBatch || ''}
+    style={{
+      width: '100%',
+      padding: '12px',
+      borderRadius: '8px',
+      border: '1px solid #ddd',
+      marginBottom: '15px', // Reduced from 20px
+      fontSize: '14px',
+      color: '#555',
+      backgroundColor: '#fff',
+      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
+    }}
+  >
+    <option value="">Select Course</option>
+    {batches.map(batch => (
+      <option key={batch.batch_id} value={batch.batch_id}>{batch.batch_name}</option>
+    ))}
+  </select>
 
-            <h2 style={{
-              textAlign: 'center',
-              color: '#1D72B8',
-              fontSize: '18px',
-              marginBottom: '15px',
-              fontWeight: '500',
-            }}>
-              Students
-            </h2>
+  <h2 style={{
+    textAlign: 'center',
+    color: '#1D72B8',
+    fontSize: '18px',
+    marginBottom: '15px',
+    marginTop: '0', // Added to ensure no extra space
+    fontWeight: '500',
+  }}>
+    Students
+  </h2>
             
             <div style={{ marginBottom: '15px' }}>
               <input
@@ -1526,12 +1803,17 @@ useEffect(() => {
               />
             </div>
             
-            <StudentList 
-              students={students}
-              searchTerm={searchTerm}
-              onStudentClick={handleStudentClick}
-              selectedStudent={selectedStudent}
-            />
+            {/* In your sidebar section, after the search input and before the StudentList */}
+<StudentListFilters 
+  onSortChange={handleStudentSortChange}
+  currentSort={studentSortOption}
+/>
+
+<StudentList 
+  students={getSortedStudents()} // Use sorted students
+  onStudentClick={handleStudentClick}
+  selectedStudent={selectedStudent}
+/>
           </div>
 
           {/* Main Content */}
@@ -1589,21 +1871,21 @@ useEffect(() => {
                       nextDueDate={selectedStudent.nextDueDate}
                       paymentCompleted={selectedStudent.paymentCompleted}
                     />
-<RecordsTable 
-  records={combinedRecords}
-  onEditPayment={openEditPaymentModal}
-  onEditCharge={openEditChargeModal}
-  onDeletePayment={confirmDeletePayment}
-  onDeleteCharge={confirmDeleteCharge}
-/>
+    <RecordsTable 
+      records={combinedRecords}
+      onEditPayment={openEditPaymentModal}
+      onEditCharge={openEditChargeModal}
+      onDeletePayment={confirmDeletePayment}
+      onDeleteCharge={confirmDeleteCharge}
+    />
 
-<div style={{ 
-  marginTop: '30px', 
-  display: 'flex', 
-  justifyContent: 'center',
-  gap: '20px' 
-}}>
-  <button 
+    <div style={{ 
+      marginTop: '30px', 
+      display: 'flex', 
+      justifyContent: 'center',
+      gap: '20px' 
+    }}>
+    <button 
     onClick={() => setPaymentModalOpen(true)} 
     style={{ 
       padding: '12px 25px', 
@@ -1632,11 +1914,11 @@ useEffect(() => {
       e.currentTarget.style.transform = 'translateY(0)';
       e.currentTarget.style.boxShadow = '0 3px 10px rgba(76, 175, 80, 0.3)';
     }}
-  >
+    >
    You Got
-  </button>
+    </button>
   
-  <button 
+    <button 
     onClick={() => setChargeModalOpen(true)} 
     style={{ 
       padding: '12px 25px', 
@@ -1665,9 +1947,9 @@ useEffect(() => {
       e.currentTarget.style.transform = 'translateY(0)';
       e.currentTarget.style.boxShadow = '0 3px 10px rgba(244, 67, 54, 0.3)';
     }}
-  >
+    >
     You Gave
-  </button>
+    </button>
                     </div>
                   </div>
                 )}
