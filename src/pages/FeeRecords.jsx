@@ -535,7 +535,7 @@ const handleAddPayment = useCallback(async (e) => {
       paymentDataToSend.nextDueDate = paymentData.nextDueDate;
     }
     
-    const response = await fetch(`${BASE_URL}/api/feepaymentrecords/add-payment`, {
+    const response = await fetch(`${BASE_URL}/api/feepaymentrecords/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -626,7 +626,7 @@ const handleAddCharge = useCallback(async (e) => {
   if (!selectedStudent?.feeStatusId) return;
   
   try {
-    const response = await fetch(`${BASE_URL}/api/otherchargesrecords/add-other-charges`, {
+    const response = await fetch(`${BASE_URL}/api/otherchargesrecords/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
