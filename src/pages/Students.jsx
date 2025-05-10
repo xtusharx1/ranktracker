@@ -455,131 +455,135 @@ const Students = () => {
   };
 
   // Submit handler for updating a student
-  const handleEditSubmit = async (e) => {
-    e.preventDefault();
-    
-    // Basic validation for essential fields
-    if (!editingStudent.name || !editingStudent.email || !editingStudent.phone_number || 
-        !editingStudent.status) {
-      alert("Please fill in all required fields: Name, Email, Phone Number, and Status.");
-      return;
-    }
-    
-    // Validate batch and type if they're required in your application
-    if (!editingStudent.batch_id) {
-      alert("Please select a batch for the student.");
-      return;
-    }
-    
-    if (!editingStudent.type) {
-      alert("Please select a student type.");
-      return;
-    }
-    
-    // Format data for API submission
-    const studentData = {
-      name: editingStudent.name,
-      email: editingStudent.email,
-      phone_number: editingStudent.phone_number,
-      role_id: 2,
-      status: editingStudent.status,
-      gender: editingStudent.gender || "",
-      present_class: editingStudent.present_class || "",
-      date_of_admission: formatDateForAPI(editingStudent.date_of_admission),
-      date_of_birth: formatDateForAPI(editingStudent.date_of_birth),
-      total_course_fees: editingStudent.total_course_fees ? parseFloat(editingStudent.total_course_fees) : 0,
-      father_name: editingStudent.father_name || "",
-      mother_name: editingStudent.mother_name || "",
-      full_address: editingStudent.full_address || "",
-      child_aadhar_number: editingStudent.child_aadhar_number || "",
-      mother_aadhar_number: editingStudent.mother_aadhar_number || "",
-      father_aadhar_number: editingStudent.father_aadhar_number || "",
-      permanent_education_number: editingStudent.permanent_education_number || "",
-      student_registration_number: editingStudent.student_registration_number || "",
-      previous_school_info: editingStudent.previous_school_info || "",
-      state: editingStudent.state || ""
-    };
-    
-    console.log("Data being submitted to API:", studentData);
-    
-    // Flag to track overall success
-    let mainUpdateSuccessful = false;
-    
-    try {
-      // Step 1: Update student's basic info
-      const response = await axios.put(`${API_BASE_URL}/users/user/${editingStudent.user_id}`, studentData);
-      console.log("API Response:", response.data);
-      mainUpdateSuccessful = true;
-      
-      // Track success of each step
-      let batchUpdateSuccessful = true;
-      let typeUpdateSuccessful = true;
-      
-      // Step 2: Try to update batch information
-      try {
-        if (editingStudent.batch_id) {
-          console.log(`Attempting to update batch for user ${editingStudent.user_id} with batch ${editingStudent.batch_id}`);
-          
-          // Use same format as in handleSubmit
-          await axios.post(`${API_BASE_URL}/studentBatches/students/batch/`, {
-            user_id: editingStudent.user_id,
-            batch_id: editingStudent.batch_id
-          });
-          
-          console.log("Batch update successful");
-        }
-      } catch (batchError) {
-        console.error("Batch update error:", batchError.response ? batchError.response.data : batchError);
-        batchUpdateSuccessful = false;
-      }
-      
-      // Step 3: Try to update student type
-      try {
-        if (editingStudent.type) {
-          console.log(`Attempting to update type for user ${editingStudent.user_id} with type ${editingStudent.type}`);
-          
-          // Use same format as in handleSubmit
-          await axios.post(`${API_BASE_URL}/student-types`, {
-            student_id: editingStudent.user_id,
-            type: editingStudent.type
-          });
-          
-          console.log("Type update successful");
-        }
-      } catch (typeError) {
-        console.error("Type update error:", typeError.response ? typeError.response.data : typeError);
-        typeUpdateSuccessful = false;
-      }
-      
-      // Provide appropriate message based on what succeeded
-      if (mainUpdateSuccessful && batchUpdateSuccessful && typeUpdateSuccessful) {
-        alert('Student updated successfully!');
-      } else if (mainUpdateSuccessful) {
-        if (!batchUpdateSuccessful && !typeUpdateSuccessful) {
-          alert('Student basic information updated successfully, but there were issues updating both batch and type information.');
-        } else if (!batchUpdateSuccessful) {
-          alert('Student basic information updated successfully, but there was an issue updating the batch information.');
-        } else {
-          alert('Student basic information updated successfully, but there was an issue updating the type information.');
-        }
-      }
-      
-      // Reload the page regardless of batch/type update success
-      window.location.reload();
-      
-    } catch (error) {
-      console.error('Error updating student:', error);
-      
-      if (error.response && error.response.data) {
-        const errorMessage = error.response.data.message || "Unknown server error";
-        alert(`Error updating student: ${errorMessage}`);
-      } else if (error.request) {
-        alert("Error updating student: No response from server. Please check your connection.");
-      } else {
-        alert(`Error updating student: ${error.message || "Unknown error"}`);
-      }
-    }
+  // Submit handler for updating a student
+const handleEditSubmit = async (e) => {
+  e.preventDefault();
+  
+  // Basic validation for essential fields
+  if (!editingStudent.name || !editingStudent.email || !editingStudent.phone_number || 
+      !editingStudent.status) {
+    alert("Please fill in all required fields: Name, Email, Phone Number, and Status.");
+    return;
+  }
+  
+  // Validate batch and type if they're required in your application
+  if (!editingStudent.batch_id) {
+    alert("Please select a batch for the student.");
+    return;
+  }
+  
+  if (!editingStudent.type) {
+    alert("Please select a student type.");
+    return;
+  }
+  
+  // Format data for API submission
+  const studentData = {
+    name: editingStudent.name,
+    email: editingStudent.email,
+    phone_number: editingStudent.phone_number,
+    role_id: 2,
+    status: editingStudent.status,
+    gender: editingStudent.gender || "",
+    present_class: editingStudent.present_class || "",
+    date_of_admission: formatDateForAPI(editingStudent.date_of_admission),
+    date_of_birth: formatDateForAPI(editingStudent.date_of_birth),
+    total_course_fees: editingStudent.total_course_fees ? parseFloat(editingStudent.total_course_fees) : 0,
+    father_name: editingStudent.father_name || "",
+    mother_name: editingStudent.mother_name || "",
+    full_address: editingStudent.full_address || "",
+    child_aadhar_number: editingStudent.child_aadhar_number || "",
+    mother_aadhar_number: editingStudent.mother_aadhar_number || "",
+    father_aadhar_number: editingStudent.father_aadhar_number || "",
+    permanent_education_number: editingStudent.permanent_education_number || "",
+    student_registration_number: editingStudent.student_registration_number || "",
+    previous_school_info: editingStudent.previous_school_info || "",
+    state: editingStudent.state || ""
   };
+  
+  console.log("Data being submitted to API:", studentData);
+  
+  // Flag to track overall success
+  let mainUpdateSuccessful = false;
+  
+  try {
+    // Step 1: Update student's basic info
+    const response = await axios.put(`${API_BASE_URL}/users/user/${editingStudent.user_id}`, studentData);
+    console.log("API Response:", response.data);
+    mainUpdateSuccessful = true;
+    
+    // Track success of each step
+    let batchUpdateSuccessful = true;
+    let typeUpdateSuccessful = true;
+    
+    // Step 2: Try to update batch information using the new API endpoint
+    try {
+      // Find the original batch ID from the students array
+      const originalStudent = students.find(s => s.user_id === editingStudent.user_id);
+      const originalBatchId = originalStudent ? originalStudent.batch_id : null;
+      
+      if (editingStudent.batch_id && originalBatchId !== editingStudent.batch_id) {
+        console.log(`Attempting to update batch for user ${editingStudent.user_id} from ${originalBatchId} to ${editingStudent.batch_id}`);
+        
+        await axios.put(`${API_BASE_URL}/studentBatches/update`, {
+          user_id: editingStudent.user_id,
+          old_batch_id: originalBatchId,
+          new_batch_id: editingStudent.batch_id
+        });
+        
+        console.log("Batch update successful");
+      }
+    } catch (batchError) {
+      console.error("Batch update error:", batchError.response ? batchError.response.data : batchError);
+      batchUpdateSuccessful = false;
+    }
+    
+    // Step 3: Try to update student type
+    try {
+      if (editingStudent.type) {
+        console.log(`Attempting to update type for user ${editingStudent.user_id} with type ${editingStudent.type}`);
+        
+        await axios.post(`${API_BASE_URL}/student-types`, {
+          student_id: editingStudent.user_id,
+          type: editingStudent.type
+        });
+        
+        console.log("Type update successful");
+      }
+    } catch (typeError) {
+      console.error("Type update error:", typeError.response ? typeError.response.data : typeError);
+      typeUpdateSuccessful = false;
+    }
+    
+    // Provide appropriate message based on what succeeded
+    if (mainUpdateSuccessful && batchUpdateSuccessful && typeUpdateSuccessful) {
+      alert('Student updated successfully!');
+    } else if (mainUpdateSuccessful) {
+      if (!batchUpdateSuccessful && !typeUpdateSuccessful) {
+        alert('Student basic information updated successfully, but there were issues updating both batch and type information.');
+      } else if (!batchUpdateSuccessful) {
+        alert('Student basic information updated successfully, but there was an issue updating the batch information.');
+      } else {
+        alert('Student basic information updated successfully, but there was an issue updating the type information.');
+      }
+    }
+    
+    // Reload the page regardless of batch/type update success
+    window.location.reload();
+    
+  } catch (error) {
+    console.error('Error updating student:', error);
+    
+    if (error.response && error.response.data) {
+      const errorMessage = error.response.data.message || "Unknown server error";
+      alert(`Error updating student: ${errorMessage}`);
+    } else if (error.request) {
+      alert("Error updating student: No response from server. Please check your connection.");
+    } else {
+      alert(`Error updating student: ${error.message || "Unknown error"}`);
+    }
+  }
+};
   
   // Filter students based on search term and filters
   const filteredStudents = useMemo(() => {
