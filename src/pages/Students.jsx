@@ -54,7 +54,12 @@ const Students = () => {
   };
   
   const [newStudent, setNewStudent] = useState(emptyStudent);
-  
+  const [passwordData, setPasswordData] = useState({
+    new_password: '',
+    confirm_password: ''
+  });
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
   // Base URL for API endpoints
   const API_BASE_URL = "https://apistudents.sainikschoolcadet.com/api";
 
@@ -273,7 +278,53 @@ const Students = () => {
       [name]: value,
     }));
   };
-
+  const handlePasswordChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordData({
+      ...passwordData,
+      [name]: value
+    });
+  };
+  
+  // Add this function to handle password submission
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Reset messages
+    setPasswordError('');
+    setPasswordSuccess('');
+    
+    // Validate password
+    if (!passwordData.new_password) {
+      setPasswordError('New password is required');
+      return;
+    }
+    
+    if (passwordData.new_password !== passwordData.confirm_password) {
+      setPasswordError('Passwords do not match');
+      return;
+    }
+    
+    try {
+      // Make API call to change password
+      await axios.put(`${API_BASE_URL}/users/user/${editingStudent.user_id}/change-password`, {
+        new_password: passwordData.new_password
+      });
+      
+      // Show success message
+      setPasswordSuccess('Password changed successfully');
+      
+      // Reset password fields
+      setPasswordData({
+        new_password: '',
+        confirm_password: ''
+      });
+      
+    } catch (error) {
+      console.error('Error changing password:', error);
+      setPasswordError('Failed to change password. Please try again.');
+    }
+  };
   // Handler for edit button click
   const handleEditClick = async (userId) => {
     setIsLoading(true);
@@ -1278,360 +1329,417 @@ const handleEditSubmit = async (e) => {
 
       {/* Edit Student Modal */}
       {showEditModal && editingStudent && (
-        <div className="fixed inset-0 z-50 overflow-auto bg-gray-500 bg-opacity-75 flex items-center justify-center">
-          <div className="bg-white rounded-lg max-w-4xl w-full p-6 max-h-screen overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">Edit Student: {editingStudent.name}</h2>
-              <button
-                onClick={() => setShowEditModal(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <span className="text-2xl">&times;</span>
-              </button>
+  <div className="fixed inset-0 z-50 overflow-auto bg-gray-500 bg-opacity-75 flex items-center justify-center">
+    <div className="bg-white rounded-lg max-w-4xl w-full p-6 max-h-screen overflow-y-auto">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Edit Student: {editingStudent.name}</h2>
+        <button
+          onClick={() => setShowEditModal(false)}
+          className="text-gray-500 hover:text-gray-700"
+        >
+          <span className="text-2xl">&times;</span>
+        </button>
+      </div>
+      
+      <form onSubmit={handleEditSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Basic Information Section */}
+        <div className="bg-blue-50 p-4 rounded-lg col-span-2">
+          <h3 className="text-lg font-semibold mb-3 text-blue-800">Basic Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-base font-medium text-gray-700 mb-1">
+                Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="name"
+                value={editingStudent.name}
+                onChange={handleEditChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                required
+              />
             </div>
             
-            <form onSubmit={handleEditSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Basic Information Section */}
-              <div className="bg-blue-50 p-4 rounded-lg col-span-2">
-                <h3 className="text-lg font-semibold mb-3 text-blue-800">Basic Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-base font-medium text-gray-700 mb-1">
-                      Name <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={editingStudent.name}
-                      onChange={handleEditChange}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-base font-medium text-gray-700 mb-1">
-                      Email <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={editingStudent.email}
-                      onChange={handleEditChange}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-base font-medium text-gray-700 mb-1">
-                      Phone Number <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="phone_number"
-                      value={editingStudent.phone_number}
-                      onChange={handleEditChange}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-base font-medium text-gray-700 mb-1">
-                      Gender <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      name="gender"
-                      value={editingStudent.gender}
-                      onChange={handleEditChange}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      required
-                    >
-                      <option value="">Select Gender</option>
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-base font-medium text-gray-700 mb-1">
-                      Status <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      name="status"
-                      value={editingStudent.status}
-                      onChange={handleEditChange}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      required
-                    >
-                      <option value="active">Active</option>
-                      <option value="inactive">Inactive</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Academic Information Section */}
-              <div className="bg-green-50 p-4 rounded-lg col-span-2">
-                <h3 className="text-lg font-semibold mb-3 text-green-800">Academic Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-base font-medium text-gray-700 mb-1">
-                      Batch <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      name="batch_id"
-                      value={editingStudent.batch_id || ""}
-                      onChange={handleEditChange}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      required
-                    >
-                      <option value="">Select Batch</option>
-                      {batches.map((batch) => (
-                        <option key={batch.batch_id} value={batch.batch_id}>
-                          {batch.batch_name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-base font-medium text-gray-700 mb-1">
-                      Student Type <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      name="type"
-                      value={editingStudent.type || ""}
-                      onChange={handleEditChange}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      required
-                    >
-                      <option value="">Select Type</option>
-                      <option value="online">Online</option>
-                      <option value="dayboarder">Day Boarder</option>
-                      <option value="hosteller">Hosteller</option>
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-base font-medium text-gray-700 mb-1">
-                      Present Class
-                    </label>
-                    <input
-                      type="text"
-                      name="present_class"
-                      value={editingStudent.present_class || ""}
-                      onChange={handleEditChange}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-base font-medium text-gray-700 mb-1">
-                      Total Course Fees <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="number"
-                      name="total_course_fees"
-                      value={editingStudent.total_course_fees || ""}
-                      onChange={handleEditChange}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-base font-medium text-gray-700 mb-1">
-                      Date of Admission
-                    </label>
-                    <input
-                      type="date"
-                      name="date_of_admission"
-                      value={editingStudent.date_of_admission || ""}
-                      onChange={handleEditChange}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-base font-medium text-gray-700 mb-1">
-                      Date of Birth
-                    </label>
-                    <input
-                      type="date"
-                      name="date_of_birth"
-                      value={editingStudent.date_of_birth || ""}
-                      onChange={handleEditChange}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              {/* Personal Details Section */}
-              <div className="bg-amber-50 p-4 rounded-lg col-span-2">
-                <h3 className="text-lg font-semibold mb-3 text-amber-800">Personal Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-base font-medium text-gray-700 mb-1">
-                      Father's Name
-                    </label>
-                    <input
-                      type="text"
-                      name="father_name"
-                      value={editingStudent.father_name || ""}
-                      onChange={handleEditChange}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-base font-medium text-gray-700 mb-1">
-                      Mother's Name
-                    </label>
-                    <input
-                      type="text"
-                      name="mother_name"
-                      value={editingStudent.mother_name || ""}
-                      onChange={handleEditChange}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-base font-medium text-gray-700 mb-1">
-                      State
-                    </label>
-                    <input
-                      type="text"
-                      name="state"
-                      value={editingStudent.state || ""}
-                      onChange={handleEditChange}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                  
-                  <div className="col-span-2">
-                    <label className="block text-base font-medium text-gray-700 mb-1">
-                      Full Address
-                    </label>
-                    <textarea
-                      name="full_address"
-                      value={editingStudent.full_address || ""}
-                      onChange={handleEditChange}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      rows="3"
-                    ></textarea>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Documents Section */}
-              <div className="bg-purple-50 p-4 rounded-lg col-span-2">
-                <h3 className="text-lg font-semibold mb-3 text-purple-800">Documents & IDs</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-base font-medium text-gray-700 mb-1">
-                      Child Aadhar Number
-                    </label>
-                    <input
-                      type="text"
-                      name="child_aadhar_number"
-                      value={editingStudent.child_aadhar_number || ""}
-                      onChange={handleEditChange}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-base font-medium text-gray-700 mb-1">
-                      Father Aadhar Number
-                    </label>
-                    <input
-                      type="text"
-                      name="father_aadhar_number"
-                      value={editingStudent.father_aadhar_number || ""}
-                      onChange={handleEditChange}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-base font-medium text-gray-700 mb-1">
-                      Mother Aadhar Number
-                    </label>
-                    <input
-                      type="text"
-                      name="mother_aadhar_number"
-                      value={editingStudent.mother_aadhar_number || ""}
-                      onChange={handleEditChange}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-base font-medium text-gray-700 mb-1">
-                      Permanent Education Number
-                    </label>
-                    <input
-                      type="text"
-                      name="permanent_education_number"
-                      value={editingStudent.permanent_education_number || ""}
-                      onChange={handleEditChange}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-base font-medium text-gray-700 mb-1">
-                      Student Registration Number
-                    </label>
-                    <input
-                      type="text"
-                      name="student_registration_number"
-                      value={editingStudent.student_registration_number || ""}
-                      onChange={handleEditChange}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                  
-                  <div className="col-span-2">
-                    <label className="block text-base font-medium text-gray-700 mb-1">
-                      Previous School Info
-                    </label>
-                    <textarea
-                      name="previous_school_info"
-                      value={editingStudent.previous_school_info || ""}
-                      onChange={handleEditChange}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      rows="3"
-                    ></textarea>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Form Actions */}
-              <div className="col-span-2 flex justify-center gap-4 mt-6">
-                <button
-                  type="submit"
-                  className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition duration-200"
-                >
-                  Update Student
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowEditModal(false)}
-                  className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-6 rounded-lg transition duration-200"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
+            <div>
+              <label className="block text-base font-medium text-gray-700 mb-1">
+                Email <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="email"
+                name="email"
+                value={editingStudent.email}
+                onChange={handleEditChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                required
+              />
+            </div>
+            
+            <div>
+              <label className="block text-base font-medium text-gray-700 mb-1">
+                Phone Number <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="phone_number"
+                value={editingStudent.phone_number}
+                onChange={handleEditChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                required
+              />
+            </div>
+            
+            <div>
+              <label className="block text-base font-medium text-gray-700 mb-1">
+                Gender <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="gender"
+                value={editingStudent.gender}
+                onChange={handleEditChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                required
+              >
+                <option value="">Select Gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-base font-medium text-gray-700 mb-1">
+                Status <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="status"
+                value={editingStudent.status}
+                onChange={handleEditChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                required
+              >
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </div>
           </div>
         </div>
-      )}
+        
+        {/* Academic Information Section */}
+        <div className="bg-green-50 p-4 rounded-lg col-span-2">
+          <h3 className="text-lg font-semibold mb-3 text-green-800">Academic Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-base font-medium text-gray-700 mb-1">
+                Batch <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="batch_id"
+                value={editingStudent.batch_id || ""}
+                onChange={handleEditChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                required
+              >
+                <option value="">Select Batch</option>
+                {batches.map((batch) => (
+                  <option key={batch.batch_id} value={batch.batch_id}>
+                    {batch.batch_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-base font-medium text-gray-700 mb-1">
+                Student Type <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="type"
+                value={editingStudent.type || ""}
+                onChange={handleEditChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                required
+              >
+                <option value="">Select Type</option>
+                <option value="online">Online</option>
+                <option value="dayboarder">Day Boarder</option>
+                <option value="hosteller">Hosteller</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-base font-medium text-gray-700 mb-1">
+                Present Class
+              </label>
+              <input
+                type="text"
+                name="present_class"
+                value={editingStudent.present_class || ""}
+                onChange={handleEditChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-base font-medium text-gray-700 mb-1">
+                Total Course Fees <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                name="total_course_fees"
+                value={editingStudent.total_course_fees || ""}
+                onChange={handleEditChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                required
+              />
+            </div>
+            
+            <div>
+              <label className="block text-base font-medium text-gray-700 mb-1">
+                Date of Admission
+              </label>
+              <input
+                type="date"
+                name="date_of_admission"
+                value={editingStudent.date_of_admission || ""}
+                onChange={handleEditChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-base font-medium text-gray-700 mb-1">
+                Date of Birth
+              </label>
+              <input
+                type="date"
+                name="date_of_birth"
+                value={editingStudent.date_of_birth || ""}
+                onChange={handleEditChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+          </div>
+        </div>
+        
+        {/* Personal Details Section */}
+        <div className="bg-amber-50 p-4 rounded-lg col-span-2">
+          <h3 className="text-lg font-semibold mb-3 text-amber-800">Personal Details</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-base font-medium text-gray-700 mb-1">
+                Father's Name
+              </label>
+              <input
+                type="text"
+                name="father_name"
+                value={editingStudent.father_name || ""}
+                onChange={handleEditChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-base font-medium text-gray-700 mb-1">
+                Mother's Name
+              </label>
+              <input
+                type="text"
+                name="mother_name"
+                value={editingStudent.mother_name || ""}
+                onChange={handleEditChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-base font-medium text-gray-700 mb-1">
+                State
+              </label>
+              <input
+                type="text"
+                name="state"
+                value={editingStudent.state || ""}
+                onChange={handleEditChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            
+            <div className="col-span-2">
+              <label className="block text-base font-medium text-gray-700 mb-1">
+                Full Address
+              </label>
+              <textarea
+                name="full_address"
+                value={editingStudent.full_address || ""}
+                onChange={handleEditChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                rows="3"
+              ></textarea>
+            </div>
+          </div>
+        </div>
+        
+        {/* Documents Section */}
+        <div className="bg-purple-50 p-4 rounded-lg col-span-2">
+          <h3 className="text-lg font-semibold mb-3 text-purple-800">Documents & IDs</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-base font-medium text-gray-700 mb-1">
+                Child Aadhar Number
+              </label>
+              <input
+                type="text"
+                name="child_aadhar_number"
+                value={editingStudent.child_aadhar_number || ""}
+                onChange={handleEditChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-base font-medium text-gray-700 mb-1">
+                Father Aadhar Number
+              </label>
+              <input
+                type="text"
+                name="father_aadhar_number"
+                value={editingStudent.father_aadhar_number || ""}
+                onChange={handleEditChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-base font-medium text-gray-700 mb-1">
+                Mother Aadhar Number
+              </label>
+              <input
+                type="text"
+                name="mother_aadhar_number"
+                value={editingStudent.mother_aadhar_number || ""}
+                onChange={handleEditChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-base font-medium text-gray-700 mb-1">
+                Permanent Education Number
+              </label>
+              <input
+                type="text"
+                name="permanent_education_number"
+                value={editingStudent.permanent_education_number || ""}
+                onChange={handleEditChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-base font-medium text-gray-700 mb-1">
+                Student Registration Number
+              </label>
+              <input
+                type="text"
+                name="student_registration_number"
+                value={editingStudent.student_registration_number || ""}
+                onChange={handleEditChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            
+            <div className="col-span-2">
+              <label className="block text-base font-medium text-gray-700 mb-1">
+                Previous School Info
+              </label>
+              <textarea
+                name="previous_school_info"
+                value={editingStudent.previous_school_info || ""}
+                onChange={handleEditChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                rows="3"
+              ></textarea>
+            </div>
+          </div>
+        </div>
+        
+        {/* Password Change Section - NEW */}
+        <div className="bg-red-50 p-4 rounded-lg col-span-2">
+          <h3 className="text-lg font-semibold mb-3 text-red-800">Change Password</h3>
+          
+          {/* Success message */}
+          {passwordSuccess && (
+            <div className="mb-4 p-2 bg-green-100 text-green-700 rounded">
+              {passwordSuccess}
+            </div>
+          )}
+          
+          {/* Error message */}
+          {passwordError && (
+            <div className="mb-4 p-2 bg-red-100 text-red-700 rounded">
+              {passwordError}
+            </div>
+          )}
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-base font-medium text-gray-700 mb-1">
+                New Password
+              </label>
+              <input
+                type="password"
+                name="new_password"
+                value={passwordData.new_password}
+                onChange={handlePasswordChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-base font-medium text-gray-700 mb-1">
+                Confirm New Password
+              </label>
+              <input
+                type="password"
+                name="confirm_password"
+                value={passwordData.confirm_password}
+                onChange={handlePasswordChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+          </div>
+          
+          <div className="mt-4">
+            <button
+              type="button"
+              onClick={handlePasswordSubmit}
+              className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md transition duration-200"
+            >
+              Change Password
+            </button>
+          </div>
+        </div>
+        
+        {/* Form Actions */}
+        <div className="col-span-2 flex justify-center gap-4 mt-6">
+          <button
+            type="submit"
+            className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition duration-200"
+          >
+            Update Student
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowEditModal(false)}
+            className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-6 rounded-lg transition duration-200"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
     </div>
   );
 };
