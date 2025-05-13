@@ -294,26 +294,33 @@ useEffect(() => {
         }
     };
     
-
     const handleEditUser = async (e) => {
         e.preventDefault();
     
         console.log("Selected User Data:", selectedUser);  // Debugging log
+        console.log("New User Data:", newUser);  // Added debugging for form data
         console.log("Selected Subject from Dropdown:", selectedSubject);  // Debugging log
     
         try {
+            // Make sure we have a phone number value
+            if (!newUser.phone_number) {
+                console.warn("Phone number missing in form, using default");
+                newUser.phone_number = "0000000000"; // Default fallback
+            }
+    
             // ✅ Update user's basic info
             console.log("Updating user:", newUser);
-            console.log("New Pass",newUser.password);
+            console.log("New Pass", newUser.password);
             const userUpdateResponse = await axios.put(
                 `https://apistudents.sainikschoolcadet.com/api/users/user/${selectedUser.user_id}`,
                 {
-                  name: newUser.name,
-                  email: newUser.email,
-                  password_hash: newUser.password || undefined, // Correct field name
-                  status: newUser.status
+                    name: newUser.name,
+                    email: newUser.email,
+                    password_hash: newUser.password || undefined,
+                    phone_number: newUser.phone_number, // Use phone number from the form
+                    status: newUser.status
                 }
-              );
+            );
               
             console.log('User updated:', userUpdateResponse.data);
     
@@ -391,10 +398,11 @@ useEffect(() => {
             window.location.reload();
             closeEditModal();
         } catch (error) {
-            console.error('Error updating user:', error.response?.data || error.message);
+            console.error('Error updating user:', error);
+            console.error('Error details:', error.response?.data || error.message);
+            alert('Failed to update user. Please check console for details.');
         }
     };
-    
     
     
     
