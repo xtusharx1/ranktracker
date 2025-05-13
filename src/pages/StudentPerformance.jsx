@@ -260,7 +260,7 @@ const StudentPerformance = () => {
               >
                 {students.map(student => (
                   <MenuItem key={student.user_id} value={student.user_id}>
-                    {student.name}
+                    {student.name} (Admission No.: {student.user_id})
                   </MenuItem>
                 ))}
               </Select>

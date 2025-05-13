@@ -1,16 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { Bar, Pie, Line } from 'react-chartjs-2';
 import 'chart.js/auto';
-import { Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, CircularProgress, Card, MenuItem, FormControl, Select, InputLabel, Container, Box, Chip, Grid, Divider } from '@mui/material';
+import { Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, CircularProgress, Card, MenuItem, FormControl, Select, InputLabel, Container, Box, Chip, Grid, Divider, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
 import SchoolIcon from '@mui/icons-material/School';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import AssessmentIcon from '@mui/icons-material/Assessment';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import CloseIcon from '@mui/icons-material/Close';
+import PersonIcon from '@mui/icons-material/Person';
 
 const ClassPerformance = () => {
   const [batches, setBatches] = useState([]);
   const [selectedBatch, setSelectedBatch] = useState('');
   const [testDetails, setTestDetails] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [openReportDialog, setOpenReportDialog] = useState(false);
+  const [selectedTestDetails, setSelectedTestDetails] = useState(null);
+  const [studentDetails, setStudentDetails] = useState([]);
 
   useEffect(() => {
     const fetchBatchDetails = async () => {
@@ -116,6 +122,44 @@ const ClassPerformance = () => {
       return 'N/A';
     }
     return typeof value === 'number' ? value.toFixed(decimalPlaces) : value;
+  };
+
+  const handleOpenReportDialog = async (testDetail) => {
+    setSelectedTestDetails(testDetail);
+    
+    // Fetch student details for each record
+    const studentDetailsPromises = testDetail.records.map(async (record) => {
+      try {
+        const response = await fetch(`https://apistudents.sainikschoolcadet.com/api/users/user/${record.user_id}`);
+        const userData = await response.json();
+        
+        // Calculate rank
+        const allScores = [...testDetail.records].sort((a, b) => b.marks_obtained - a.marks_obtained);
+        const rank = allScores.findIndex(r => r.user_id === record.user_id) + 1;
+        
+        return {
+          ...record,
+          name: userData.user?.name || `Student ${record.user_id}`,
+          rank
+        };
+      } catch (error) {
+        console.error("Error fetching student details:", error);
+        return {
+          ...record,
+          name: `Student ${record.user_id}`,
+          rank: 'N/A'
+        };
+      }
+    });
+    
+    const detailedStudents = await Promise.all(studentDetailsPromises);
+    setStudentDetails(detailedStudents.sort((a, b) => a.rank - b.rank));
+    setOpenReportDialog(true);
+  };
+
+  const handleCloseReportDialog = () => {
+    setOpenReportDialog(false);
+    setSelectedTestDetails(null);
   };
 
   const batchOverview = getBatchOverview();
@@ -323,18 +367,19 @@ const ClassPerformance = () => {
               </Typography>
               <TableContainer component={Paper}>
                 <Table>
-                <TableHead>
-  <TableRow className="bg-gray-200 dark:bg-gray-700 border-b-2 border-gray-300">
-    <TableCell className="px-4 py-3 text-left text-gray-600 dark:text-gray-300 border border-gray-300">Test ID</TableCell>
-    <TableCell className="px-4 py-3 text-left text-gray-600 dark:text-gray-300 border border-gray-300">Test Name</TableCell>
-    <TableCell className="px-4 py-3 text-left text-gray-600 dark:text-gray-300 border border-gray-300">Subject</TableCell>
-    <TableCell className="px-4 py-3 text-left text-gray-600 dark:text-gray-300 border border-gray-300">Date</TableCell>
-    <TableCell className="px-4 py-3 text-left text-gray-600 dark:text-gray-300 border border-gray-300">Highest</TableCell>
-    <TableCell className="px-4 py-3 text-left text-gray-600 dark:text-gray-300 border border-gray-300">Lowest</TableCell>
-    <TableCell className="px-4 py-3 text-left text-gray-600 dark:text-gray-300 border border-gray-300">Average</TableCell>
-    <TableCell className="px-4 py-3 text-left text-gray-600 dark:text-gray-300 border border-gray-300">Students</TableCell>
-  </TableRow>
-</TableHead>
+                  <TableHead>
+                    <TableRow className="bg-gray-200 dark:bg-gray-700 border-b-2 border-gray-300">
+                      <TableCell className="px-4 py-3 text-left text-gray-600 dark:text-gray-300 border border-gray-300">S No</TableCell>
+                      <TableCell className="px-4 py-3 text-left text-gray-600 dark:text-gray-300 border border-gray-300">Test Name</TableCell>
+                      <TableCell className="px-4 py-3 text-left text-gray-600 dark:text-gray-300 border border-gray-300">Subject</TableCell>
+                      <TableCell className="px-4 py-3 text-left text-gray-600 dark:text-gray-300 border border-gray-300">Date</TableCell>
+                      <TableCell className="px-4 py-3 text-left text-gray-600 dark:text-gray-300 border border-gray-300">Highest</TableCell>
+                      <TableCell className="px-4 py-3 text-left text-gray-600 dark:text-gray-300 border border-gray-300">Lowest</TableCell>
+                      <TableCell className="px-4 py-3 text-left text-gray-600 dark:text-gray-300 border border-gray-300">Average</TableCell>
+                      <TableCell className="px-4 py-3 text-left text-gray-600 dark:text-gray-300 border border-gray-300">Students</TableCell>
+                      <TableCell className="px-4 py-3 text-left text-gray-600 dark:text-gray-300 border border-gray-300">Action</TableCell>
+                    </TableRow>
+                  </TableHead>
 
                   <TableBody>
                     {testDetails.map((testDetail, index) => {
@@ -347,7 +392,7 @@ const ClassPerformance = () => {
                       
                       return (
                         <TableRow key={testDetail.testId} hover>
-                          <TableCell>{testDetail.testId}</TableCell>
+                          <TableCell>{index + 1}</TableCell>
                           <TableCell>{testDetail.testName}</TableCell>
                           <TableCell>{testDetail.subject}</TableCell>
                           <TableCell>{testDetail.date}</TableCell>
@@ -355,6 +400,16 @@ const ClassPerformance = () => {
                           <TableCell>{lowestScore}</TableCell>
                           <TableCell>{averageScore}</TableCell>
                           <TableCell>{testDetail.records.length}</TableCell>
+                          <TableCell>
+                            <IconButton 
+                              color="primary" 
+                              onClick={() => handleOpenReportDialog(testDetail)}
+                              aria-label="View student report"
+                              title="View Student Report Card"
+                            >
+                              <VisibilityIcon />
+                            </IconButton>
+                          </TableCell>
                         </TableRow>
                       );
                     })}
@@ -447,6 +502,78 @@ const ClassPerformance = () => {
             </Card>
           </>
         )}
+        
+        {/* Student Report Card Dialog */}
+        <Dialog 
+          open={openReportDialog} 
+          onClose={handleCloseReportDialog}
+          maxWidth="md"
+          fullWidth
+        >
+          <DialogTitle sx={{ backgroundColor: '#f5f5f5', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <PersonIcon sx={{ mr: 1 }} />
+              <Typography variant="h6">
+                Student Report: {selectedTestDetails?.testName} - {selectedTestDetails?.subject}
+              </Typography>
+            </Box>
+            <IconButton onClick={handleCloseReportDialog} size="small">
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent>
+            <Box sx={{ my: 2 }}>
+              <TableContainer component={Paper} sx={{ boxShadow: 2, borderRadius: 2, overflow: 'hidden' }}>
+                <Table>
+                  <TableHead>
+                    <TableRow sx={{ backgroundColor: '#1a237e' }}>
+                      <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>S No</TableCell>
+                      <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Name of Student</TableCell>
+                      <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Score</TableCell>
+                      <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Rank in Class</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {studentDetails.map((student, index) => (
+                      <TableRow key={student.user_id} sx={{ 
+                        '&:nth-of-type(odd)': { backgroundColor: '#f9f9f9' },
+                        '&:hover': { backgroundColor: '#f0f0f0' }
+                      }}>
+                        <TableCell>{index + 1}</TableCell>
+                        <TableCell sx={{ fontWeight: 'medium' }}>{student.name}</TableCell>
+                        <TableCell>
+                          <Chip 
+                            label={`${student.marks_obtained}/${selectedTestDetails?.totalMarks || 100}`} 
+                            sx={{ 
+                              backgroundColor: getPerformanceColor(student.marks_obtained, selectedTestDetails?.totalMarks || 100),
+                              color: 'white',
+                              fontWeight: 'bold'
+                            }} 
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Chip 
+                            label={`#${student.rank}`} 
+                            sx={{ 
+                              backgroundColor: student.rank <= 3 ? '#4caf50' : '#1a237e',
+                              color: 'white',
+                              fontWeight: 'bold'
+                            }} 
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseReportDialog} variant="contained" color="primary">
+              Close
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Container>
     </Box>
   );
