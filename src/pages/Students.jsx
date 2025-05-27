@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Header } from "../components";
 import axios from 'axios';
-
+import { useNavigate } from 'react-router-dom';
 const Students = () => {
   // State management
   const [students, setStudents] = useState([]);
@@ -9,7 +9,7 @@ const Students = () => {
   const [batchMapping, setBatchMapping] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+  const navigate = useNavigate();
   // Modal states
   const [showModal, setShowModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -269,7 +269,9 @@ const Students = () => {
       profile_picture: e.target.files[0],
     });
   };
-
+  const handleViewProfile = (userId) => {
+    navigate(`/profile/${userId}`);
+  };
   // Handler for edit form input changes
   const handleEditChange = (e) => {
     const { name, value } = e.target;
@@ -776,108 +778,116 @@ const handleEditSubmit = async (e) => {
             
             {/* Students table */}
             <div className="students-table overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th scope="col" className="px-4 py-3 text-left text-base font-medium text-gray-500 uppercase tracking-wider">
-                      S.No
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-left text-base font-medium text-gray-500 uppercase tracking-wider">
-                      Admn. No.
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-left text-base font-medium text-gray-500 uppercase tracking-wider">
-                      Name
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-left text-base font-medium text-gray-500 uppercase tracking-wider">
-                      Email
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-left text-base font-medium text-gray-500 uppercase tracking-wider">
-                      Phone Number
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-left text-base font-medium text-gray-500 uppercase tracking-wider">
-                      Batch Name
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-left text-base font-medium text-gray-500 uppercase tracking-wider">
-                      Added by
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-left text-base font-medium text-gray-500 uppercase tracking-wider">
-                      Type
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-left text-base font-medium text-gray-500 uppercase tracking-wider">
-                      Date of Admission
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-left text-base font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-center text-base font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {currentStudents.length > 0 ? (
-                    currentStudents.map((student, index) => (
-                      <tr key={student.user_id} className="hover:bg-gray-50 transition duration-150">
-                        <td className="px-4 py-3 whitespace-nowrap text-base text-gray-500 text-center">
-                          {indexOfFirstStudent + index + 1}
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-base text-gray-500">
-                          {student.user_id}
-                        </td>
-                        <td className="px-4 py-3">
-  <div className="text-base font-medium text-gray-900 max-w-[150px] break-words">
-    {student.name}
-  </div>
-</td>
-                        <td className="px-4 py-3 whitespace-nowrap text-base text-gray-500">
-                          {student.email}
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-base text-gray-500">
-                          {student.phone_number}
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-base text-gray-500">
-                          {student.batch_name}
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-base text-gray-500">
-                          {student.counselor_name || "No Counselor"}
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          <span className={`px-2 py-1 inline-flex text-base leading-5 font-semibold rounded-full
-                            ${student.type === 'online' ? 'bg-blue-100 text-blue-800' : 
-                              student.type === 'dayboarder' ? 'bg-yellow-100 text-yellow-800' :
-                              student.type === 'hosteller' ? 'bg-green-100 text-green-800' :
-                              'bg-gray-100 text-gray-800'}`}>
-                            {student.type ? student.type.charAt(0).toUpperCase() + student.type.slice(1) : "Not Defined"}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-base text-gray-500">
-                          {student.date_of_admission}
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          <span className={`px-2 py-1 inline-flex text-base leading-5 font-semibold rounded-full
-                            ${student.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                            {student.status.charAt(0).toUpperCase() + student.status.slice(1)}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-center text-base font-medium">
-                          <button
-                            onClick={() => handleEditClick(student.user_id)}
-                            className="bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-600 transition duration-200"
-                          >
-                            Edit
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="11" className="px-6 py-4 text-center text-base text-gray-500">
-                        {isLoading ? "Loading student data..." : "No students found matching the criteria."}
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+            <table className="min-w-full divide-y divide-gray-200">
+  <thead className="bg-gray-50">
+    <tr>
+      <th scope="col" className="px-4 py-3 text-left text-base font-medium text-gray-500 uppercase tracking-wider">
+        S.No
+      </th>
+      <th scope="col" className="px-4 py-3 text-left text-base font-medium text-gray-500 uppercase tracking-wider">
+        Admn. No.
+      </th>
+      <th scope="col" className="px-4 py-3 text-left text-base font-medium text-gray-500 uppercase tracking-wider">
+        Name
+      </th>
+      <th scope="col" className="px-4 py-3 text-left text-base font-medium text-gray-500 uppercase tracking-wider">
+        Email
+      </th>
+      <th scope="col" className="px-4 py-3 text-left text-base font-medium text-gray-500 uppercase tracking-wider">
+        Phone Number
+      </th>
+      <th scope="col" className="px-4 py-3 text-left text-base font-medium text-gray-500 uppercase tracking-wider">
+        Batch Name
+      </th>
+      <th scope="col" className="px-4 py-3 text-left text-base font-medium text-gray-500 uppercase tracking-wider">
+        Added by
+      </th>
+      <th scope="col" className="px-4 py-3 text-left text-base font-medium text-gray-500 uppercase tracking-wider">
+        Type
+      </th>
+      <th scope="col" className="px-4 py-3 text-left text-base font-medium text-gray-500 uppercase tracking-wider">
+        Date of Admission
+      </th>
+      <th scope="col" className="px-4 py-3 text-left text-base font-medium text-gray-500 uppercase tracking-wider">
+        Status
+      </th>
+      <th scope="col" className="px-4 py-3 text-center text-base font-medium text-gray-500 uppercase tracking-wider">
+        Actions
+      </th>
+    </tr>
+  </thead>
+  <tbody className="bg-white divide-y divide-gray-200">
+    {currentStudents.length > 0 ? (
+      currentStudents.map((student, index) => (
+        <tr key={student.user_id} className="hover:bg-gray-50 transition duration-150">
+          <td className="px-4 py-3 whitespace-nowrap text-base text-gray-500 text-center">
+            {indexOfFirstStudent + index + 1}
+          </td>
+          <td className="px-4 py-3 whitespace-nowrap text-base text-gray-500">
+            {student.user_id}
+          </td>
+          <td className="px-4 py-3">
+            <div className="text-base font-medium text-gray-900 max-w-[150px] break-words">
+              {student.name}
+            </div>
+          </td>
+          <td className="px-4 py-3 whitespace-nowrap text-base text-gray-500">
+            {student.email}
+          </td>
+          <td className="px-4 py-3 whitespace-nowrap text-base text-gray-500">
+            {student.phone_number}
+          </td>
+          <td className="px-4 py-3 whitespace-nowrap text-base text-gray-500">
+            {student.batch_name}
+          </td>
+          <td className="px-4 py-3 whitespace-nowrap text-base text-gray-500">
+            {student.counselor_name || "No Counselor"}
+          </td>
+          <td className="px-4 py-3 whitespace-nowrap">
+            <span className={`px-2 py-1 inline-flex text-base leading-5 font-semibold rounded-full
+              ${student.type === 'online' ? 'bg-blue-100 text-blue-800' : 
+                student.type === 'dayboarder' ? 'bg-yellow-100 text-yellow-800' :
+                student.type === 'hosteller' ? 'bg-green-100 text-green-800' :
+                'bg-gray-100 text-gray-800'}`}>
+              {student.type ? student.type.charAt(0).toUpperCase() + student.type.slice(1) : "Not Defined"}
+            </span>
+          </td>
+          <td className="px-4 py-3 whitespace-nowrap text-base text-gray-500">
+            {student.date_of_admission}
+          </td>
+          <td className="px-4 py-3 whitespace-nowrap">
+            <span className={`px-2 py-1 inline-flex text-base leading-5 font-semibold rounded-full
+              ${student.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+              {student.status.charAt(0).toUpperCase() + student.status.slice(1)}
+            </span>
+          </td>
+          <td className="px-4 py-3 whitespace-nowrap text-center text-base font-medium">
+            <div className="flex justify-center space-x-2">
+              <button
+                onClick={() => handleEditClick(student.user_id)}
+                className="bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-600 transition duration-200"
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => handleViewProfile(student.user_id)}
+                className="bg-green-500 text-white py-1 px-3 rounded hover:bg-green-600 transition duration-200"
+              >
+                View Profile
+              </button>
+            </div>
+          </td>
+        </tr>
+      ))
+    ) : (
+      <tr>
+        <td colSpan="11" className="px-6 py-4 text-center text-base text-gray-500">
+          {isLoading ? "Loading student data..." : "No students found matching the criteria."}
+        </td>
+      </tr>
+    )}
+  </tbody>
+</table>
             </div>
             
             {/* Pagination */}

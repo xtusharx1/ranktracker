@@ -96,43 +96,130 @@ const ViewAttendance = () => {
     return new Date(year, month, 0).getDate();
   };
 
-  const renderTableHeader = () => {
-    const days = getDaysInMonth(year, monthNum);
-    return (
-      <tr>
-        <th style={headerCellStyle}>S.No</th>
-        <th style={{...headerCellStyle, textAlign: 'left', minWidth: '180px', position: 'sticky', left: '40px', zIndex: 2}}>Student Name</th>
-        {[...Array(days)].map((_, i) => (
-          <th key={i} style={{...headerCellStyle, width: '40px'}}>{i + 1}</th>
-        ))}
-      </tr>
-    );
+  // Add this to your CSS or style definitions
+const nameColumnStyle = {
+  minWidth: '220px',
+  width: '220px',
+  textOverflow: 'unset',
+  overflow: 'visible',
+  whiteSpace: 'normal',
+  wordBreak: 'break-word',
+  position: 'sticky',
+  left: '40px',
+  zIndex: 2,
+  backgroundColor: '#f9fafb', // Match your header background
+  boxShadow: '2px 0 5px rgba(0,0,0,0.1)' // Optional: adds shadow to right edge
+};
+
+// Responsive wrapper styles
+const tableContainerStyle = {
+  width: '100%',
+  overflowX: 'auto',
+  overflowY: 'auto',
+  maxHeight: '75vh', // Adjust based on your layout
+  position: 'relative'
+};
+
+// Fixed width for date columns
+const dateColumnStyle = {
+  width: '35px',
+  minWidth: '35px',
+  padding: '4px',
+  textAlign: 'center'
+};
+
+// Updated renderTableHeader function
+const renderTableHeader = () => {
+  const days = getDaysInMonth(year, monthNum);
+  
+  // Get day of week for each date
+  const getDayOfWeek = (day) => {
+    const date = new Date(year, monthNum - 1, day);
+    return date.toLocaleDateString('en-US', { weekday: 'short' }).substring(0, 1);
   };
+  
+  return (
+    <tr>
+      <th style={{
+        ...headerCellStyle, 
+        position: 'sticky', 
+        top: 0,
+        left: 0, 
+        zIndex: 3,
+        backgroundColor: '#f9fafb' // Match your header background
+      }}>S.No</th>
+      <th style={{
+        ...headerCellStyle,
+        ...nameColumnStyle, 
+        position: 'sticky',
+        top: 0,
+        textAlign: 'left',
+        zIndex: 3, // Higher z-index for header
+        backgroundColor: '#f9fafb' // Match your header background
+      }}>Student Name</th>
+      {[...Array(days)].map((_, i) => (
+        <th key={i} style={{
+          ...headerCellStyle, 
+          ...dateColumnStyle,
+          position: 'sticky',
+          top: 0,
+          backgroundColor: '#f9fafb'
+        }}>
+          <div>{i + 1}</div>
+          <div style={{ fontSize: '9px', color: '#666' }}>{getDayOfWeek(i + 1)}</div>
+        </th>
+      ))}
+    </tr>
+  );
+};
 
-  const renderTableBody = () => {
-    const days = getDaysInMonth(year, monthNum);
+// Updated renderTableBody function
+const renderTableBody = () => {
+  const days = getDaysInMonth(year, monthNum);
 
-    return students.map((student, index) => (
-      <tr key={student.user_id}>
-        <td style={{...indexCellStyle, position: 'sticky', left: 0, zIndex: 2}}>{index + 1}</td>
-        <td style={{...nameCellStyle, position: 'sticky', left: '40px', zIndex: 2}}>{student.name}</td>
-        {[...Array(days)].map((_, i) => {
-          const date = `${month}-${String(i + 1).padStart(2, '0')}`;
-          const record = attendanceData.find(r => r.user_id === student.user_id && r.attendance_date.startsWith(date));
-          const status = record?.status || '';
+  return students.map((student, index) => (
+    <tr key={student.user_id}>
+      <td style={{
+        ...indexCellStyle, 
+        position: 'sticky', 
+        left: 0, 
+        zIndex: 2,
+        backgroundColor: '#ffffff' // Match your cell background
+      }}>{index + 1}</td>
+      <td style={{
+        ...nameCellStyle,
+        ...nameColumnStyle,
+        backgroundColor: '#ffffff' // Match your cell background
+      }}>{student.name}</td>
+      {[...Array(days)].map((_, i) => {
+        const date = `${month}-${String(i + 1).padStart(2, '0')}`;
+        const record = attendanceData.find(r => r.user_id === student.user_id && r.attendance_date.startsWith(date));
+        const status = record?.status || '';
+        
+        // Highlight weekends with a light background
+        const isWeekend = () => {
+          const dayOfWeek = new Date(year, monthNum - 1, i + 1).getDay();
+          return dayOfWeek === 0 || dayOfWeek === 6; // 0 is Sunday, 6 is Saturday
+        };
+        
+        const cellBackground = status ? getStatusColor(status) : 
+                               isWeekend() ? '#f9f9f9' : '#ffffff';
+        
+        return (
+          <td key={i} style={{
+            ...dataCellStyle,
+            ...dateColumnStyle,
+            backgroundColor: cellBackground,
+          }}>
+            {status ? status.charAt(0) : '-'}
+          </td>
+        );
+      })}
+    </tr>
+  ));
+};
 
-          return (
-            <td key={i} style={{
-              ...dataCellStyle,
-              backgroundColor: getStatusColor(status),
-            }}>
-              {status ? status.charAt(0) : '-'}
-            </td>
-          );
-        })}
-      </tr>
-    ));
-  };
+
 
   const getStatusColor = (status) => {
     switch (status) {

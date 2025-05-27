@@ -23,7 +23,9 @@ import SchoolMap from './pages/SchoolMap';
 import ClassRecords from './pages/ClassRecord';
 import TeacherReports from './pages/TeacherReports';
 import Notice from './pages/Notice';
+import ProfileView from './pages/StudentProfileView'; // Add this import
 import path from 'path-browserify';
+
 const App = () => {
   const {
     activeMenu,
@@ -33,14 +35,14 @@ const App = () => {
     currentMode,
   } = useStateContext();
 
-  const [userRole, setUserRole] = useState(localStorage.getItem('role') || ''); // Initialize with role from localStorage or empty
-  const [isLoggedIn, setIsLoggedIn] = useState(!!userRole); // Check if user is logged in based on role
+  const [userRole, setUserRole] = useState(localStorage.getItem('role') || '');
+  const [isLoggedIn, setIsLoggedIn] = useState(!!userRole);
 
   useEffect(() => {
     if (userRole) {
-      setIsLoggedIn(true); // Set to true when userRole is set
+      setIsLoggedIn(true);
     } else {
-      setIsLoggedIn(false); // If there's no role, consider the user as logged out
+      setIsLoggedIn(false);
     }
   }, [userRole]);
 
@@ -60,10 +62,11 @@ const App = () => {
       { path: '/view-attendance', element: <ViewAttendance /> },
       { path: '/teacher-reports', element:<TeacherReports/>},
       { path: '/notice', element: <Notice /> }, 
-      //{ path: '/attendance', element: <Attendance /> },  
       { path: '/class-performance', element: <ClassPerformance /> },
       {path: '/school-map', element: <SchoolMap />},
-      {path: '/class-records', element: <ClassRecords />}
+      {path: '/class-records', element: <ClassRecords />},
+      {path: '/profile/:userId', element: <ProfileView />}, // Add this line
+      {path: '/profile', element: <ProfileView />}, // Add this line for current user profile
     ],
     teacher: [
       { path: '/', element: <Dashboard /> },
@@ -75,7 +78,9 @@ const App = () => {
       { path: '/class-performance', element: <ClassPerformance /> },
       { path: '/view-attendance', element: <ViewAttendance /> },
       { path: '/attendance', element: <Attendance /> },
-      {path: '/class-records', element: <ClassRecords />}
+      {path: '/class-records', element: <ClassRecords />},
+      {path: '/profile/:userId', element: <ProfileView />}, // Add this line
+      {path: '/profile', element: <ProfileView />}, // Add this line for current user profile
     ],
     counselor: [
       { path: '/', element: <Dashboard /> },
@@ -88,17 +93,16 @@ const App = () => {
       { path: '/notice', element: <Notice /> }, 
       { path: '/students', element: <Students /> },
       { path: '/view-attendance', element: <ViewAttendance /> },
+      {path: '/profile/:userId', element: <ProfileView />}, // Add this line
+      {path: '/profile', element: <ProfileView />}, // Add this line for current user profile
     ],
   };
 
   // Logout function
   const handleLogout = () => {
-    // Remove user-related data from localStorage
     localStorage.removeItem('role');
     localStorage.removeItem('name');
     localStorage.removeItem('email');
-
-    // Update the state and redirect to the login page
     setUserRole('');
     setIsLoggedIn(false);
   };
@@ -130,7 +134,6 @@ const App = () => {
                   {roleRoutes[userRole]?.map((route) => (
                     <Route key={route.path} path={route.path} element={route.element} />
                   ))}
-                  {/* Redirect to Dashboard if no route matches */}
                   <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
               </div>
@@ -139,7 +142,6 @@ const App = () => {
         ) : (
           <Routes>
             <Route path="/" element={<Login setUserRole={setUserRole} />} />
-            {/* You can also add other routes like signup or password reset here */}
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         )}
