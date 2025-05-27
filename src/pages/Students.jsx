@@ -270,8 +270,9 @@ const Students = () => {
     });
   };
   const handleViewProfile = (userId) => {
-    navigate(`/profile/${userId}`);
+    window.open(`/profile/${userId}`, '_blank');
   };
+  
   // Handler for edit form input changes
   const handleEditChange = (e) => {
     const { name, value } = e.target;
