@@ -1247,20 +1247,19 @@ const getResultStatus = (result) => {
         {/* Selected Student Details */}
         {selectedStudent && (
   <div
-    className="fixed inset-0 z-50 flex items-center justify-center bg-black transition-opacity duration-300 ease-out p-4 sm:p-6"
+    className="fixed inset-0 z-50 flex items-center justify-center bg-black transition-opacity duration-300 ease-out p-2"
     style={{
       opacity: '1',
       backgroundColor: 'rgba(0, 0, 0, 0.5)',
     }}
     onClick={(e) => {
-      // Close modal when clicking on backdrop
       if (e.target === e.currentTarget) {
         setSelectedStudent(null);
       }
     }}
   >
     <div
-      className="bg-white w-full max-w-xs sm:max-w-lg md:max-w-3xl lg:max-w-5xl rounded-xl sm:rounded-2xl shadow-2xl overflow-hidden relative transform transition-transform duration-300 ease-out scale-100 max-h-[95vh] sm:max-h-[90vh] flex flex-col"
+      className="bg-white w-full max-w-xs sm:max-w-md md:max-w-lg lg:max-w-xl rounded-lg shadow-2xl overflow-hidden relative transform transition-transform duration-300 ease-out scale-100 max-h-[98vh] flex flex-col"
       style={{
         transform: 'scale(1)',
         opacity: '1',
@@ -1268,88 +1267,82 @@ const getResultStatus = (result) => {
       onClick={(e) => e.stopPropagation()}
     >
       {/* Fixed Header with Close Button */}
-      <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-100 bg-white sticky top-0 z-10">
-        <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">Student Details</h2>
+      <div className="flex items-center justify-between p-3 border-b border-gray-100 bg-white sticky top-0 z-10">
+        <h2 className="text-base sm:text-lg font-bold text-gray-900">Student Details</h2>
         <button
           onClick={() => setSelectedStudent(null)}
-          className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full p-2 transition-colors"
+          className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full p-1 transition-colors"
           aria-label="Close modal"
         >
-          <svg className="h-5 w-5 sm:h-6 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
       </div>
 
-      {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 sm:space-y-8">
-        {/* Student Info Card */}
-        <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 lg:p-8 border border-gray-100">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 sm:mb-6">
-            <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">Basic Information</h3>
-            <div className={`px-3 sm:px-4 py-2 rounded-full ${getResultStatus(selectedStudent.result).bg} w-full sm:w-auto`}>
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto p-3 space-y-3">
+        {/* Basic Information & Performance Stats */}
+        <div className="bg-white rounded-lg shadow-md p-3 border border-gray-100">
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <h3 className="text-base sm:text-lg font-bold text-gray-900">Basic Information</h3>
+            <div className={`px-2 py-1 rounded-full ${getResultStatus(selectedStudent.result).bg} w-full sm:w-auto`}>
               <div className="flex items-center justify-center sm:justify-start">
                 {React.createElement(getResultStatus(selectedStudent.result).icon, {
-                  className: `h-4 w-4 ${getResultStatus(selectedStudent.result).color} mr-2`
+                  className: `h-3 w-3 ${getResultStatus(selectedStudent.result).color} mr-1`
                 })}
-                <span className={`font-semibold text-sm sm:text-base ${getResultStatus(selectedStudent.result).color}`}>
+                <span className={`font-semibold text-xs sm:text-sm ${getResultStatus(selectedStudent.result).color}`}>
                   {getResultStatus(selectedStudent.result).status === 'qualified' ? 'Qualified' : 'Not Qualified'}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Mobile Layout - Stacked Cards */}
-          <div className="block sm:hidden space-y-4">
-            <StatCard icon={User} title="Name" value={selectedStudent.candidate_name} color="blue" />
-            <StatCard icon={BookOpen} title="Roll Number" value={selectedStudent.roll} color="green" />
-            <StatCard icon={MapPin} title="State" value={selectedStudent.domicile} color="purple" />
-            <StatCard icon={Users} title="Category" value={selectedStudent.category} color="orange" />
+          {/* New Compact UI for Details */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm sm:text-base">
+            <div className="flex items-center">
+              <User className="h-4 w-4 text-blue-600 mr-2 flex-shrink-0" />
+              <span className="font-medium text-gray-600">Name:</span>
+              <span className="ml-1 text-gray-900 font-semibold truncate">{selectedStudent.candidate_name}</span>
+            </div>
+            <div className="flex items-center">
+              <BookOpen className="h-4 w-4 text-green-600 mr-2 flex-shrink-0" />
+              <span className="font-medium text-gray-600">Roll No.:</span>
+              <span className="ml-1 text-gray-900 font-semibold">{selectedStudent.roll}</span>
+            </div>
+            <div className="flex items-center">
+              <MapPin className="h-4 w-4 text-purple-600 mr-2 flex-shrink-0" />
+              <span className="font-medium text-gray-600">State:</span>
+              <span className="ml-1 text-gray-900 font-semibold">{selectedStudent.domicile}</span>
+            </div>
+            <div className="flex items-center">
+              <Users className="h-4 w-4 text-orange-600 mr-2 flex-shrink-0" />
+              <span className="font-medium text-gray-600">Category:</span>
+              <span className="ml-1 text-gray-900 font-semibold">{selectedStudent.category}</span>
+            </div>
+            <div className="flex items-center">
+              <Award className="h-4 w-4 text-indigo-600 mr-2 flex-shrink-0" />
+              <span className="font-medium text-gray-600">AIR:</span>
+              <span className="ml-1 text-gray-900 font-semibold">#{selectedStudent.air_rank}</span>
+            </div>
+            <div className="flex items-center">
+              <TrendingUp className="h-4 w-4 text-green-600 mr-2 flex-shrink-0" />
+              <span className="font-medium text-gray-600">Total Marks:</span>
+              <span className="ml-1 text-gray-900 font-semibold">{selectedStudent.total_marks}</span>
+            </div>
+            <div className="flex items-center">
+              <Target className="h-4 w-4 text-purple-600 mr-2 flex-shrink-0" />
+              <span className="font-medium text-gray-600">Gender:</span>
+              <span className="ml-1 text-gray-900 font-semibold">{selectedStudent.gender}</span>
+            </div>
           </div>
-
-          {/* Tablet & Desktop Layout - Grid */}
-          <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            <StatCard icon={User} title="Name" value={selectedStudent.candidate_name} color="blue" />
-            <StatCard icon={BookOpen} title="Roll Number" value={selectedStudent.roll} color="green" />
-            <StatCard icon={MapPin} title="State" value={selectedStudent.domicile} color="purple" />
-            <StatCard icon={Users} title="Category" value={selectedStudent.category} color="orange" />
-          </div>
-        </div>
-
-        {/* Performance Stats */}
-        <div className="space-y-4 sm:space-y-0 sm:grid sm:grid-cols-1 md:grid-cols-3 sm:gap-4 md:gap-6">
-          <StatCard 
-            icon={Award} 
-            title="All India Rank" 
-            value={`#${selectedStudent.air_rank}`} 
-            subtitle="All India Rank" 
-            color="indigo" 
-          />
-          <StatCard 
-            icon={TrendingUp} 
-            title="Total Marks" 
-            value={selectedStudent.total_marks} 
-            subtitle="Out of total" 
-            color="green" 
-          />
-          <StatCard 
-            icon={Target} 
-            title="Gender" 
-            value={selectedStudent.gender} 
-            subtitle="Student category" 
-            color="purple" 
-          />
         </div>
 
         {/* Result Details */}
-        <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 lg:p-8 border border-gray-100">
-          <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-4">Result Details</h3>
-          <div className="bg-gray-50 rounded-xl p-4 sm:p-6">
-            <p className="text-gray-800 font-medium text-sm sm:text-base leading-relaxed">{selectedStudent.result}</p>
-          </div>
+        <div className="bg-white rounded-lg shadow-md p-3 border border-gray-100">
+          <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2">Result</h3>
+          <p className="text-gray-800 font-medium text-sm leading-tight">{selectedStudent.result}</p>
         </div>
-
-        
       </div>
     </div>
   </div>
