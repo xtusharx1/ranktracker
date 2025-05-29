@@ -34,7 +34,7 @@ const SainikRankTracker = () => {
 
   const fetchDropdownOptions = async () => {
     try {
-      const response = await fetch('http://localhost:3011/api/rank-tracker/options');
+      const response = await fetch('https://rankapi.sainikschoolcadet.com/api/rank-tracker/options');
       const result = await response.json();
       if (result.success) {
         setDropdownOptions(result.data);
@@ -66,8 +66,8 @@ const SainikRankTracker = () => {
 
       // Fetch both students and vacancies simultaneously
       const [studentsResponse, vacanciesResponse] = await Promise.all([
-        fetch(`http://localhost:3011/api/rank-tracker/students?${queryParams.toString()}`),
-        fetch(`http://localhost:3011/api/rank-tracker/vacancies?${queryParams.toString()}`)
+        fetch(`https://rankapi.sainikschoolcadet.com/api/rank-tracker/students?${queryParams.toString()}`),
+        fetch(`https://rankapi.sainikschoolcadet.com/api/rank-tracker/vacancies?${queryParams.toString()}`)
       ]);
   
       const studentsResult = await studentsResponse.json();
