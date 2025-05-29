@@ -613,7 +613,7 @@ const getResultStatus = (result) => {
   {/* User Roll Number Input */}
   <div className="mb-6 space-y-2">
     <label className="block text-sm font-medium text-gray-700">
-      <span className="hidden sm:inline">Your Roll Number (for admission tracking)</span>
+      <span className="hidden sm:inline">Your Roll Number (Optional)</span>
       <span className="sm:hidden">Your Roll Number</span>
     </label>
     <input
