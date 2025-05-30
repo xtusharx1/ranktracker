@@ -614,7 +614,7 @@ const getResultStatus = (result) => {
   <div className="mb-6 space-y-2">
     <label className="block text-sm font-medium text-gray-700">
       <span className="hidden sm:inline">Your Roll Number (Optional)</span>
-      <span className="sm:hidden">Your Roll Number</span>
+      <span className="sm:hidden">Your Roll Number (Optional)</span>
     </label>
     <input
       type="text"
